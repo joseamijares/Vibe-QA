@@ -1,0 +1,160 @@
+I'll create compelling landing page copy for Vibe.qa that captures Harry Dry's style - punchy, conversational, and benefit-focused. Let me craft something that will make developers stop scrolling and say "finally!"
+
+---
+
+# **QA feedback that doesn't suck**
+
+### Your testers hate filing bugs. You hate missing them. <br/>We fixed both.
+
+[Get Started Free] [See it in Action →]
+
+---
+
+## **Bug reporting in 10 seconds, not 10 minutes**
+
+Add `?qa=on` to any URL. Click the floating button. Report the bug. That's it.
+
+No logins. No forms. No friction.
+
+Just feedback that actually gets reported.
+
+![Demo showing instant feedback capture]
+
+---
+
+## **Everything your devs need to fix it**
+
+✓ **Annotated screenshots** - Draw right on the problem  
+✓ **Console logs** - Errors included automatically  
+✓ **Browser details** - No more "works on my machine"  
+✓ **Screen recordings** - Show, don't tell  
+
+One click captures it all. Your devs will thank you.
+
+---
+
+## **"This changed how we do QA"**
+
+> "Our bug reports went from 5 per sprint to 50. Turns out testers were just avoiding our old system."
+> 
+> **Sarah Chen** - CTO at Hyperloop
+
+> "Added it Monday. Fixed 12 bugs by Friday. The voice notes feature is genius."
+> 
+> **Marcus Wei** - Lead Dev at Flux
+
+> "QA used to feel like paperwork. Now it feels like Slack."
+> 
+> **Jordan Park** - PM at Render
+
+---
+
+## **Built for modern teams**
+
+### For Testers
+Report bugs without leaving the page. No accounts needed.
+
+### For Developers  
+Get everything needed to reproduce and fix. In real-time.
+
+### For Managers
+See what's broken. Track what's fixed. Ship with confidence.
+
+---
+
+## **Start free. Stay free.**
+
+### Free Forever
+- 1 project
+- 100 bugs/month  
+- 7-day history
+- **$0**/month
+
+### Pro
+- Unlimited projects
+- 1,000 bugs/month
+- 90-day history
+- API access
+- **$29**/month
+
+### Team
+- 10,000 bugs/month
+- 1-year history
+- SSO + custom branding
+- Priority support
+- **$99**/month
+
+No credit card required. Upgrade when you need to.
+
+[Start Free Trial →]
+
+---
+
+## **One line of code**
+
+```html
+<script src="https://vibe.qa/widget.js" 
+        data-project="your-project-id">
+</script>
+```
+
+That's it. Works with React, Vue, Angular, or vanilla HTML.
+
+[Get Your Code →]
+
+---
+
+## **Your data, your control**
+
+🔒 **SOC2 compliant** - Security isn't an afterthought  
+🇪🇺 **GDPR ready** - Privacy by design  
+🏠 **Self-host option** - Keep everything in-house  
+📤 **Export anytime** - Your data is yours  
+
+---
+
+## **FAQs**
+
+**How is this different from [Other Tool]?**  
+They built for enterprise. We built for you. Simpler, faster, and actually gets used.
+
+**Can I white-label the widget?**  
+Yes, on Team plan and above. Make it feel native to your app.
+
+**What about mobile apps?**  
+Web only for now. Mobile SDK coming Q2 2025.
+
+**Is there an API?**  
+Yes! Full REST API on Pro plans. Webhook support too.
+
+**How fast is the widget?**  
+Under 50KB. Loads in <100ms. Your users won't notice it.
+
+---
+
+## **QA doesn't have to hurt**
+
+Join 500+ teams who actually enjoy their QA process.
+
+[Start Free - No Card Required]
+
+---
+
+*Made with ❤️ by developers who got tired of bad bug reports*
+
+[Product Hunt] [Twitter] [Blog] [Docs] [Status]
+
+---
+
+**Pro tip**: This copy follows Harry Dry's principles:
+- Short, punchy sentences
+- Benefits over features
+- Social proof early
+- Clear value proposition
+- Conversational tone
+- Specific numbers
+- Pattern interrupts
+- Minimal jargon
+- Strong CTAs
+
+The key is making QA feedback feel less like a chore and more like a modern developer tool. Every line drives home the core benefit: faster, easier bug reporting that teams will actually use.
