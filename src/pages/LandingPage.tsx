@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'wouter';
 import {
@@ -14,8 +13,6 @@ import {
   Users,
   BarChart,
   Sparkles,
-  FileText,
-  Globe,
   Star,
   Github,
   Mic,
@@ -314,27 +311,32 @@ export function LandingPage() {
               },
             ].map((feature, index) => (
               <div key={index} className="group">
-                <div className="card-modern rounded-2xl p-8 h-full space-y-4">
+                <div className="relative">
                   <div
-                    className={`w-16 h-16 bg-gradient-to-br ${feature.gradient} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}
-                  >
-                    <feature.icon className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-xl font-semibold">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
-                  <div className="pt-4">
-                    <div className="h-32 bg-gray-50 rounded-lg overflow-hidden">
-                      <FeatureMockup
-                        type={
-                          index === 0
-                            ? 'screenshot'
-                            : index === 1
-                              ? 'recording'
-                              : index === 2
-                                ? 'console'
-                                : 'browser'
-                        }
-                      />
+                    className={`absolute -inset-1 bg-gradient-to-br ${feature.gradient} rounded-2xl opacity-20 group-hover:opacity-30 transition-opacity blur-lg`}
+                  ></div>
+                  <div className="relative glass-modern-light rounded-2xl p-8 h-full space-y-4 hover:shadow-2xl transition-all duration-300">
+                    <div
+                      className={`w-16 h-16 bg-gradient-to-br ${feature.gradient} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}
+                    >
+                      <feature.icon className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold">{feature.title}</h3>
+                    <p className="text-gray-600">{feature.description}</p>
+                    <div className="pt-4">
+                      <div className="h-32 glass-modern rounded-lg overflow-hidden p-2">
+                        <FeatureMockup
+                          type={
+                            index === 0
+                              ? 'screenshot'
+                              : index === 1
+                                ? 'recording'
+                                : index === 2
+                                  ? 'console'
+                                  : 'browser'
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -471,125 +473,267 @@ export function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="relative py-24 px-4">
-        <AnimatedBackground variant="mesh" />
+      <section id="pricing" className="relative py-24 px-4 overflow-hidden">
+        <AnimatedBackground variant="orbs" />
 
         <div className="container mx-auto relative z-10">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-5xl font-bold">Simple, transparent pricing</h2>
-            <p className="text-xl text-gray-600">Start free. Upgrade when you need more.</p>
+            <Badge className="bg-[#FF6B35]/10 text-[#FF6B35] border-[#FF6B35]/20 px-4 py-2">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Save 20% with annual billing
+            </Badge>
+            <h2 className="text-5xl font-bold">
+              Pricing that <span className="gradient-text-accent">makes sense</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Start with our generous free tier. Upgrade as you grow.
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Free Plan */}
-            <div className="card-modern rounded-2xl p-8 h-full">
-              <h3 className="text-2xl font-bold mb-2">Free</h3>
-              <div className="mb-6">
-                <span className="text-5xl font-bold">$0</span>
-                <span className="text-gray-600">/month</span>
+          <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+            {/* Starter Plan */}
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-br from-[#094765] to-[#3387a7] rounded-3xl opacity-20 group-hover:opacity-30 transition-opacity blur-lg"></div>
+              <div className="relative glass-modern-light rounded-3xl p-10 h-full hover:shadow-2xl transition-all duration-300">
+                <div className="text-center space-y-6">
+                  <div>
+                    <h3 className="text-3xl font-bold mb-2">Starter</h3>
+                    <p className="text-gray-600">Perfect for small teams and startups</p>
+                  </div>
+
+                  <div className="py-8 border-y border-gray-200">
+                    <div className="flex items-baseline justify-center gap-2">
+                      <span className="text-6xl font-bold gradient-text-modern">$9</span>
+                      <span className="text-gray-600 text-lg">/month</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">per project</p>
+                  </div>
+
+                  <ul className="space-y-4 text-left">
+                    {[
+                      '3 projects included',
+                      '500 bug reports/month',
+                      '30-day history',
+                      'Email support',
+                      'Basic integrations',
+                      'Team collaboration',
+                    ].map((feature) => (
+                      <li key={feature} className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-3 h-3 text-green-600" />
+                        </div>
+                        <span className="text-gray-700">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-full border-gray-300 hover:border-[#094765] py-6 text-lg"
+                  >
+                    Start Free Trial
+                  </Button>
+                </div>
               </div>
-              <ul className="space-y-4 mb-8">
-                {['1 project', '100 bug reports/month', '7-day history', 'Basic support'].map(
-                  (feature) => (
-                    <li key={feature} className="flex items-center gap-3">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                      <span className="text-gray-700">{feature}</span>
-                    </li>
-                  )
-                )}
-              </ul>
-              <Button variant="outline" className="w-full rounded-full border-gray-300">
-                Start Free
-              </Button>
             </div>
 
             {/* Pro Plan */}
-            <div className="pricing-recommended card-modern rounded-2xl p-8 h-full">
-              <h3 className="text-2xl font-bold mb-2">Pro</h3>
-              <div className="mb-6">
-                <span className="text-5xl font-bold gradient-text-accent">$29</span>
-                <span className="text-gray-600">/month</span>
+            <div className="relative group transform lg:scale-105">
+              <div className="absolute -inset-1 bg-gradient-to-br from-[#FF6B35] to-[#FFB39A] rounded-3xl opacity-30 group-hover:opacity-40 transition-opacity blur-lg"></div>
+              <div className="relative pricing-recommended glass-modern-light rounded-3xl p-10 h-full hover:shadow-2xl transition-all duration-300">
+                <div className="text-center space-y-6">
+                  <div>
+                    <h3 className="text-3xl font-bold mb-2">Pro</h3>
+                    <p className="text-gray-600">For growing teams that need more</p>
+                  </div>
+
+                  <div className="py-8 border-y border-[#FF6B35]/20">
+                    <div className="flex items-baseline justify-center gap-2">
+                      <span className="text-6xl font-bold gradient-text-accent">$19</span>
+                      <span className="text-gray-600 text-lg">/month</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">per project</p>
+                  </div>
+
+                  <ul className="space-y-4 text-left">
+                    {[
+                      'Unlimited projects',
+                      '2,000 bug reports/month',
+                      '90-day history',
+                      'Priority support',
+                      'Advanced integrations',
+                      'API access',
+                      'Custom workflows',
+                      'Analytics dashboard',
+                    ].map((feature) => (
+                      <li key={feature} className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full bg-[#FF6B35]/20 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-3 h-3 text-[#FF6B35]" />
+                        </div>
+                        <span className="text-gray-700">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button className="w-full magnetic-button rounded-full py-6 text-lg">
+                    Start Free Trial
+                  </Button>
+                  <p className="text-sm text-gray-500">No credit card required</p>
+                </div>
               </div>
-              <ul className="space-y-4 mb-8">
-                {[
-                  '5 projects',
-                  '1,000 bug reports/month',
-                  '90-day history',
-                  'Priority support',
-                  'API access',
-                  'Team collaboration',
-                ].map((feature) => (
-                  <li key={feature} className="flex items-center gap-3">
-                    <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button className="w-full magnetic-button rounded-full">Start Free Trial</Button>
+            </div>
+          </div>
+
+          <div className="text-center mt-16 space-y-6">
+            <div className="flex items-center justify-center gap-8 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <Check className="w-5 h-5 text-green-500" />
+                <span>14-day free trial</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-5 h-5 text-green-500" />
+                <span>Cancel anytime</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-5 h-5 text-green-500" />
+                <span>No setup fees</span>
+              </div>
             </div>
 
-            {/* Team Plan */}
-            <div className="card-modern rounded-2xl p-8 h-full">
-              <h3 className="text-2xl font-bold mb-2">Team</h3>
-              <div className="mb-6">
-                <span className="text-5xl font-bold">$99</span>
-                <span className="text-gray-600">/month</span>
-              </div>
-              <ul className="space-y-4 mb-8">
-                {[
-                  'Unlimited projects',
-                  '10,000 bug reports/month',
-                  'Unlimited history',
-                  'Dedicated support',
-                  'SSO & SAML',
-                  'Custom integrations',
-                ].map((feature) => (
-                  <li key={feature} className="flex items-center gap-3">
-                    <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button variant="outline" className="w-full rounded-full border-gray-300">
+            <div className="pt-8">
+              <p className="text-gray-600 mb-4">Need enterprise features, SSO, or custom limits?</p>
+              <Button variant="outline" size="lg" className="rounded-full border-gray-300">
                 Contact Sales
               </Button>
             </div>
           </div>
-
-          <div className="text-center mt-12">
-            <p className="text-gray-600 mb-4">
-              Need more? Looking for custom limits, on-premise, or enterprise features?
-            </p>
-            <Button variant="outline" size="lg" className="rounded-full border-gray-300">
-              Talk to Sales
-            </Button>
-          </div>
         </div>
       </section>
 
-      {/* Security Section */}
-      <section className="relative py-24 px-4 bg-gradient-to-br from-[#094765] to-[#156c8b] text-white">
-        <div className="container mx-auto relative z-10">
-          <div className="glass-modern rounded-3xl p-12 text-center max-w-4xl mx-auto">
-            <h2 className="text-4xl font-bold mb-12">Enterprise-grade security</h2>
+      {/* Trust & Security Section */}
+      <section className="relative py-24 px-4 bg-gray-50">
+        <FloatingElements />
 
-            <div className="grid md:grid-cols-4 gap-8">
+        <div className="container mx-auto relative z-10">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-5xl font-bold">
+              Built for <span className="gradient-text-modern">trust</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Your bugs are sensitive. We treat them that way.
+            </p>
+          </div>
+
+          <div className="max-w-6xl mx-auto">
+            {/* Trust indicators */}
+            <div className="grid md:grid-cols-3 gap-8 mb-16">
               {[
-                { icon: Shield, title: 'SOC2 Compliant', desc: 'Security-first architecture' },
-                { icon: Globe, title: 'GDPR Ready', desc: 'Privacy by design' },
-                { icon: Monitor, title: 'Self-host Option', desc: 'Keep data in-house' },
-                { icon: FileText, title: 'Data Export', desc: 'Your data, always' },
+                {
+                  icon: Shield,
+                  title: 'Bank-level encryption',
+                  description: 'All data encrypted at rest and in transit with AES-256',
+                  stat: '256-bit',
+                  gradient: 'from-[#094765] to-[#3387a7]',
+                },
+                {
+                  icon: Clock,
+                  title: 'Real uptime',
+                  description: 'Redundant infrastructure across multiple regions',
+                  stat: '99.9%',
+                  gradient: 'from-[#3387a7] to-[#66a5bd]',
+                },
+                {
+                  icon: Users,
+                  title: 'Trusted by teams',
+                  description: 'From startups to Fortune 500 companies',
+                  stat: '500+',
+                  gradient: 'from-[#FF6B35] to-[#FFB39A]',
+                },
               ].map((item, index) => (
-                <div key={index} className="flex flex-col items-center space-y-4">
-                  <div className="w-16 h-16 glass-modern rounded-2xl flex items-center justify-center">
-                    <item.icon className="w-8 h-8" />
+                <div key={index} className="text-center">
+                  <div className="relative inline-block mb-6">
+                    <div
+                      className={`absolute -inset-4 bg-gradient-to-br ${item.gradient} rounded-full opacity-20 blur-lg`}
+                    ></div>
+                    <div className="relative w-20 h-20 glass-modern-light rounded-full flex items-center justify-center mx-auto">
+                      <item.icon className="w-10 h-10 text-gray-700" />
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold mb-1">{item.title}</h3>
-                    <p className="text-sm text-white/80">{item.desc}</p>
-                  </div>
+                  <div className="text-4xl font-bold gradient-text-modern mb-2">{item.stat}</div>
+                  <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
+                  <p className="text-gray-600">{item.description}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Compliance badges */}
+            <div className="relative">
+              <div className="glass-modern-light rounded-3xl p-12">
+                <h3 className="text-2xl font-bold text-center mb-8">Compliance & Certifications</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                  {[
+                    { name: 'SOC 2', desc: 'Type II Certified' },
+                    { name: 'GDPR', desc: 'Compliant' },
+                    { name: 'CCPA', desc: 'Compliant' },
+                    { name: 'ISO 27001', desc: 'Certified' },
+                  ].map((cert, index) => (
+                    <div key={index} className="text-center">
+                      <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-gray-200">
+                        <span className="text-2xl font-bold text-gray-700">{cert.name}</span>
+                      </div>
+                      <p className="text-sm text-gray-600">{cert.desc}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-12 pt-8 border-t border-gray-200">
+                  <div className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-lg">Data handling</h4>
+                      <ul className="space-y-2">
+                        {[
+                          'Your data never leaves your selected region',
+                          'Automatic daily backups with point-in-time recovery',
+                          'Complete data export available anytime',
+                          'Right to deletion within 24 hours',
+                        ].map((item, i) => (
+                          <li key={i} className="flex items-start gap-3">
+                            <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-gray-600">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-lg">Infrastructure</h4>
+                      <ul className="space-y-2">
+                        {[
+                          'Hosted on AWS with multi-region failover',
+                          'DDoS protection and rate limiting',
+                          'Regular third-party security audits',
+                          'Bug bounty program for security researchers',
+                        ].map((item, i) => (
+                          <li key={i} className="flex items-start gap-3">
+                            <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-gray-600">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Trust quote */}
+            <div className="mt-12 text-center">
+              <blockquote className="text-2xl font-medium text-gray-700 max-w-3xl mx-auto">
+                "We switched to VibeQA specifically because of their security practices. As a
+                fintech, we can't compromise on data protection."
+              </blockquote>
+              <cite className="block mt-4 text-gray-600">
+                — Sarah Chen, CTO at Hyperloop Financial
+              </cite>
             </div>
           </div>
         </div>
