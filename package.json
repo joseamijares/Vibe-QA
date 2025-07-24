@@ -1,0 +1,16 @@
+{
+  "name": "Supabasejs-Database",
+  "version": "1.0.0",
+  "description": "[Supabase](https://supabase.io) is an Open Source Firebase alternative.",
+  "main": "index.js",
+  "dependencies": {
+    "@supabase/supabase-js": "^1.35.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
