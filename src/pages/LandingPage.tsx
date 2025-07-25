@@ -22,10 +22,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { HeroMockup, DashboardMockup, FeatureMockup } from '@/components/Mockups';
-import {
-  AnimatedBackground,
-  DataVisualization,
-} from '@/components/AnimatedBackground';
+import { AnimatedBackground, DataVisualization } from '@/components/AnimatedBackground';
 import { useEffect, useState } from 'react';
 
 export function LandingPage() {
@@ -197,7 +194,7 @@ export function LandingPage() {
 
       {/* How it Works Section */}
       <section id="how-it-works" className="relative py-24 px-4">
-        <AnimatedBackground variant="dot-matrix" />
+        <AnimatedBackground variant="aurora-light" />
 
         <div className="container mx-auto relative z-10">
           <div className="text-center mb-16 space-y-4">
@@ -270,7 +267,7 @@ export function LandingPage() {
 
       {/* Features Section */}
       <section id="features" className="relative py-24 px-4">
-        <AnimatedBackground variant="dot-matrix" />
+        <AnimatedBackground variant="aurora-light" />
 
         <div className="container mx-auto relative z-10">
           <div className="text-center mb-16 space-y-4">
@@ -478,7 +475,7 @@ export function LandingPage() {
 
       {/* Pricing Section */}
       <section id="pricing" className="relative py-24 px-4 overflow-hidden">
-        <AnimatedBackground variant="dot-matrix" />
+        <AnimatedBackground variant="aurora-light" />
 
         <div className="container mx-auto relative z-10">
           <div className="text-center mb-16 space-y-4">
@@ -616,7 +613,7 @@ export function LandingPage() {
 
       {/* Trust & Security Section */}
       <section className="relative py-24 px-4">
-        <AnimatedBackground variant="dot-matrix" />
+        <AnimatedBackground variant="aurora-light" />
 
         <div className="container mx-auto relative z-10">
           <div className="text-center mb-16 space-y-4">
@@ -797,8 +794,9 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative py-16 px-4 bg-gray-50">
-        <div className="container mx-auto">
+      <footer className="relative py-16 px-4">
+        <AnimatedBackground variant="aurora-medium" />
+        <div className="container mx-auto relative z-10">
           <div className="glass-modern-light rounded-3xl p-10">
             <div className="grid md:grid-cols-4 gap-8 mb-8">
               <div>
@@ -877,7 +875,7 @@ export function LandingPage() {
               </div>
             </div>
 
-            <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center">
+            <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center">
               <p className="text-sm text-gray-600">© 2024 VibeQA. All rights reserved.</p>
               <p className="text-sm text-gray-600 mt-4 md:mt-0">
                 Made with ❤️ by developers, for developers

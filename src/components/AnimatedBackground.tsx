@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface AnimatedBackgroundProps {
-  variant?: 'orbs' | 'gradient' | 'mesh' | 'aurora' | 'dot-matrix';
+  variant?: 'orbs' | 'gradient' | 'mesh' | 'aurora' | 'aurora-light' | 'aurora-medium';
   className?: string;
 }
 
@@ -50,59 +50,27 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
     );
   }
 
-  if (variant === 'dot-matrix') {
-    // Generate a pattern of dots with random accent colors
-    const dots = Array.from({ length: 400 }, (_, i) => {
-      const isAccent = Math.random() > 0.85;
-      const accentType = isAccent ? Math.floor(Math.random() * 3) + 1 : 0;
-      const size = Math.random() > 0.9 ? 'large' : Math.random() < 0.1 ? 'small' : '';
-
-      return {
-        id: i,
-        className: `dot-matrix-dot ${accentType ? `accent-${accentType}` : ''} ${size}`,
-        style: {
-          animationDelay: `${Math.random() * 4}s`,
-        },
-      };
-    });
-
+  if (variant === 'aurora-light') {
     return (
-      <div className={`dot-matrix-container ${className}`}>
-        <div className="dot-matrix-grid">
-          {dots.map((dot) => (
-            <div key={dot.id} className={dot.className} style={dot.style} />
-          ))}
+      <div className={`absolute inset-0 overflow-hidden ${className}`}>
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-50">
+          <div className="aurora-light-layer aurora-light-1" />
+          <div className="aurora-light-layer aurora-light-2" />
+          <div className="aurora-light-layer aurora-light-3" />
+          <div className="aurora-light-glow" />
         </div>
-        <div className="dot-matrix-glow" />
-        {/* Floating accent dots */}
-        <div
-          className="dot-matrix-float"
-          style={{
-            top: '20%',
-            left: '10%',
-            animationDelay: '0s',
-          }}
-        />
-        <div
-          className="dot-matrix-float"
-          style={{
-            bottom: '30%',
-            right: '15%',
-            animationDelay: '-5s',
-            width: '12px',
-            height: '12px',
-          }}
-        />
-        <div
-          className="dot-matrix-float"
-          style={{
-            top: '60%',
-            left: '70%',
-            animationDelay: '-10s',
-            width: '6px',
-            height: '6px',
-          }}
-        />
+      </div>
+    );
+  }
+
+  if (variant === 'aurora-medium') {
+    return (
+      <div className={`absolute inset-0 overflow-hidden ${className}`}>
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-300 via-slate-200 to-slate-300">
+          <div className="aurora-footer-1" />
+          <div className="aurora-footer-2" />
+          <div className="aurora-footer-3" />
+        </div>
       </div>
     );
   }
