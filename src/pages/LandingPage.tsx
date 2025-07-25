@@ -24,7 +24,6 @@ import {
 import { HeroMockup, DashboardMockup, FeatureMockup } from '@/components/Mockups';
 import {
   AnimatedBackground,
-  FloatingElements,
   DataVisualization,
 } from '@/components/AnimatedBackground';
 import { useEffect, useState } from 'react';
@@ -91,7 +90,7 @@ export function LandingPage() {
 
       {/* Hero Section with animated background */}
       <section className="relative pt-32 pb-24 px-4 overflow-hidden">
-        <AnimatedBackground variant="orbs" />
+        <AnimatedBackground variant="aurora" />
 
         <div className="container mx-auto relative z-10">
           <div className="max-w-6xl mx-auto">
@@ -101,12 +100,12 @@ export function LandingPage() {
                 Trusted by 500+ development teams
               </Badge>
 
-              <h1 className="text-6xl lg:text-7xl font-bold leading-tight">
+              <h1 className="text-6xl lg:text-7xl font-bold leading-tight text-white">
                 <span className="block">QA feedback that</span>
-                <span className="gradient-text-modern">developers love</span>
+                <span className="gradient-text-accent">developers love</span>
               </h1>
 
-              <p className="text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              <p className="text-xl lg:text-2xl text-gray-200 max-w-3xl mx-auto leading-relaxed">
                 Your testers hate filing bugs. You hate missing them. We fixed both with the
                 simplest bug reporting tool ever made.
               </p>
@@ -128,17 +127,17 @@ export function LandingPage() {
                 </Button>
               </div>
 
-              <div className="flex items-center justify-center gap-8 text-sm text-gray-600 pt-4">
+              <div className="flex items-center justify-center gap-8 text-sm text-gray-300 pt-4">
                 <div className="flex items-center gap-2">
-                  <Check className="w-5 h-5 text-green-500" />
+                  <Check className="w-5 h-5 text-green-400" />
                   <span>No credit card required</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Check className="w-5 h-5 text-green-500" />
+                  <Check className="w-5 h-5 text-green-400" />
                   <span>Setup in 60 seconds</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Check className="w-5 h-5 text-green-500" />
+                  <Check className="w-5 h-5 text-green-400" />
                   <span>14-day free trial</span>
                 </div>
               </div>
@@ -162,14 +161,14 @@ export function LandingPage() {
                 className="absolute -left-20 top-20 parallax-medium"
                 style={{ transform: `translateY(${scrollY * 0.15}px)` }}
               >
-                <div className="glass-modern-light rounded-2xl p-6 shadow-xl">
+                <div className="glass-testimonial rounded-2xl p-6 shadow-xl">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
-                      <Bug className="w-7 h-7 text-green-600" />
+                    <div className="w-14 h-14 glass-modern rounded-full flex items-center justify-center">
+                      <Bug className="w-7 h-7 text-green-400" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">247</p>
-                      <p className="text-sm text-gray-600">Bugs reported today</p>
+                      <p className="text-2xl font-bold text-gray-900">247</p>
+                      <p className="text-sm text-gray-700">Bugs reported today</p>
                     </div>
                   </div>
                 </div>
@@ -179,9 +178,9 @@ export function LandingPage() {
                 className="absolute -right-20 bottom-20 parallax-fast"
                 style={{ transform: `translateY(${scrollY * 0.2}px)` }}
               >
-                <div className="glass-modern-light rounded-2xl p-4 shadow-xl">
+                <div className="glass-testimonial rounded-2xl p-4 shadow-xl">
                   <DataVisualization className="w-48" />
-                  <p className="text-sm text-gray-600 mt-2 text-center">Response time analytics</p>
+                  <p className="text-sm text-gray-700 mt-2 text-center">Response time analytics</p>
                 </div>
               </div>
             </div>
@@ -191,14 +190,14 @@ export function LandingPage() {
         {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
           <div className="scroll-indicator">
-            <ChevronDown className="w-6 h-6 text-gray-400" />
+            <ChevronDown className="w-6 h-6 text-gray-300" />
           </div>
         </div>
       </section>
 
       {/* How it Works Section */}
-      <section id="how-it-works" className="relative py-24 px-4 bg-gray-50">
-        <FloatingElements />
+      <section id="how-it-works" className="relative py-24 px-4">
+        <AnimatedBackground variant="dot-matrix" />
 
         <div className="container mx-auto relative z-10">
           <div className="text-center mb-16 space-y-4">
@@ -271,7 +270,7 @@ export function LandingPage() {
 
       {/* Features Section */}
       <section id="features" className="relative py-24 px-4">
-        <AnimatedBackground variant="gradient" />
+        <AnimatedBackground variant="dot-matrix" />
 
         <div className="container mx-auto relative z-10">
           <div className="text-center mb-16 space-y-4">
@@ -412,15 +411,15 @@ export function LandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="relative py-24 px-4 bg-gray-50">
-        <FloatingElements />
+      <section id="testimonials" className="relative py-24 px-4">
+        <AnimatedBackground variant="aurora" />
 
         <div className="container mx-auto relative z-10">
           <div className="text-center mb-16 space-y-4">
-            <h2 className="text-5xl font-bold">
+            <h2 className="text-5xl font-bold text-white">
               Teams <span className="gradient-text-accent">love VibeQA</span>
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-200">
               Join 500+ teams who actually enjoy their QA process
             </p>
           </div>
@@ -449,17 +448,22 @@ export function LandingPage() {
               },
             ].map((testimonial, index) => (
               <div key={index} className="group">
-                <div className="testimonial-modern rounded-2xl p-8 h-full space-y-4">
+                <div className="glass-testimonial rounded-2xl p-8 h-full space-y-4 transition-all duration-300">
                   <div className="flex items-center gap-4">
-                    <div
-                      className={`w-14 h-14 bg-gradient-to-br ${testimonial.gradient} rounded-full`}
-                    ></div>
+                    <div className="w-14 h-14 glass-modern rounded-full flex items-center justify-center">
+                      <span className="text-2xl font-bold text-white">
+                        {testimonial.name
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')}
+                      </span>
+                    </div>
                     <div>
-                      <p className="font-semibold">{testimonial.name}</p>
-                      <p className="text-sm text-gray-600">{testimonial.role}</p>
+                      <p className="font-semibold text-white">{testimonial.name}</p>
+                      <p className="text-sm text-gray-300">{testimonial.role}</p>
                     </div>
                   </div>
-                  <p className="text-gray-700 text-lg">{testimonial.quote}</p>
+                  <p className="text-gray-100 text-lg leading-relaxed">{testimonial.quote}</p>
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
@@ -474,7 +478,7 @@ export function LandingPage() {
 
       {/* Pricing Section */}
       <section id="pricing" className="relative py-24 px-4 overflow-hidden">
-        <AnimatedBackground variant="orbs" />
+        <AnimatedBackground variant="dot-matrix" />
 
         <div className="container mx-auto relative z-10">
           <div className="text-center mb-16 space-y-4">
@@ -611,8 +615,8 @@ export function LandingPage() {
       </section>
 
       {/* Trust & Security Section */}
-      <section className="relative py-24 px-4 bg-gray-50">
-        <FloatingElements />
+      <section className="relative py-24 px-4">
+        <AnimatedBackground variant="dot-matrix" />
 
         <div className="container mx-auto relative z-10">
           <div className="text-center mb-16 space-y-4">
@@ -741,7 +745,7 @@ export function LandingPage() {
 
       {/* Final CTA */}
       <section className="relative py-24 px-4">
-        <AnimatedBackground variant="orbs" />
+        <AnimatedBackground variant="aurora" />
 
         <div className="container mx-auto text-center relative z-10">
           <div className="max-w-4xl mx-auto space-y-8">
@@ -750,11 +754,11 @@ export function LandingPage() {
               Over 10,000 bugs fixed this month
             </Badge>
 
-            <h2 className="text-5xl lg:text-6xl font-bold">
+            <h2 className="text-5xl lg:text-6xl font-bold text-white">
               Ready to <span className="gradient-text-accent">fix bugs faster?</span>
             </h2>
 
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-200 max-w-2xl mx-auto">
               Join 500+ teams using VibeQA to ship better software with confidence
             </p>
 
@@ -776,16 +780,16 @@ export function LandingPage() {
 
             <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto pt-12">
               <div className="text-center">
-                <div className="text-4xl font-bold gradient-text-modern">500+</div>
-                <div className="text-sm text-gray-600">Happy Teams</div>
+                <div className="text-4xl font-bold gradient-text-accent">500+</div>
+                <div className="text-sm text-gray-300">Happy Teams</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold gradient-text-modern">50k+</div>
-                <div className="text-sm text-gray-600">Bugs Fixed</div>
+                <div className="text-4xl font-bold gradient-text-accent">50k+</div>
+                <div className="text-sm text-gray-300">Bugs Fixed</div>
               </div>
               <div className="text-center">
-                <div className="text-4xl font-bold gradient-text-modern">99.9%</div>
-                <div className="text-sm text-gray-600">Uptime</div>
+                <div className="text-4xl font-bold gradient-text-accent">99.9%</div>
+                <div className="text-sm text-gray-300">Uptime</div>
               </div>
             </div>
           </div>

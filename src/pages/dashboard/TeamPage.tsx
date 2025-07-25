@@ -6,18 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Users,
-  UserPlus,
-  Mail,
-  Shield,
-  Trash2,
-  Crown,
-  User,
-  Send,
-  X,
-  Copy,
-} from 'lucide-react';
+import { Users, UserPlus, Mail, Shield, Trash2, Crown, User, Send, X, Copy } from 'lucide-react';
 import { OrganizationMember, Invitation, UserRole } from '@/types/database.types';
 import { toast } from 'sonner';
 
