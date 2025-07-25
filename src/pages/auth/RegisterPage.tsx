@@ -17,12 +17,16 @@ interface RegisterFormData {
 }
 
 export function RegisterPage() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { signUp, signInWithGoogle, signInWithMagicLink } = useAuth();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get redirect URL from query params
+  const searchParams = new URLSearchParams(location.split('?')[1] || '');
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
 
   const {
     register,
@@ -41,7 +45,7 @@ export function RegisterPage() {
         title: 'Account created!',
         description: 'Please check your email to verify your account.',
       });
-      navigate('/dashboard');
+      navigate(redirectTo);
     } catch (error: any) {
       toast({
         title: 'Error',

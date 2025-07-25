@@ -337,6 +337,20 @@ export type Database = {
         };
         Returns: string;
       };
+      get_organization_members: {
+        Args: {
+          org_id: string;
+        };
+        Returns: {
+          id: string;
+          organization_id: string;
+          user_id: string;
+          role: Database['public']['Enums']['user_role'];
+          joined_at: string;
+          user_email: string;
+          user_metadata: Json;
+        }[];
+      };
     };
     Enums: {
       user_role: 'owner' | 'admin' | 'member' | 'viewer';

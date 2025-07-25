@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
@@ -24,16 +25,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [location] = useLocation();
   const { user, signOut } = useAuth();
   const { organization, membership } = useOrganization();
+  const { canManageProjects } = usePermissions();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Projects', href: '/dashboard/projects', icon: Folder },
-    { name: 'Feedback', href: '/dashboard/feedback', icon: MessageSquare },
-    { name: 'Team', href: '/dashboard/team', icon: Users },
-    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
-  ];
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, show: true },
+    { name: 'Projects', href: '/dashboard/projects', icon: Folder, show: true },
+    { name: 'Feedback', href: '/dashboard/feedback', icon: MessageSquare, show: true },
+    { name: 'Team', href: '/dashboard/team', icon: Users, show: true },
+    { name: 'Settings', href: '/dashboard/settings', icon: Settings, show: true },
+  ].filter((item) => item.show);
 
   const handleSignOut = async () => {
     await signOut();
@@ -152,12 +154,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
             {/* Quick actions */}
             <div className="flex items-center gap-4">
-              <Link href="/dashboard/projects/new">
-                <Button className="hidden sm:flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  New Project
-                </Button>
-              </Link>
+              {canManageProjects && (
+                <Link href="/dashboard/projects/new">
+                  <Button className="hidden sm:flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    New Project
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </header>

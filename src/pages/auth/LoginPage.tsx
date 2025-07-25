@@ -15,11 +15,15 @@ interface LoginFormData {
 }
 
 export function LoginPage() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { signIn, signInWithGoogle, signInWithMagicLink } = useAuth();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get redirect URL from query params
+  const searchParams = new URLSearchParams(location.split('?')[1] || '');
+  const redirectTo = searchParams.get('redirect') || '/dashboard';
 
   const {
     register,
@@ -35,7 +39,7 @@ export function LoginPage() {
         title: 'Welcome back!',
         description: 'You have successfully signed in.',
       });
-      navigate('/dashboard');
+      navigate(redirectTo);
     } catch (error: any) {
       toast({
         title: 'Error',
