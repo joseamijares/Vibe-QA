@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Users, UserPlus, Mail, Shield, Trash2, Crown, User, Send, X, Copy } from 'lucide-react';
 import { OrganizationMember, Invitation, UserRole } from '@/types/database.types';
 import { toast } from 'sonner';
+import { EmailService } from '@/lib/email';
 
 interface MemberWithUser extends OrganizationMember {
   user: {
@@ -127,14 +128,30 @@ export function TeamPage() {
       // Add to local state
       setInvitations([data, ...invitations]);
 
+      // Send invitation email
+      const emailResult = await EmailService.sendInvitationEmail({
+        invitationId: data.id,
+        email: inviteEmail,
+        organizationName: organization.name,
+        inviterName: user!.email?.split('@')[0] || 'Team Admin',
+        recipientName: inviteEmail.split('@')[0],
+        role: inviteRole,
+        expiryDate: expiresAt.toISOString(),
+      });
+
+      if (!emailResult.success) {
+        console.error('Failed to send invitation email:', emailResult.error);
+        toast.warning(
+          'Invitation created but email could not be sent. You can copy the invitation link to share manually.'
+        );
+      } else {
+        toast.success('Invitation sent successfully');
+      }
+
       // Reset form
       setInviteEmail('');
       setInviteRole('member');
       setInviteModalOpen(false);
-
-      toast.success('Invitation sent successfully');
-
-      // TODO: Send email notification when email system is implemented
     } catch (error) {
       console.error('Error sending invitation:', error);
       toast.error('Failed to send invitation');

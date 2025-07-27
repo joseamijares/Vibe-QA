@@ -5,6 +5,7 @@ This guide documents the reusable component patterns that define VibeQA's visual
 ## Glassmorphism Effects
 
 ### Light Glassmorphism
+
 Used on light backgrounds for subtle depth and elegance.
 
 ```css
@@ -18,12 +19,14 @@ Used on light backgrounds for subtle depth and elegance.
 ```
 
 **Use cases:**
+
 - Navigation header
 - Feature cards on white backgrounds
 - Footer container
 - Form containers
 
 ### Dark Glassmorphism
+
 Used on dark backgrounds for dramatic effect.
 
 ```css
@@ -37,12 +40,14 @@ Used on dark backgrounds for dramatic effect.
 ```
 
 **Use cases:**
+
 - Cards on dark sections
 - Testimonial cards on aurora backgrounds
 - Modal overlays
 - Floating stats cards
 
 ### Enhanced Glassmorphism (Testimonials)
+
 Special variant with stronger blur and subtle top highlight.
 
 ```css
@@ -51,7 +56,7 @@ Special variant with stronger blur and subtle top highlight.
   backdrop-filter: blur(20px) saturate(200%);
   -webkit-backdrop-filter: blur(20px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 
+  box-shadow:
     0 8px 32px 0 rgba(31, 38, 135, 0.15),
     inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   position: relative;
@@ -65,16 +70,19 @@ Special variant with stronger blur and subtle top highlight.
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, 
+  background: linear-gradient(
+    90deg,
     transparent 0%,
     rgba(255, 255, 255, 0.5) 50%,
-    transparent 100%);
+    transparent 100%
+  );
 }
 ```
 
 ## Button Styles
 
 ### Primary Button (Magnetic Effect)
+
 The main CTA button with magnetic hover effect and ripple animation.
 
 ```css
@@ -97,7 +105,9 @@ The main CTA button with magnetic hover effect and ripple animation.
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
+  transition:
+    width 0.6s,
+    height 0.6s;
 }
 
 .magnetic-button:hover::before {
@@ -112,11 +122,13 @@ The main CTA button with magnetic hover effect and ripple animation.
 ```
 
 **Variants:**
+
 - `size="lg"`: Large CTAs (hero, final CTA)
 - `size="md"`: Default size
 - `size="sm"`: Inline actions
 
 ### Secondary Button
+
 Outline style for secondary actions.
 
 ```css
@@ -134,6 +146,7 @@ Outline style for secondary actions.
 ```
 
 ### Ghost Button
+
 Minimal style for tertiary actions.
 
 ```css
@@ -151,6 +164,7 @@ Minimal style for tertiary actions.
 ## Card Patterns
 
 ### Modern Card
+
 The standard card with hover effects and gradient border on hover.
 
 ```css
@@ -186,13 +200,18 @@ The standard card with hover effects and gradient border on hover.
 ```
 
 ### Feature Card
+
 Card with icon and gradient shadow effect.
 
 ```html
 <div className="group">
   <div className="relative">
-    <div className="absolute -inset-1 bg-gradient-to-br from-[#094765] to-[#3387a7] rounded-2xl opacity-20 group-hover:opacity-30 transition-opacity blur-lg"></div>
-    <div className="relative glass-modern-light rounded-2xl p-8 h-full space-y-4 hover:shadow-2xl transition-all duration-300">
+    <div
+      className="absolute -inset-1 bg-gradient-to-br from-[#094765] to-[#3387a7] rounded-2xl opacity-20 group-hover:opacity-30 transition-opacity blur-lg"
+    ></div>
+    <div
+      className="relative glass-modern-light rounded-2xl p-8 h-full space-y-4 hover:shadow-2xl transition-all duration-300"
+    >
       <!-- Content -->
     </div>
   </div>
@@ -200,6 +219,7 @@ Card with icon and gradient shadow effect.
 ```
 
 ### Pricing Card
+
 Special styling for pricing tiers.
 
 ```css
@@ -228,6 +248,7 @@ Special styling for pricing tiers.
 ## Badge Patterns
 
 ### Default Badge
+
 Small inline labels for status and categories.
 
 ```css
@@ -243,12 +264,14 @@ Small inline labels for status and categories.
 ```
 
 **Variants:**
+
 - Success: `bg-green-100 text-green-700 border-green-200`
 - Warning: `bg-yellow-100 text-yellow-700 border-yellow-200`
 - Error: `bg-red-100 text-red-700 border-red-200`
 - Info: `bg-blue-100 text-blue-700 border-blue-200`
 
 ### Accent Badge
+
 For highlighting special content.
 
 ```css
@@ -262,6 +285,7 @@ For highlighting special content.
 ## Navigation Patterns
 
 ### Glass Navigation
+
 The main header navigation with glassmorphism.
 
 ```css
@@ -278,6 +302,7 @@ The main header navigation with glassmorphism.
 ```
 
 ### Nav Link Hover
+
 Smooth transitions for navigation items.
 
 ```css
@@ -310,6 +335,7 @@ Smooth transitions for navigation items.
 ## Form Elements
 
 ### Input Fields
+
 Modern input styling with focus states.
 
 ```css
@@ -333,6 +359,7 @@ Modern input styling with focus states.
 ```
 
 ### Form Container
+
 Glass container for forms.
 
 ```css
@@ -349,6 +376,7 @@ Glass container for forms.
 ## Icon Patterns
 
 ### Icon Container
+
 Consistent icon presentation.
 
 ```css
@@ -383,6 +411,7 @@ Consistent icon presentation.
 ## Loading States
 
 ### Skeleton Loader
+
 For content that's loading.
 
 ```css
@@ -393,12 +422,17 @@ For content that's loading.
 }
 
 @keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 ```
 
 ### Spinner
+
 Simple loading spinner.
 
 ```css
@@ -412,13 +446,16 @@ Simple loading spinner.
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 ```
 
 ## Hover Effects
 
 ### Scale on Hover
+
 Subtle scale effect for interactive elements.
 
 ```css
@@ -432,6 +469,7 @@ Subtle scale effect for interactive elements.
 ```
 
 ### Glow on Hover
+
 Soft glow effect for important elements.
 
 ```css
@@ -445,6 +483,7 @@ Soft glow effect for important elements.
 ```
 
 ### Lift on Hover
+
 Card lift effect.
 
 ```css

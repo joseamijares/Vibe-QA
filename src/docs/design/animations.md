@@ -13,6 +13,7 @@ Animations in VibeQA are designed to enhance user experience through smooth, pur
 ## Timing Functions
 
 ### Standard Easings
+
 ```css
 /* Default - Most interactions */
 .ease-out {
@@ -36,6 +37,7 @@ Animations in VibeQA are designed to enhance user experience through smooth, pur
 ```
 
 ### Custom Easings
+
 ```css
 /* Magnetic button effect */
 .ease-magnetic {
@@ -57,12 +59,12 @@ Animations in VibeQA are designed to enhance user experience through smooth, pur
 .duration-150: 150ms;
 
 /* Standard transitions */
-.duration-200: 200ms;  /* Default */
-.duration-300: 300ms;  /* Smooth */
+.duration-200: 200ms; /* Default */
+.duration-300: 300ms; /* Smooth */
 
 /* Deliberate animations */
-.duration-500: 500ms;  /* Modals, drawers */
-.duration-700: 700ms;  /* Page transitions */
+.duration-500: 500ms; /* Modals, drawers */
+.duration-700: 700ms; /* Page transitions */
 .duration-1000: 1000ms; /* Hero animations */
 
 /* Background animations */
@@ -73,11 +75,14 @@ Animations in VibeQA are designed to enhance user experience through smooth, pur
 ## Common Animation Patterns
 
 ### 1. Hover Lift
+
 Subtle elevation change on hover.
 
 ```css
 .hover-lift {
-  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  transition:
+    transform 0.2s ease-out,
+    box-shadow 0.2s ease-out;
 }
 
 .hover-lift:hover {
@@ -87,6 +92,7 @@ Subtle elevation change on hover.
 ```
 
 ### 2. Scale on Hover
+
 Gentle scale for interactive elements.
 
 ```css
@@ -100,6 +106,7 @@ Gentle scale for interactive elements.
 ```
 
 ### 3. Fade In Up
+
 Content reveal animation.
 
 ```css
@@ -120,6 +127,7 @@ Content reveal animation.
 ```
 
 ### 4. Slide In
+
 Horizontal entrance animation.
 
 ```css
@@ -142,6 +150,7 @@ Horizontal entrance animation.
 ## Complex Animations
 
 ### Magnetic Button Effect
+
 Multi-layered hover animation with ripple.
 
 ```css
@@ -162,7 +171,9 @@ Multi-layered hover animation with ripple.
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  transition: width 0.6s ease-out, height 0.6s ease-out;
+  transition:
+    width 0.6s ease-out,
+    height 0.6s ease-out;
 }
 
 .magnetic-button:hover::before {
@@ -178,11 +189,13 @@ Multi-layered hover animation with ripple.
 ```
 
 ### Aurora Flow Animation
+
 Smooth, organic movement for background effects.
 
 ```css
 @keyframes aurora-flow {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(-50%) translateY(0) scaleX(1);
   }
   25% {
@@ -203,6 +216,7 @@ Smooth, organic movement for background effects.
 ```
 
 ### Parallax Scrolling
+
 Depth effect through different scroll speeds.
 
 ```css
@@ -225,6 +239,7 @@ Depth effect through different scroll speeds.
 ```
 
 ### Reveal on Scroll
+
 Staggered content reveal.
 
 ```css
@@ -245,14 +260,21 @@ Staggered content reveal.
 }
 
 /* Stagger children */
-.reveal-up:nth-child(1) { animation-delay: 0s; }
-.reveal-up:nth-child(2) { animation-delay: 0.1s; }
-.reveal-up:nth-child(3) { animation-delay: 0.2s; }
+.reveal-up:nth-child(1) {
+  animation-delay: 0s;
+}
+.reveal-up:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.reveal-up:nth-child(3) {
+  animation-delay: 0.2s;
+}
 ```
 
 ## Loading Animations
 
 ### Skeleton Loading
+
 Content placeholder animation.
 
 ```css
@@ -266,23 +288,20 @@ Content placeholder animation.
 }
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    #f3f4f6 25%,
-    #e5e7eb 50%,
-    #f3f4f6 75%
-  );
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s ease-in-out infinite;
 }
 ```
 
 ### Pulse Loading
+
 Subtle breathing effect.
 
 ```css
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -298,6 +317,7 @@ Subtle breathing effect.
 ## Micro-interactions
 
 ### Button Press
+
 Tactile feedback on click.
 
 ```css
@@ -308,6 +328,7 @@ Tactile feedback on click.
 ```
 
 ### Input Focus
+
 Smooth focus ring expansion.
 
 ```css
@@ -321,6 +342,7 @@ Smooth focus ring expansion.
 ```
 
 ### Link Underline
+
 Animated underline on hover.
 
 ```css
@@ -347,6 +369,7 @@ Animated underline on hover.
 ## Performance Optimization
 
 ### Use Transform and Opacity
+
 These properties are GPU-accelerated.
 
 ```css
@@ -364,6 +387,7 @@ These properties are GPU-accelerated.
 ```
 
 ### Will-change
+
 Use sparingly for frequently animated elements.
 
 ```css
@@ -378,6 +402,7 @@ Use sparingly for frequently animated elements.
 ```
 
 ### RequestAnimationFrame
+
 For JavaScript animations, always use RAF.
 
 ```javascript
@@ -392,6 +417,7 @@ function animate() {
 ## Accessibility
 
 ### Reduced Motion
+
 Always provide alternatives for users who prefer reduced motion.
 
 ```css
@@ -402,7 +428,7 @@ Always provide alternatives for users who prefer reduced motion.
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  
+
   /* Keep essential animations but make them instant */
   .aurora-layer {
     opacity: 0.3;
@@ -412,6 +438,7 @@ Always provide alternatives for users who prefer reduced motion.
 ```
 
 ### Focus Indicators
+
 Never remove focus indicators, enhance them.
 
 ```css

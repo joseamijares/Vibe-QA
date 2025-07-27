@@ -80,6 +80,7 @@ export type Database = {
           user_id: string;
           role: Database['public']['Enums']['user_role'];
           joined_at: string;
+          email_notifications: Json;
         };
         Insert: {
           id?: string;
@@ -87,6 +88,7 @@ export type Database = {
           user_id: string;
           role?: Database['public']['Enums']['user_role'];
           joined_at?: string;
+          email_notifications?: Json;
         };
         Update: {
           id?: string;
@@ -94,6 +96,7 @@ export type Database = {
           user_id?: string;
           role?: Database['public']['Enums']['user_role'];
           joined_at?: string;
+          email_notifications?: Json;
         };
       };
       feedback: {
@@ -292,6 +295,94 @@ export type Database = {
           created_at?: string;
         };
       };
+      email_queue: {
+        Row: {
+          id: string;
+          to_email: string;
+          to_name: string | null;
+          from_email: string;
+          from_name: string;
+          subject: string;
+          template: string;
+          params: Json;
+          status: string;
+          attempts: number;
+          max_attempts: number;
+          error: string | null;
+          created_at: string;
+          processed_at: string | null;
+          sent_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          to_email: string;
+          to_name?: string | null;
+          from_email?: string;
+          from_name?: string;
+          subject: string;
+          template: string;
+          params: Json;
+          status?: string;
+          attempts?: number;
+          max_attempts?: number;
+          error?: string | null;
+          created_at?: string;
+          processed_at?: string | null;
+          sent_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          to_email?: string;
+          to_name?: string | null;
+          from_email?: string;
+          from_name?: string;
+          subject?: string;
+          template?: string;
+          params?: Json;
+          status?: string;
+          attempts?: number;
+          max_attempts?: number;
+          error?: string | null;
+          created_at?: string;
+          processed_at?: string | null;
+          sent_at?: string | null;
+        };
+      };
+      email_templates: {
+        Row: {
+          id: string;
+          name: string;
+          subject: string;
+          html_template: string;
+          text_template: string | null;
+          variables: Json;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          subject: string;
+          html_template: string;
+          text_template?: string | null;
+          variables?: Json;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          subject?: string;
+          html_template?: string;
+          text_template?: string | null;
+          variables?: Json;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -375,6 +466,8 @@ export type FeedbackMedia = Tables<'feedback_media'>;
 export type Comment = Tables<'comments'>;
 export type ActivityLog = Tables<'activity_logs'>;
 export type Invitation = Tables<'invitations'>;
+export type EmailQueue = Tables<'email_queue'>;
+export type EmailTemplate = Tables<'email_templates'>;
 
 export type UserRole = Enums<'user_role'>;
 export type FeedbackType = Enums<'feedback_type'>;
