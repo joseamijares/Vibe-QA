@@ -97,6 +97,7 @@ export function LoginPage() {
               })}
               type="email"
               id="email"
+              autoComplete="email"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#094765] focus:ring-2 focus:ring-[#094765]/20 transition-colors"
               placeholder="you@example.com"
             />
@@ -118,6 +119,7 @@ export function LoginPage() {
                 })}
                 type={showPassword ? 'text' : 'password'}
                 id="password"
+                autoComplete="current-password"
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#094765] focus:ring-2 focus:ring-[#094765]/20 transition-colors pr-12"
                 placeholder="••••••••"
               />
@@ -144,10 +146,11 @@ export function LoginPage() {
               <span className="ml-2 text-sm text-gray-700">Remember me</span>
             </label>
 
-            <Link href="/forgot-password">
-              <a className="text-sm text-[#094765] hover:text-[#156c8b] transition-colors">
-                Forgot password?
-              </a>
+            <Link
+              href="/forgot-password"
+              className="text-sm text-[#094765] hover:text-[#156c8b] transition-colors"
+            >
+              Forgot password?
             </Link>
           </div>
         </div>
@@ -184,10 +187,11 @@ export function LoginPage() {
 
         <p className="text-center text-sm text-gray-600">
           Don't have an account?{' '}
-          <Link href="/register">
-            <a className="text-[#094765] hover:text-[#156c8b] transition-colors font-medium">
-              Sign up for free
-            </a>
+          <Link
+            href="/register"
+            className="text-[#094765] hover:text-[#156c8b] transition-colors font-medium"
+          >
+            Sign up for free
           </Link>
         </p>
       </form>

@@ -103,6 +103,7 @@ export function RegisterPage() {
               })}
               type="email"
               id="email"
+              autoComplete="email"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#094765] focus:ring-2 focus:ring-[#094765]/20 transition-colors"
               placeholder="you@example.com"
             />
@@ -128,6 +129,7 @@ export function RegisterPage() {
                 })}
                 type={showPassword ? 'text' : 'password'}
                 id="password"
+                autoComplete="new-password"
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#094765] focus:ring-2 focus:ring-[#094765]/20 transition-colors pr-12"
                 placeholder="••••••••"
               />
@@ -160,6 +162,7 @@ export function RegisterPage() {
                 })}
                 type={showConfirmPassword ? 'text' : 'password'}
                 id="confirmPassword"
+                autoComplete="new-password"
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#094765] focus:ring-2 focus:ring-[#094765]/20 transition-colors pr-12"
                 placeholder="••••••••"
               />
@@ -234,10 +237,11 @@ export function RegisterPage() {
 
         <p className="text-center text-sm text-gray-600">
           Already have an account?{' '}
-          <Link href="/login">
-            <a className="text-[#094765] hover:text-[#156c8b] transition-colors font-medium">
-              Sign in
-            </a>
+          <Link
+            href="/login"
+            className="text-[#094765] hover:text-[#156c8b] transition-colors font-medium"
+          >
+            Sign in
           </Link>
         </p>
       </form>
