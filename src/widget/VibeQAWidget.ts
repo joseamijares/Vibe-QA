@@ -1,14 +1,16 @@
 import { VibeQAWidgetConfig, WidgetState, WidgetAPI, FeedbackSubmission } from './types';
-import { createWidgetContainer } from './components/WidgetContainer';
+import { WidgetUI } from './components/WidgetUI';
 import { detectBrowserInfo, detectDeviceInfo } from './utils/deviceDetection';
 import { validateProjectKey } from './utils/validation';
 import { WIDGET_STYLES } from './styles/widgetStyles';
+import { mediaManager } from './utils/mediaManager';
 
 export class VibeQAWidget implements WidgetAPI {
   private config: Required<VibeQAWidgetConfig>;
   private state: WidgetState;
   private container: HTMLElement | null = null;
   private shadowRoot: ShadowRoot | null = null;
+  private ui: WidgetUI | null = null;
   private isInitialized = false;
 
   constructor(config: VibeQAWidgetConfig) {
@@ -66,7 +68,7 @@ export class VibeQAWidget implements WidgetAPI {
 
       // Create and inject the widget
       this.createWidget();
-      this.attachEventListeners();
+      this.setupUI();
       this.isInitialized = true;
 
       this.log('Widget initialized successfully');
@@ -95,28 +97,23 @@ export class VibeQAWidget implements WidgetAPI {
     styleSheet.textContent = WIDGET_STYLES;
     this.shadowRoot.appendChild(styleSheet);
 
-    // Create widget content
-    const widgetContent = createWidgetContainer(this.config, this.state);
-    this.shadowRoot.appendChild(widgetContent);
-
     // Append to body
     document.body.appendChild(this.container);
+
+    // Initialize UI
+    this.ui = new WidgetUI(this.config, this.state);
+    this.ui.render(this.container, this.shadowRoot);
   }
 
-  private attachEventListeners(): void {
-    if (!this.shadowRoot) return;
+  private setupUI(): void {
+    if (!this.ui) return;
 
-    // Trigger button click
-    const triggerBtn = this.shadowRoot.querySelector('[data-vibeqa-trigger]');
-    if (triggerBtn) {
-      triggerBtn.addEventListener('click', () => this.toggle());
-    }
-
-    // Close button click
-    const closeBtn = this.shadowRoot.querySelector('[data-vibeqa-close]');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => this.close());
-    }
+    // Listen to UI events
+    this.ui.on('toggle', () => this.toggle());
+    this.ui.on('close', () => this.close());
+    this.ui.on('submit', (submission: Partial<FeedbackSubmission>) => this.submit(submission));
+    this.ui.on('screenshot', () => this.captureScreenshot());
+    this.ui.on('record', () => this.startRecording());
 
     // Listen for keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -135,7 +132,7 @@ export class VibeQAWidget implements WidgetAPI {
     }
 
     this.state.isOpen = true;
-    this.updateUI();
+    this.ui?.setState({ isOpen: true });
     this.config.onOpen();
     this.log('Widget opened');
   }
@@ -148,7 +145,7 @@ export class VibeQAWidget implements WidgetAPI {
 
     this.state.isOpen = false;
     this.state.currentStep = 'type';
-    this.updateUI();
+    this.ui?.setState({ isOpen: false, currentStep: 'type' });
     this.config.onClose();
     this.log('Widget closed');
   }
@@ -164,7 +161,7 @@ export class VibeQAWidget implements WidgetAPI {
   public async submit(feedback: Partial<FeedbackSubmission>): Promise<void> {
     try {
       this.state.isLoading = true;
-      this.updateUI();
+      this.ui?.setState({ isLoading: true });
 
       // Prepare submission data
       const submission: FeedbackSubmission = {
@@ -185,15 +182,47 @@ export class VibeQAWidget implements WidgetAPI {
         attachments: feedback.attachments,
       };
 
-      // Send to API
-      const response = await fetch(`${this.config.apiUrl}/api/widget/feedback`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Project-Key': this.config.projectKey,
-        },
-        body: JSON.stringify(submission),
-      });
+      // Get attachments
+      const attachments = mediaManager.getAttachments();
+      const hasAttachments = attachments.length > 0;
+
+      let response: Response;
+
+      if (hasAttachments) {
+        // Send as multipart form data with files
+        const formData = new FormData();
+
+        // Add JSON data
+        const { attachments: _, ...submissionData } = submission;
+        formData.append('data', JSON.stringify(submissionData));
+
+        // Add files
+        attachments.forEach((attachment, index) => {
+          if (attachment.type === 'screenshot') {
+            formData.append(`screenshot-${index}`, attachment.blob, attachment.filename);
+          } else if (attachment.type === 'voice') {
+            formData.append(`recording-${index}`, attachment.blob, attachment.filename);
+          }
+        });
+
+        response = await fetch(`${this.config.apiUrl}/api/widget/feedback`, {
+          method: 'POST',
+          headers: {
+            'X-Project-Key': this.config.projectKey,
+          },
+          body: formData,
+        });
+      } else {
+        // Send as regular JSON
+        response = await fetch(`${this.config.apiUrl}/api/widget/feedback`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Project-Key': this.config.projectKey,
+          },
+          body: JSON.stringify(submission),
+        });
+      }
 
       if (!response.ok) {
         const error = await response.json();
@@ -201,9 +230,9 @@ export class VibeQAWidget implements WidgetAPI {
       }
 
       const result = await response.json();
-      
+
       this.state.currentStep = 'success';
-      this.updateUI();
+      this.ui?.setState({ currentStep: 'success' });
       this.config.onSuccess(result.id);
 
       // Auto-close after success
@@ -212,15 +241,17 @@ export class VibeQAWidget implements WidgetAPI {
       this.handleError(error as Error);
     } finally {
       this.state.isLoading = false;
-      this.updateUI();
+      this.ui?.setState({ isLoading: false });
     }
   }
 
   public destroy(): void {
     if (this.container) {
+      this.ui?.destroy();
       this.container.remove();
       this.container = null;
       this.shadowRoot = null;
+      this.ui = null;
       this.isInitialized = false;
       this.log('Widget destroyed');
     }
@@ -228,7 +259,7 @@ export class VibeQAWidget implements WidgetAPI {
 
   public updateConfig(config: Partial<VibeQAWidgetConfig>): void {
     this.config = { ...this.config, ...config };
-    
+
     if (this.isInitialized) {
       // Re-render widget with new config
       this.destroy();
@@ -236,21 +267,55 @@ export class VibeQAWidget implements WidgetAPI {
     }
   }
 
-  private updateUI(): void {
-    if (!this.shadowRoot) return;
+  private async captureScreenshot(): Promise<void> {
+    this.log('Screenshot capture requested');
 
-    // Update widget UI based on current state
-    const widget = this.shadowRoot.querySelector('[data-vibeqa-widget]');
-    if (widget) {
-      widget.setAttribute('data-open', this.state.isOpen.toString());
-      widget.setAttribute('data-loading', this.state.isLoading.toString());
-      widget.setAttribute('data-step', this.state.currentStep);
+    try {
+      // Minimize the widget temporarily
+      this.state.isMinimized = true;
+      this.ui?.setState({ isMinimized: true });
+
+      // Wait a bit for UI to update
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Capture screenshot
+      const attachment = await mediaManager.captureScreenshot({
+        quality: 0.8,
+        maxWidth: 1920,
+        maxHeight: 1080,
+      });
+
+      // Restore widget
+      this.state.isMinimized = false;
+      this.ui?.setState({ isMinimized: false });
+
+      // Update UI to show attachment
+      this.ui?.emit('attachment-added', attachment);
+
+      this.log('Screenshot captured successfully', attachment);
+    } catch (error) {
+      this.handleError(error as Error);
+    }
+  }
+
+  private async startRecording(): Promise<void> {
+    this.log('Voice recording requested');
+
+    try {
+      const attachment = await mediaManager.captureVoice();
+
+      // Update UI to show attachment
+      this.ui?.emit('attachment-added', attachment);
+
+      this.log('Voice recording captured successfully', attachment);
+    } catch (error) {
+      this.handleError(error as Error);
     }
   }
 
   private handleError(error: Error): void {
     this.state.error = error.message;
-    this.updateUI();
+    this.ui?.setState({ error: error.message });
     this.config.onError(error);
     console.error('[VibeQA]', error);
   }

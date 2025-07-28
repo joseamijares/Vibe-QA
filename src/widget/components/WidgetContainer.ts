@@ -1,6 +1,9 @@
-import { VibeQAWidgetConfig, WidgetState } from '../types';
+import { VibeQAWidgetConfig, WidgetState, MediaAttachment } from '../types';
 
-export function createWidgetContainer(config: Required<VibeQAWidgetConfig>, state: WidgetState): HTMLElement {
+export function createWidgetContainer(
+  config: Required<VibeQAWidgetConfig>,
+  state: WidgetState
+): HTMLElement {
   const container = document.createElement('div');
   container.className = 'vibeqa-widget';
   container.setAttribute('data-vibeqa-widget', 'true');
@@ -52,6 +55,7 @@ function createModal(config: Required<VibeQAWidgetConfig>, state: WidgetState): 
   modal.setAttribute('data-open', state.isOpen.toString());
   modal.setAttribute('data-loading', state.isLoading.toString());
   modal.setAttribute('data-step', state.currentStep);
+  modal.setAttribute('data-minimized', state.isMinimized?.toString() || 'false');
 
   const modalContent = document.createElement('div');
   modalContent.className = 'vibeqa-modal-content';
@@ -72,7 +76,7 @@ function createModal(config: Required<VibeQAWidgetConfig>, state: WidgetState): 
   } else if (state.currentStep === 'type') {
     body.appendChild(createTypeSelector());
   } else if (state.currentStep === 'details') {
-    body.appendChild(createDetailsForm(config));
+    body.appendChild(createDetailsForm(config, state));
   }
 
   modalContent.appendChild(body);
@@ -102,7 +106,7 @@ function createHeader(): HTMLElement {
 
 function createTypeSelector(): HTMLElement {
   const container = document.createElement('div');
-  
+
   const title = document.createElement('p');
   title.style.marginBottom = '16px';
   title.style.color = 'var(--vibeqa-text-secondary)';
@@ -119,7 +123,7 @@ function createTypeSelector(): HTMLElement {
     { value: 'other', label: 'Other', icon: getOtherIcon() },
   ];
 
-  types.forEach(type => {
+  types.forEach((type) => {
     const button = document.createElement('button');
     button.className = 'vibeqa-type-button';
     button.setAttribute('data-type', type.value);
@@ -142,23 +146,73 @@ function createTypeSelector(): HTMLElement {
   return container;
 }
 
-function createDetailsForm(config: Required<VibeQAWidgetConfig>): HTMLElement {
+function createDetailsForm(config: Required<VibeQAWidgetConfig>, state: WidgetState): HTMLElement {
+  const container = document.createElement('div');
+
+  // Back button
+  const backButton = document.createElement('button');
+  backButton.className = 'vibeqa-button-secondary';
+  backButton.setAttribute('data-vibeqa-back', 'true');
+  backButton.style.marginBottom = '16px';
+  backButton.innerHTML = `<span style="margin-right: 4px">←</span> Back`;
+  container.appendChild(backButton);
+
+  // Add feedback type indicator
+  const typeIndicator = document.createElement('div');
+  typeIndicator.style.marginBottom = '16px';
+  typeIndicator.style.display = 'flex';
+  typeIndicator.style.alignItems = 'center';
+  typeIndicator.style.gap = '8px';
+  typeIndicator.style.color = 'var(--vibeqa-text-secondary)';
+  typeIndicator.innerHTML = `
+    <span style="font-weight: 600">Type:</span>
+    <span style="text-transform: capitalize; color: var(--vibeqa-primary)">${state.feedbackType}</span>
+  `;
+  container.appendChild(typeIndicator);
+
   const form = document.createElement('form');
   form.className = 'vibeqa-form';
 
-  // Title field (optional)
+  // Customize form based on feedback type
+  const placeholders = {
+    bug: {
+      title: 'Bug summary (e.g., "Login button not working")',
+      description:
+        'Please describe the bug in detail:\n- What were you trying to do?\n- What happened instead?\n- Steps to reproduce the issue',
+    },
+    suggestion: {
+      title: 'Feature suggestion',
+      description:
+        'Please describe your suggestion:\n- What feature would you like?\n- How would it help you?\n- Any examples from other apps?',
+    },
+    praise: {
+      title: 'What made you happy?',
+      description:
+        "We'd love to hear what you enjoyed!\nYour feedback helps us understand what's working well.",
+    },
+    other: {
+      title: 'Brief summary of your feedback',
+      description: 'Please share your feedback...',
+    },
+  };
+
+  const currentPlaceholders = placeholders[state.feedbackType] || placeholders.other;
+
+  // Title field (optional for most, but encouraged for bugs)
   const titleField = document.createElement('div');
   titleField.className = 'vibeqa-field';
-  
+
   const titleLabel = document.createElement('label');
   titleLabel.className = 'vibeqa-label';
-  titleLabel.textContent = 'Title (optional)';
+  titleLabel.textContent =
+    state.feedbackType === 'bug' ? 'Title (recommended)' : 'Title (optional)';
   titleField.appendChild(titleLabel);
 
   const titleInput = document.createElement('input');
   titleInput.className = 'vibeqa-input';
   titleInput.type = 'text';
-  titleInput.placeholder = 'Brief summary of your feedback';
+  titleInput.name = 'title';
+  titleInput.placeholder = currentPlaceholders.title;
   titleField.appendChild(titleInput);
 
   form.appendChild(titleField);
@@ -166,7 +220,7 @@ function createDetailsForm(config: Required<VibeQAWidgetConfig>): HTMLElement {
   // Description field
   const descField = document.createElement('div');
   descField.className = 'vibeqa-field';
-  
+
   const descLabel = document.createElement('label');
   descLabel.className = 'vibeqa-label';
   descLabel.textContent = 'Description';
@@ -174,8 +228,11 @@ function createDetailsForm(config: Required<VibeQAWidgetConfig>): HTMLElement {
 
   const descTextarea = document.createElement('textarea');
   descTextarea.className = 'vibeqa-textarea';
-  descTextarea.placeholder = 'Please describe your feedback in detail...';
+  descTextarea.name = 'description';
+  descTextarea.placeholder = currentPlaceholders.description;
   descTextarea.required = true;
+  // Adjust height based on feedback type
+  descTextarea.style.minHeight = state.feedbackType === 'bug' ? '120px' : '100px';
   descField.appendChild(descTextarea);
 
   form.appendChild(descField);
@@ -184,7 +241,7 @@ function createDetailsForm(config: Required<VibeQAWidgetConfig>): HTMLElement {
   if (!config.user.email) {
     const emailField = document.createElement('div');
     emailField.className = 'vibeqa-field';
-    
+
     const emailLabel = document.createElement('label');
     emailLabel.className = 'vibeqa-label';
     emailLabel.textContent = 'Email (optional)';
@@ -193,6 +250,7 @@ function createDetailsForm(config: Required<VibeQAWidgetConfig>): HTMLElement {
     const emailInput = document.createElement('input');
     emailInput.className = 'vibeqa-input';
     emailInput.type = 'email';
+    emailInput.name = 'email';
     emailInput.placeholder = 'your@email.com';
     emailField.appendChild(emailInput);
 
@@ -206,16 +264,24 @@ function createDetailsForm(config: Required<VibeQAWidgetConfig>): HTMLElement {
   const screenshotBtn = document.createElement('button');
   screenshotBtn.className = 'vibeqa-media-button';
   screenshotBtn.type = 'button';
+  screenshotBtn.setAttribute('data-vibeqa-screenshot', 'true');
   screenshotBtn.innerHTML = `<span class="vibeqa-media-icon">${getCameraIcon()}</span> Screenshot`;
   mediaButtons.appendChild(screenshotBtn);
 
   const recordBtn = document.createElement('button');
   recordBtn.className = 'vibeqa-media-button';
   recordBtn.type = 'button';
+  recordBtn.setAttribute('data-vibeqa-record', 'true');
   recordBtn.innerHTML = `<span class="vibeqa-media-icon">${getMicIcon()}</span> Record`;
   mediaButtons.appendChild(recordBtn);
 
   form.appendChild(mediaButtons);
+
+  // Attachments display
+  if (state.attachments && state.attachments.length > 0) {
+    const attachmentsSection = createAttachmentsSection(state.attachments);
+    form.appendChild(attachmentsSection);
+  }
 
   // Submit button
   const submitBtn = document.createElement('button');
@@ -225,39 +291,40 @@ function createDetailsForm(config: Required<VibeQAWidgetConfig>): HTMLElement {
   submitBtn.style.marginTop = '20px';
   form.appendChild(submitBtn);
 
-  return form;
+  container.appendChild(form);
+  return container;
 }
 
 function createLoadingState(): HTMLElement {
   const container = document.createElement('div');
   container.className = 'vibeqa-loading';
-  
+
   const spinner = document.createElement('div');
   spinner.className = 'vibeqa-spinner';
   container.appendChild(spinner);
-  
+
   return container;
 }
 
 function createSuccessState(): HTMLElement {
   const container = document.createElement('div');
   container.className = 'vibeqa-success';
-  
+
   const icon = document.createElement('div');
   icon.className = 'vibeqa-success-icon';
   icon.innerHTML = getCheckIcon();
   container.appendChild(icon);
-  
+
   const title = document.createElement('h3');
   title.className = 'vibeqa-success-title';
   title.textContent = 'Thank you!';
   container.appendChild(title);
-  
+
   const message = document.createElement('p');
   message.className = 'vibeqa-success-message';
   message.textContent = 'Your feedback has been submitted successfully.';
   container.appendChild(message);
-  
+
   return container;
 }
 
@@ -315,4 +382,82 @@ function getCheckIcon(): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>`;
+}
+
+function createAttachmentsSection(attachments: MediaAttachment[]): HTMLElement {
+  const section = document.createElement('div');
+  section.className = 'vibeqa-attachments';
+
+  const title = document.createElement('div');
+  title.className = 'vibeqa-attachments-title';
+  title.textContent = `Attachments (${attachments.length})`;
+  section.appendChild(title);
+
+  const list = document.createElement('div');
+  list.className = 'vibeqa-attachment-list';
+
+  attachments.forEach((attachment) => {
+    const item = document.createElement('div');
+    item.className = 'vibeqa-attachment-item';
+
+    // Preview
+    if (attachment.thumbnail) {
+      const preview = document.createElement('img');
+      preview.className = 'vibeqa-attachment-preview';
+      preview.src = attachment.thumbnail;
+      preview.alt = attachment.filename;
+      item.appendChild(preview);
+    } else if (attachment.type === 'voice') {
+      const icon = document.createElement('div');
+      icon.className = 'vibeqa-attachment-preview';
+      icon.style.display = 'flex';
+      icon.style.alignItems = 'center';
+      icon.style.justifyContent = 'center';
+      icon.innerHTML = getMicIcon();
+      item.appendChild(icon);
+    }
+
+    // Info
+    const info = document.createElement('div');
+    info.className = 'vibeqa-attachment-info';
+
+    const name = document.createElement('div');
+    name.className = 'vibeqa-attachment-name';
+    name.textContent = attachment.filename;
+    info.appendChild(name);
+
+    const size = document.createElement('div');
+    size.className = 'vibeqa-attachment-size';
+    size.textContent = formatFileSize(attachment.size);
+    if (attachment.duration) {
+      size.textContent += ` • ${formatDuration(attachment.duration)}`;
+    }
+    info.appendChild(size);
+
+    item.appendChild(info);
+
+    // Remove button
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'vibeqa-attachment-remove';
+    removeBtn.setAttribute('data-attachment-remove', attachment.filename);
+    removeBtn.innerHTML = getCloseIcon();
+    item.appendChild(removeBtn);
+
+    list.appendChild(item);
+  });
+
+  section.appendChild(list);
+  return section;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }

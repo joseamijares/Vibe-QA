@@ -60,8 +60,8 @@ export async function handleWidgetFeedback(request: Request): Promise<Response> 
     if (project.allowed_domains && project.allowed_domains.length > 0) {
       const origin = request.headers.get('Origin') || '';
       const domain = new URL(origin || submission.pageUrl).hostname;
-      
-      const isAllowed = project.allowed_domains.some(allowedDomain => {
+
+      const isAllowed = project.allowed_domains.some((allowedDomain) => {
         // Support wildcards like *.example.com
         if (allowedDomain.startsWith('*.')) {
           const baseDomain = allowedDomain.slice(2);
@@ -129,12 +129,9 @@ export async function handleWidgetFeedback(request: Request): Promise<Response> 
     );
   } catch (error) {
     console.error('Widget feedback error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      {
-        status: 500,
-        headers: corsHeaders,
-      }
-    );
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: corsHeaders,
+    });
   }
 }

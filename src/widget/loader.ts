@@ -16,7 +16,7 @@ declare global {
   }
 }
 
-(function() {
+(function () {
   // Prevent multiple initializations
   if (window.VibeQA) {
     console.warn('[VibeQA] Widget loader already initialized');
@@ -67,7 +67,9 @@ declare global {
     } as VibeQAWidgetConfig;
 
     if (!config.projectKey) {
-      console.error('[VibeQA] Project key is required. Please provide data-project-key attribute or initialize with config.');
+      console.error(
+        '[VibeQA] Project key is required. Please provide data-project-key attribute or initialize with config.'
+      );
       throw new Error('Project key is required');
     }
 

@@ -27,6 +27,16 @@ export interface WidgetState {
   error: string | null;
   feedbackType: 'bug' | 'suggestion' | 'praise' | 'other';
   currentStep: 'type' | 'details' | 'media' | 'success';
+  attachments?: MediaAttachment[];
+}
+
+export interface MediaAttachment {
+  type: 'screenshot' | 'voice' | 'video';
+  blob: Blob;
+  filename: string;
+  size: number;
+  duration?: number;
+  thumbnail?: string;
 }
 
 export interface FeedbackSubmission {
@@ -63,3 +73,5 @@ export interface WidgetAPI {
   destroy: () => void;
   updateConfig: (config: Partial<VibeQAWidgetConfig>) => void;
 }
+
+export type FeedbackType = 'bug' | 'suggestion' | 'praise' | 'other';

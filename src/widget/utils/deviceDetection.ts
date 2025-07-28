@@ -42,7 +42,11 @@ export function detectBrowserInfo(): { browser: string; version: string; os: str
   } else if (userAgent.indexOf('Android') > -1) {
     const androidVersion = userAgent.match(/Android (\d+\.\d+)/)?.[1];
     os = `Android ${androidVersion || 'Unknown'}`;
-  } else if (userAgent.indexOf('iOS') > -1 || userAgent.indexOf('iPhone') > -1 || userAgent.indexOf('iPad') > -1) {
+  } else if (
+    userAgent.indexOf('iOS') > -1 ||
+    userAgent.indexOf('iPhone') > -1 ||
+    userAgent.indexOf('iPad') > -1
+  ) {
     const iosVersion = userAgent.match(/OS (\d+_\d+)/)?.[1];
     os = `iOS ${iosVersion?.replace(/_/g, '.') || 'Unknown'}`;
   } else if (userAgent.indexOf('Linux') > -1) os = 'Linux';

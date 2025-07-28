@@ -42,6 +42,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
     "date-fns": "^3.6.0",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^0.344.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -49,7 +50,8 @@
     "sonner": "^2.0.6",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
-    "wouter": "^3.0.1"
+    "wouter": "^3.0.1",
+    "zod": "^4.0.10"
   },
   "devDependencies": {
     "@types/node": "^20.11.19",
