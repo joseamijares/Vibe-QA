@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VibeQA Widget Demo</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #094765;
+      margin-bottom: 30px;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+    .code-block {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 20px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 14px;
+      overflow-x: auto;
+    }
+    .button {
+      background: #094765;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    .button:hover {
+      background: #0a5580;
+    }
+    .config-form {
+      display: grid;
+      gap: 15px;
+      max-width: 500px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    label {
+      font-weight: 500;
+      color: #555;
+    }
+    input, select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>VibeQA Widget Demo</h1>
+    
+    <div class="section">
+      <h2>Quick Test</h2>
+      <p>The widget is loaded with a test project key. Look for the feedback button in the bottom-right corner!</p>
+      <div>
+        <button class="button" onclick="openWidget()">Open Widget</button>
+        <button class="button" onclick="closeWidget()">Close Widget</button>
+        <button class="button" onclick="toggleWidget()">Toggle Widget</button>
+      </div>
+      <div id="status"></div>
+    </div>
+
+    <div class="section">
+      <h2>Configuration</h2>
+      <div class="config-form">
+        <div class="form-group">
+          <label for="projectKey">Project Key</label>
+          <input type="text" id="projectKey" value="proj_test123456789" placeholder="proj_xxxxx">
+        </div>
+        
+        <div class="form-group">
+          <label for="position">Position</label>
+          <select id="position">
+            <option value="bottom-right">Bottom Right</option>
+            <option value="bottom-left">Bottom Left</option>
+            <option value="top-right">Top Right</option>
+            <option value="top-left">Top Left</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="theme">Theme</label>
+          <select id="theme">
+            <option value="auto">Auto</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="buttonText">Button Text</label>
+          <input type="text" id="buttonText" value="Feedback" placeholder="Button text">
+        </div>
+        
+        <div class="form-group">
+          <label for="primaryColor">Primary Color</label>
+          <input type="color" id="primaryColor" value="#094765">
+        </div>
+        
+        <button class="button" onclick="reinitializeWidget()">Reinitialize Widget</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Installation Code</h2>
+      <p>Copy this code to add the VibeQA widget to your website:</p>
+      <div class="code-block">
+&lt;script 
+  src="https://cdn.vibeqa.com/widget.js" 
+  data-project-key="proj_test123456789"
+  data-position="bottom-right"
+  data-theme="auto"
+  async&gt;
+&lt;/script&gt;
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Advanced Configuration</h2>
+      <p>Initialize with JavaScript for more control:</p>
+      <div class="code-block">
+&lt;script&gt;
+window.vibeQAConfig = {
+  projectKey: 'proj_test123456789',
+  position: 'bottom-right',
+  theme: 'auto',
+  primaryColor: '#094765',
+  user: {
+    id: 'user123',
+    email: 'user@example.com',
+    name: 'John Doe'
+  },
+  metadata: {
+    plan: 'premium',
+    version: '2.0.0'
+  },
+  onSuccess: function(feedbackId) {
+    console.log('Feedback submitted:', feedbackId);
+  },
+  onError: function(error) {
+    console.error('Feedback error:', error);
+  }
+};
+&lt;/script&gt;
+&lt;script src="https://cdn.vibeqa.com/widget.js" async&gt;&lt;/script&gt;
+      </div>
+    </div>
+  </div>
+
+  <!-- Load the widget -->
+  <script>
+    // For development, we'll use the module directly
+    window.vibeQAConfig = {
+      projectKey: 'proj_test123456789',
+      apiUrl: 'http://localhost:5173',
+      debug: true,
+      onSuccess: function(feedbackId) {
+        showStatus('Feedback submitted successfully! ID: ' + feedbackId, 'success');
+      },
+      onError: function(error) {
+        showStatus('Error: ' + error.message, 'error');
+      }
+    };
+  </script>
+  
+  <!-- In production, this would be the CDN URL -->
+  <script type="module">
+    import { VibeQAWidget } from '/src/widget/loader.ts';
+    
+    // Make functions available globally for the demo buttons
+    window.openWidget = () => window.VibeQA?.widget?.open();
+    window.closeWidget = () => window.VibeQA?.widget?.close();
+    window.toggleWidget = () => window.VibeQA?.widget?.toggle();
+    
+    window.reinitializeWidget = () => {
+      // Get current config values
+      const config = {
+        projectKey: document.getElementById('projectKey').value,
+        position: document.getElementById('position').value,
+        theme: document.getElementById('theme').value,
+        buttonText: document.getElementById('buttonText').value,
+        primaryColor: document.getElementById('primaryColor').value,
+        apiUrl: 'http://localhost:5173',
+        debug: true,
+        onSuccess: function(feedbackId) {
+          showStatus('Feedback submitted successfully! ID: ' + feedbackId, 'success');
+        },
+        onError: function(error) {
+          showStatus('Error: ' + error.message, 'error');
+        }
+      };
+      
+      // Destroy existing widget
+      if (window.VibeQA?.widget) {
+        window.VibeQA.widget.destroy();
+      }
+      
+      // Create new widget
+      window.VibeQA.init(config);
+      showStatus('Widget reinitialized with new configuration', 'success');
+    };
+    
+    window.showStatus = (message, type) => {
+      const statusEl = document.getElementById('status');
+      statusEl.className = 'status ' + type;
+      statusEl.textContent = message;
+      setTimeout(() => {
+        statusEl.textContent = '';
+        statusEl.className = '';
+      }, 5000);
+    };
+  </script>
+</body>
+</html>
