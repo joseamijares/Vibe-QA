@@ -32,6 +32,7 @@ export class ScreenshotCapture {
         logging: false,
         useCORS: true,
         allowTaint: true,
+        removeContainer: true, // Prevents document.write warning
         ignoreElements: (element: Element) => {
           // Ignore widget elements
           if (element.id === 'vibeqa-widget-container') return true;

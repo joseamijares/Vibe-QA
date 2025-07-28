@@ -205,7 +205,7 @@ export class VibeQAWidget implements WidgetAPI {
           }
         });
 
-        response = await fetch(`${this.config.apiUrl}/api/widget/feedback`, {
+        response = await fetch(`${this.config.apiUrl}/submit-feedback`, {
           method: 'POST',
           headers: {
             'X-Project-Key': this.config.projectKey,
@@ -214,7 +214,7 @@ export class VibeQAWidget implements WidgetAPI {
         });
       } else {
         // Send as regular JSON
-        response = await fetch(`${this.config.apiUrl}/api/widget/feedback`, {
+        response = await fetch(`${this.config.apiUrl}/submit-feedback`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -230,6 +230,16 @@ export class VibeQAWidget implements WidgetAPI {
       }
 
       const result = await response.json();
+
+      // Show success notification
+      this.ui?.showNotification(
+        'success',
+        'Feedback submitted!',
+        `Your feedback has been received. ID: ${result.id}`
+      );
+
+      // Clear media manager
+      mediaManager.clearAll();
 
       this.state.currentStep = 'success';
       this.ui?.setState({ currentStep: 'success' });
@@ -316,6 +326,14 @@ export class VibeQAWidget implements WidgetAPI {
   private handleError(error: Error): void {
     this.state.error = error.message;
     this.ui?.setState({ error: error.message });
+
+    // Show error notification
+    this.ui?.showNotification(
+      'error',
+      'Error',
+      error.message || 'Something went wrong. Please try again.'
+    );
+
     this.config.onError(error);
     console.error('[VibeQA]', error);
   }

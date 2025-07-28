@@ -192,9 +192,12 @@ window.vibeQAConfig = {
   <!-- Load the widget -->
   <script>
     // For development, we'll use the module directly
+    // Update the API URL based on your deployment:
+    // - Local Supabase: http://localhost:54321/functions/v1
+    // - Production: https://[YOUR-PROJECT-ID].supabase.co/functions/v1
     window.vibeQAConfig = {
       projectKey: 'proj_test123456789',
-      apiUrl: 'http://localhost:5173',
+      apiUrl: 'https://oussjxzwtxlanuxtgmtt.supabase.co/functions/v1', // Using your Supabase URL
       debug: true,
       onSuccess: function(feedbackId) {
         showStatus('Feedback submitted successfully! ID: ' + feedbackId, 'success');
@@ -222,7 +225,7 @@ window.vibeQAConfig = {
         theme: document.getElementById('theme').value,
         buttonText: document.getElementById('buttonText').value,
         primaryColor: document.getElementById('primaryColor').value,
-        apiUrl: 'http://localhost:5173',
+        apiUrl: 'https://oussjxzwtxlanuxtgmtt.supabase.co/functions/v1', // Using your Supabase URL
         debug: true,
         onSuccess: function(feedbackId) {
           showStatus('Feedback submitted successfully! ID: ' + feedbackId, 'success');

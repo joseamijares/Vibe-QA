@@ -61,7 +61,7 @@ export async function handleWidgetFeedback(request: Request): Promise<Response> 
       const origin = request.headers.get('Origin') || '';
       const domain = new URL(origin || submission.pageUrl).hostname;
 
-      const isAllowed = project.allowed_domains.some((allowedDomain) => {
+      const isAllowed = project.allowed_domains.some((allowedDomain: string) => {
         // Support wildcards like *.example.com
         if (allowedDomain.startsWith('*.')) {
           const baseDomain = allowedDomain.slice(2);

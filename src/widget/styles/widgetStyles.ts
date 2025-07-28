@@ -517,6 +517,134 @@ export const WIDGET_STYLES = `
     height: 16px;
   }
 
+  /* Notification Toast */
+  .vibeqa-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--vibeqa-bg);
+    border-radius: 8px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 400px;
+    z-index: 1000000;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+  }
+
+  .vibeqa-notification.show {
+    transform: translateX(0);
+  }
+
+  .vibeqa-notification.success {
+    border-left: 4px solid #10b981;
+  }
+
+  .vibeqa-notification.error {
+    border-left: 4px solid #dc2626;
+  }
+
+  .vibeqa-notification-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .vibeqa-notification.success .vibeqa-notification-icon {
+    color: #10b981;
+  }
+
+  .vibeqa-notification.error .vibeqa-notification-icon {
+    color: #dc2626;
+  }
+
+  .vibeqa-notification-content {
+    flex: 1;
+  }
+
+  .vibeqa-notification-title {
+    font-weight: 600;
+    color: var(--vibeqa-text);
+    margin-bottom: 2px;
+  }
+
+  .vibeqa-notification-message {
+    font-size: 13px;
+    color: var(--vibeqa-text-secondary);
+  }
+
+  .vibeqa-notification-close {
+    background: none;
+    border: none;
+    color: var(--vibeqa-text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+
+  .vibeqa-notification-close:hover {
+    color: var(--vibeqa-text);
+  }
+
+  /* Recording UI */
+  .vibeqa-recording-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--vibeqa-bg);
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    z-index: 1000001;
+  }
+
+  .vibeqa-recording-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    color: #dc2626;
+    animation: vibeqa-pulse-recording 1.5s ease-in-out infinite;
+  }
+
+  @keyframes vibeqa-pulse-recording {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.1); opacity: 1; }
+  }
+
+  .vibeqa-recording-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .vibeqa-recording-timer {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--vibeqa-primary);
+    margin: 16px 0;
+  }
+
+  .vibeqa-recording-button {
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .vibeqa-recording-button:hover {
+    background: #b91c1c;
+  }
+
   /* Responsive adjustments */
   @media (max-width: 640px) {
     .vibeqa-modal-content {
@@ -529,6 +657,12 @@ export const WIDGET_STYLES = `
 
     .vibeqa-body {
       max-height: calc(100vh - 140px);
+    }
+
+    .vibeqa-notification {
+      right: 10px;
+      left: 10px;
+      max-width: none;
     }
   }
 `;

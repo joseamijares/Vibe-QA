@@ -145,6 +145,10 @@ export class MediaManager {
     this.attachments = [];
   }
 
+  clearAll(): void {
+    this.clearAttachments();
+  }
+
   private async generateThumbnail(blob: Blob): Promise<string> {
     return new Promise((resolve) => {
       const reader = new FileReader();

@@ -1,4 +1,4 @@
-import { VibeQAWidgetConfig, WidgetState, FeedbackSubmission, MediaAttachment } from '../types';
+import { VibeQAWidgetConfig, WidgetState, FeedbackSubmission } from '../types';
 import { EventEmitter } from '../utils/EventEmitter';
 import { validateEmail } from '../utils/validation';
 import { createWidgetContainer } from './WidgetContainer';
@@ -7,7 +7,6 @@ import { mediaManager } from '../utils/mediaManager';
 export class WidgetUI extends EventEmitter {
   private config: Required<VibeQAWidgetConfig>;
   private state: WidgetState;
-  private container: HTMLElement | null = null;
   private shadowRoot: ShadowRoot | null = null;
   private formData: Partial<FeedbackSubmission> = {};
 
@@ -20,8 +19,7 @@ export class WidgetUI extends EventEmitter {
     this.setupAttachmentListeners();
   }
 
-  render(container: HTMLElement, shadowRoot: ShadowRoot): void {
-    this.container = container;
+  render(_container: HTMLElement, shadowRoot: ShadowRoot): void {
     this.shadowRoot = shadowRoot;
     this.updateUI();
   }
@@ -418,12 +416,79 @@ export class WidgetUI extends EventEmitter {
     return this.state;
   }
 
+  showNotification(type: 'success' | 'error', title: string, message?: string): void {
+    if (!this.shadowRoot) return;
+
+    // Remove any existing notifications
+    const existingNotification = this.shadowRoot.querySelector('.vibeqa-notification');
+    if (existingNotification) {
+      existingNotification.remove();
+    }
+
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `vibeqa-notification ${type}`;
+
+    notification.innerHTML = `
+      <svg class="vibeqa-notification-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        ${
+          type === 'success'
+            ? '<path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>'
+            : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+        }
+      </svg>
+      <div class="vibeqa-notification-content">
+        <div class="vibeqa-notification-title">${this.escapeHtml(title)}</div>
+        ${message ? `<div class="vibeqa-notification-message">${this.escapeHtml(message)}</div>` : ''}
+      </div>
+      <button class="vibeqa-notification-close" aria-label="Close notification">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    `;
+
+    // Add to shadow root
+    this.shadowRoot.appendChild(notification);
+
+    // Show notification with animation
+    requestAnimationFrame(() => {
+      notification.classList.add('show');
+    });
+
+    // Handle close button
+    const closeBtn = notification.querySelector('.vibeqa-notification-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.hideNotification(notification);
+      });
+    }
+
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+      this.hideNotification(notification);
+    }, 5000);
+  }
+
+  private hideNotification(notification: HTMLElement): void {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      notification.remove();
+    }, 300);
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   destroy(): void {
     this.removeAllListeners();
     if (this.autoSaveTimer) {
       clearTimeout(this.autoSaveTimer);
     }
-    this.container = null;
     this.shadowRoot = null;
     this.formData = {};
   }

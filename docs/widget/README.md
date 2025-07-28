@@ -17,6 +17,14 @@ The VibeQA widget is a powerful, embeddable feedback collection tool that allows
 
 ## Installation
 
+### Backend Setup Required
+
+Before using the widget, you need to set up the backend API. See the [Backend Setup Guide](./backend-setup-guide.md) for detailed instructions on:
+- Deploying Supabase Edge Functions
+- Configuring storage buckets
+- Setting up email notifications
+- Testing the integration
+
 ### CDN (Recommended)
 
 Add this script tag to your HTML:
@@ -103,7 +111,7 @@ const widget = new VibeQAWidget({
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `projectKey` | string | required | Your project's API key |
-| `apiUrl` | string | `https://api.vibeqa.com` | API endpoint URL |
+| `apiUrl` | string | `https://api.vibeqa.com` | API endpoint URL (see [API Configuration](./api-configuration.md)) |
 | `position` | string | `bottom-right` | Widget position: `bottom-right`, `bottom-left`, `top-right`, `top-left` |
 | `theme` | string | `auto` | Color theme: `light`, `dark`, `auto` |
 | `primaryColor` | string | `#094765` | Primary brand color (hex) |
