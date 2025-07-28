@@ -2,6 +2,7 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useFeedbackRealtimeSubscription } from '@/hooks/useFeedbackNotifications';
 import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
@@ -28,6 +29,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { canManageProjects } = usePermissions();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  // Enable real-time feedback notifications
+  useFeedbackRealtimeSubscription();
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, show: true },

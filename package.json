@@ -15,7 +15,8 @@
     "verify-email-tables": "tsx scripts/verify-email-tables.ts",
     "test-email": "tsx scripts/test-email-invitation.ts",
     "test-email-direct": "tsx scripts/test-email-direct.ts",
-    "deploy-email": "bash scripts/deploy-email-functions.sh"
+    "deploy-email": "bash scripts/deploy-email-functions.sh",
+    "seed-feedback": "tsx scripts/seed-feedback.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.1",
@@ -38,7 +39,7 @@
     "@tanstack/react-query": "^5.28.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.0",
-    "date-fns": "^3.3.1",
+    "date-fns": "^3.6.0",
     "lucide-react": "^0.344.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
