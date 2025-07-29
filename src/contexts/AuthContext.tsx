@@ -22,50 +22,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    let mounted = true;
 
-    // Listen for auth changes
+    // Get initial session
+    console.log('[AuthContext] Getting initial session...');
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (mounted) {
+          console.log('[AuthContext] Initial session:', !!session);
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
+        console.error('[AuthContext] Error getting session:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+
+    // Listen for auth changes - keep it simple, no organization checks here
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (mounted) {
+        console.log('[AuthContext] Auth state change:', event, !!session);
+        setSession(session);
+        setUser(session?.user ?? null);
 
-      // Handle post-signup organization check
-      if (event === 'SIGNED_IN' && session?.user) {
-        // Check if user has an organization
-        const { data: membership, error: membershipError } = await supabase
-          .from('organization_members')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-
-        if (membershipError) {
-          console.error('Error checking organization membership:', membershipError);
-        }
-
-        if (!membership) {
-          // This shouldn't happen with our trigger, but as a fallback
-          // create an organization for the user
-          const orgSlug = session.user.email?.split('@')[0] + '-' + Date.now();
-          await supabase.rpc('create_organization_for_user', {
-            user_id: session.user.id,
-            org_name: `${session.user.email?.split('@')[0]}'s Organization`,
-            org_slug: orgSlug,
-          });
+        // Only set loading false if we're not in the initial load
+        // This prevents race conditions with getSession
+        if (event !== 'INITIAL_SESSION') {
+          setLoading(false);
         }
       }
-
-      // Set loading to false after auth state change is handled
-      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {

@@ -1,4 +1,4 @@
-import { Route, Switch } from 'wouter';
+import { Route, Switch, Redirect } from 'wouter';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
@@ -7,10 +7,60 @@ import { AcceptInvitationPage } from '@/pages/auth/AcceptInvitationPage';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { DashboardPage } from '@/pages/dashboard/DashboardPage';
 import { ProjectsPage } from '@/pages/dashboard/ProjectsPage';
+import { NewProjectPage } from '@/pages/dashboard/NewProjectPage';
 import { FeedbackPage } from '@/pages/dashboard/FeedbackPage';
 import { TeamPage } from '@/pages/dashboard/TeamPage';
 import { SettingsPage } from '@/pages/dashboard/SettingsPage';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+
+// Wrapper components for protected routes
+const ProtectedDashboard = () => (
+  <ProtectedRoute>
+    <DashboardLayout>
+      <DashboardPage />
+    </DashboardLayout>
+  </ProtectedRoute>
+);
+
+const ProtectedProjects = () => (
+  <ProtectedRoute>
+    <DashboardLayout>
+      <ProjectsPage />
+    </DashboardLayout>
+  </ProtectedRoute>
+);
+
+const ProtectedNewProject = () => (
+  <ProtectedRoute>
+    <DashboardLayout>
+      <NewProjectPage />
+    </DashboardLayout>
+  </ProtectedRoute>
+);
+
+const ProtectedFeedback = () => (
+  <ProtectedRoute>
+    <DashboardLayout>
+      <FeedbackPage />
+    </DashboardLayout>
+  </ProtectedRoute>
+);
+
+const ProtectedTeam = () => (
+  <ProtectedRoute>
+    <DashboardLayout>
+      <TeamPage />
+    </DashboardLayout>
+  </ProtectedRoute>
+);
+
+const ProtectedSettings = () => (
+  <ProtectedRoute>
+    <DashboardLayout>
+      <SettingsPage />
+    </DashboardLayout>
+  </ProtectedRoute>
+);
 
 export function Routes() {
   return (
@@ -23,55 +73,15 @@ export function Routes() {
       <Route path="/accept-invitation/:id" component={AcceptInvitationPage} />
 
       {/* Protected dashboard routes */}
-      <Route path="/dashboard">
-        {() => (
-          <ProtectedRoute>
-            <DashboardLayout>
-              <DashboardPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        )}
-      </Route>
+      <Route path="/dashboard" component={ProtectedDashboard} />
+      <Route path="/dashboard/projects" component={ProtectedProjects} />
+      <Route path="/dashboard/projects/new" component={ProtectedNewProject} />
+      <Route path="/dashboard/feedback" component={ProtectedFeedback} />
+      <Route path="/dashboard/team" component={ProtectedTeam} />
+      <Route path="/dashboard/settings" component={ProtectedSettings} />
 
-      <Route path="/dashboard/projects">
-        {() => (
-          <ProtectedRoute>
-            <DashboardLayout>
-              <ProjectsPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        )}
-      </Route>
-
-      <Route path="/dashboard/feedback">
-        {() => (
-          <ProtectedRoute>
-            <DashboardLayout>
-              <FeedbackPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        )}
-      </Route>
-
-      <Route path="/dashboard/team">
-        {() => (
-          <ProtectedRoute>
-            <DashboardLayout>
-              <TeamPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        )}
-      </Route>
-
-      <Route path="/dashboard/settings">
-        {() => (
-          <ProtectedRoute>
-            <DashboardLayout>
-              <SettingsPage />
-            </DashboardLayout>
-          </ProtectedRoute>
-        )}
-      </Route>
+      {/* Catch-all route for 404 */}
+      <Route>{() => <Redirect to="/dashboard" />}</Route>
     </Switch>
   );
 }

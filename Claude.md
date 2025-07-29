@@ -239,6 +239,59 @@ Before deploying:
 - **Media upload fails**: Check storage bucket policies
 - **Type errors**: Regenerate Supabase types after schema changes
 
+## AI Agent Usage
+
+Claude Code includes specialized agents that should be used proactively during development:
+
+### Available Agents
+
+1. **supabase-integration-reviewer**
+   - **When to use**: After implementing ANY Supabase-related features
+   - **Triggers for**: Database queries, RLS policies, auth flows, storage implementations, realtime subscriptions
+   - **Example**: "I've implemented user authentication with Supabase Auth"
+   - **Agent will**: Review security, best practices, and Supabase-specific optimizations
+
+2. **code-quality-guardian**
+   - **When to use**: After completing features, fixing bugs, or making significant code changes
+   - **Triggers for**: New components, refactored code, bug fixes, completed features
+   - **Example**: "I've finished implementing the feedback submission feature"
+   - **Agent will**: Check for bugs, edge cases, code quality issues, and adherence to project standards
+
+3. **app-functionality-architect**
+   - **When to use**: When adding new features or making architectural decisions
+   - **Triggers for**: New API endpoints, new dashboard pages, significant feature additions
+   - **Example**: "I'm adding a new analytics dashboard feature"
+   - **Agent will**: Ensure alignment with app's functionality plan and architectural consistency
+
+### Agent Usage Guidelines
+
+**IMPORTANT**: These agents should be invoked PROACTIVELY after making changes:
+
+```bash
+# After Supabase implementation
+"I've added RLS policies to the feedback table" → triggers supabase-integration-reviewer
+
+# After feature completion
+"I've completed the project settings page" → triggers code-quality-guardian
+
+# Before new feature implementation
+"I'm planning to add team collaboration features" → triggers app-functionality-architect
+```
+
+### When Agents WON'T Launch
+
+- Reading or searching files only
+- Making trivial changes (e.g., fixing typos)
+- Adding comments or documentation
+- Running commands without code changes
+
+### Best Practices
+
+1. **Be explicit**: Mention what you've implemented to trigger the right agent
+2. **Use multiple agents**: Different aspects may need different reviews
+3. **Don't skip agents**: They catch issues that manual review might miss
+4. **Trust agent feedback**: They're configured specifically for this codebase
+
 ## Additional Resources
 
 - Supabase Docs: https://supabase.com/docs
