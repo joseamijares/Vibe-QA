@@ -9,7 +9,7 @@ import { Invitation, Organization } from '@/types/database.types';
 
 export function AcceptInvitationPage() {
   const [location, navigate] = useLocation();
-  const { user } = useAuth();
+  const { session } = useAuth();
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +27,7 @@ export function AcceptInvitationPage() {
     }
 
     fetchInvitation();
-  }, [invitationId, user]);
+  }, [invitationId, session]);
 
   const fetchInvitation = async () => {
     try {
@@ -69,7 +69,7 @@ export function AcceptInvitationPage() {
       }
 
       // If user is logged in, check if email matches
-      if (user && user.email !== inviteData.email) {
+      if (session?.user && session.user.email !== inviteData.email) {
         setError(
           `This invitation is for ${inviteData.email}. Please sign out and sign in with the correct email.`
         );
@@ -83,14 +83,14 @@ export function AcceptInvitationPage() {
   };
 
   const handleAcceptInvitation = async () => {
-    if (!invitation || !user) return;
+    if (!invitation || !session?.user) return;
 
     setAccepting(true);
     try {
       // Start a transaction
       const { error: memberError } = await supabase.from('organization_members').insert({
         organization_id: invitation.organization_id,
-        user_id: user.id,
+        user_id: session.user.id,
         role: invitation.role,
       });
 
@@ -116,7 +116,7 @@ export function AcceptInvitationPage() {
       // Log activity
       await supabase.from('activity_logs').insert({
         organization_id: invitation.organization_id,
-        user_id: user.id,
+        user_id: session.user.id,
         action: 'invitation_accepted',
         resource_type: 'invitation',
         resource_id: invitation.id,
@@ -161,7 +161,7 @@ export function AcceptInvitationPage() {
                 Go to Login
               </Button>
             </>
-          ) : !user ? (
+          ) : !session?.user ? (
             <>
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="h-8 w-8 text-blue-600" />
@@ -202,7 +202,7 @@ export function AcceptInvitationPage() {
           )}
         </div>
 
-        {!error && user && invitation && (
+        {!error && session?.user && invitation && (
           <div className="space-y-4">
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="text-sm text-gray-600">

@@ -1,9 +1,8 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
 interface AuthContextType {
-  user: User | null;
   session: Session | null;
   loading: boolean;
   signUp: (email: string, password: string) => Promise<void>;
@@ -17,52 +16,71 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
+    let refreshTimer: NodeJS.Timeout;
 
     // Get initial session
-    console.log('[AuthContext] Getting initial session...');
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        if (mounted) {
-          console.log('[AuthContext] Initial session:', !!session);
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
-      })
-      .catch((error) => {
-        console.error('[AuthContext] Error getting session:', error);
-        if (mounted) {
-          setLoading(false);
-        }
-      });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
 
-    // Listen for auth changes - keep it simple, no organization checks here
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (mounted) {
-        console.log('[AuthContext] Auth state change:', event, !!session);
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        // Only set loading false if we're not in the initial load
-        // This prevents race conditions with getSession
-        if (event !== 'INITIAL_SESSION') {
-          setLoading(false);
-        }
+      // Set up refresh timer if session exists
+      if (session) {
+        setupRefreshTimer(session);
       }
     });
 
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+
+      // Clear existing timer
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+
+      // Set up new timer if session exists
+      if (session && event !== 'SIGNED_OUT') {
+        setupRefreshTimer(session);
+      }
+    });
+
+    // Function to set up refresh timer
+    function setupRefreshTimer(session: Session) {
+      // Parse the JWT to get expiration time
+      const jwt = session.access_token;
+      const jwtPayload = JSON.parse(atob(jwt.split('.')[1]));
+      const expires = new Date(jwtPayload.exp * 1000);
+      const now = new Date();
+      const timeUntilExpiry = expires.getTime() - now.getTime();
+
+      // Refresh 60 seconds before expiry
+      const refreshIn = Math.max(0, timeUntilExpiry - 60000);
+
+      refreshTimer = setTimeout(async () => {
+        const {
+          data: { session: newSession },
+          error,
+        } = await supabase.auth.refreshSession();
+        if (error) {
+          console.error('Failed to refresh session:', error);
+        } else if (newSession) {
+          setSession(newSession);
+          setupRefreshTimer(newSession);
+        }
+      }, refreshIn);
+    }
+
     return () => {
-      mounted = false;
       subscription.unsubscribe();
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
     };
   }, []);
 
@@ -114,23 +132,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        signUp,
-        signIn,
-        signInWithGoogle,
-        signInWithMagicLink,
-        signOut,
-        resetPassword,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      session,
+      loading,
+      signUp,
+      signIn,
+      signInWithGoogle,
+      signInWithMagicLink,
+      signOut,
+      resetPassword,
+    }),
+    [session, loading]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

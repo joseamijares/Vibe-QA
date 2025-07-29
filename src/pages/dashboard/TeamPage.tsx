@@ -23,7 +23,7 @@ interface MemberWithUser extends OrganizationMember {
 }
 
 export function TeamPage() {
-  const { user } = useAuth();
+  const { session } = useAuth();
   const { organization, membership } = useOrganization();
   const [members, setMembers] = useState<MemberWithUser[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -140,7 +140,7 @@ export function TeamPage() {
           organization_id: organization.id,
           email: inviteEmail,
           role: inviteRole,
-          invited_by: user!.id,
+          invited_by: session!.user.id,
           expires_at: expiresAt.toISOString(),
         })
         .select()
@@ -156,7 +156,7 @@ export function TeamPage() {
         invitationId: data.id,
         email: inviteEmail,
         organizationName: organization.name,
-        inviterName: user!.email?.split('@')[0] || 'Team Admin',
+        inviterName: session!.user.email?.split('@')[0] || 'Team Admin',
         recipientName: inviteEmail.split('@')[0],
         role: inviteRole,
         expiryDate: expiresAt.toISOString(),

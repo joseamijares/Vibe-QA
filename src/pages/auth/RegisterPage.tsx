@@ -8,6 +8,7 @@ import { AuthLayout } from '@/components/auth/AuthLayout';
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { getAuthErrorMessage } from '@/lib/auth-errors';
 
 interface RegisterFormData {
   email: string;
@@ -48,8 +49,8 @@ export function RegisterPage() {
       navigate(redirectTo);
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to create account. Please try again.',
+        title: 'Registration Failed',
+        description: getAuthErrorMessage(error),
         variant: 'destructive',
       });
     } finally {

@@ -94,7 +94,7 @@ export function FeedbackDetailDialog({
   onOpenChange,
   onUpdate,
 }: FeedbackDetailDialogProps) {
-  const { user } = useAuth();
+  const { session } = useAuth();
   const { organization } = useOrganization();
   const [status, setStatus] = useState<FeedbackStatus>(feedback.status);
   const [priority, setPriority] = useState<FeedbackPriority>(feedback.priority);
@@ -165,7 +165,7 @@ export function FeedbackDetailDialog({
 
       if (status === 'resolved' && feedback.status !== 'resolved') {
         updates.resolved_at = new Date().toISOString();
-        updates.resolved_by = user?.id;
+        updates.resolved_by = session?.user?.id;
       }
 
       const { error } = await supabase.from('feedback').update(updates).eq('id', feedback.id);
@@ -188,7 +188,7 @@ export function FeedbackDetailDialog({
     try {
       const { error } = await supabase.from('comments').insert({
         feedback_id: feedback.id,
-        user_id: user!.id,
+        user_id: session!.user.id,
         content: newComment,
         is_internal: true,
       });

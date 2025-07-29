@@ -4,14 +4,14 @@ import { supabase } from '@/lib/supabase';
 import { Organization, OrganizationMember } from '@/types/database.types';
 
 export function useOrganization() {
-  const { user } = useAuth();
+  const { session } = useAuth();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [membership, setMembership] = useState<OrganizationMember | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!user) {
+    if (!session?.user) {
       setOrganization(null);
       setMembership(null);
       setLoading(false);
@@ -24,7 +24,7 @@ export function useOrganization() {
         const { data: membershipData, error: membershipError } = await supabase
           .from('organization_members')
           .select('*')
-          .eq('user_id', user!.id)
+          .eq('user_id', session!.user.id)
           .order('joined_at', { ascending: false }) // Get most recent
           .limit(1)
           .maybeSingle(); // Returns null if no rows, data if one row
@@ -61,7 +61,7 @@ export function useOrganization() {
     }
 
     fetchOrganization();
-  }, [user]);
+  }, [session]);
 
   return { organization, membership, loading, error };
 }

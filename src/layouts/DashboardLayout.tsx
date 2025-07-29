@@ -25,7 +25,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [location] = useLocation();
-  const { user, signOut } = useAuth();
+  const { session, signOut } = useAuth();
   const { organization, membership, loading: orgLoading, error: orgError } = useOrganization();
   const { canManageProjects } = usePermissions();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -120,10 +120,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-[#094765] to-[#3387a7] rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                  {user?.email?.[0].toUpperCase()}
+                  {session?.user?.email?.[0].toUpperCase()}
                 </div>
                 <div className="flex-1 text-left">
-                  <div className="truncate">{user?.email}</div>
+                  <div className="truncate">{session?.user?.email}</div>
                   <div className="text-xs text-gray-500">{membership?.role}</div>
                 </div>
                 <ChevronDown className="h-4 w-4 text-gray-500" />

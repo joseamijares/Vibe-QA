@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { getAuthErrorMessage, isNetworkError } from '@/lib/auth-errors';
 
 interface LoginFormData {
   email: string;
@@ -16,7 +17,7 @@ interface LoginFormData {
 
 export function LoginPage() {
   const [location, navigate] = useLocation();
-  const { signIn, signInWithGoogle, signInWithMagicLink } = useAuth();
+  const { session, signIn, signInWithGoogle, signInWithMagicLink } = useAuth();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +25,13 @@ export function LoginPage() {
   // Get redirect URL from query params
   const searchParams = new URLSearchParams(location.split('?')[1] || '');
   const redirectTo = searchParams.get('redirect') || '/dashboard';
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (session) {
+      navigate(redirectTo);
+    }
+  }, [session, navigate, redirectTo]);
 
   const {
     register,
@@ -41,11 +49,22 @@ export function LoginPage() {
       });
       navigate(redirectTo);
     } catch (error: any) {
+      const errorMessage = getAuthErrorMessage(error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to sign in. Please try again.',
+        title: isNetworkError(error) ? 'Connection Error' : 'Sign In Failed',
+        description: errorMessage,
         variant: 'destructive',
       });
+
+      // If network error, offer retry
+      if (isNetworkError(error)) {
+        setTimeout(() => {
+          toast({
+            title: 'Tip',
+            description: 'Check your internet connection and try again.',
+          });
+        }, 2000);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -56,8 +75,8 @@ export function LoginPage() {
       await signInWithGoogle();
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to sign in with Google.',
+        title: 'Google Sign In Failed',
+        description: getAuthErrorMessage(error),
         variant: 'destructive',
       });
     }
@@ -72,8 +91,8 @@ export function LoginPage() {
       });
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to send magic link.',
+        title: 'Failed to Send Magic Link',
+        description: getAuthErrorMessage(error),
         variant: 'destructive',
       });
     }
