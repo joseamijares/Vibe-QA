@@ -39,11 +39,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Handle post-signup organization check
       if (event === 'SIGNED_IN' && session?.user) {
         // Check if user has an organization
-        const { data: membership } = await supabase
+        const { data: membership, error: membershipError } = await supabase
           .from('organization_members')
-          .select('organization_id')
+          .select('*')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
+        
+        if (membershipError) {
+          console.error('Error checking organization membership:', membershipError);
+        }
 
         if (!membership) {
           // This shouldn't happen with our trigger, but as a fallback
@@ -56,6 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         }
       }
+      
+      // Set loading to false after auth state change is handled
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

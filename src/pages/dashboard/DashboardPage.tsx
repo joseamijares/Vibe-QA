@@ -77,11 +77,9 @@ export function DashboardPage() {
           avgResolutionHours = totalHours / resolvedWithTime.length;
         }
 
-        // Fetch team members count
-        const { count: teamCount } = await supabase
-          .from('organization_members')
-          .select('*', { count: 'exact', head: true })
-          .eq('organization_id', organization!.id);
+        // Fetch team members count - with simple RLS we can only see our own record
+        // TODO: Add proper RLS policies to allow counting team members
+        const teamCount = 1;
 
         // Fetch recent feedback with project details
         const { data: recent } = await supabase
@@ -231,7 +229,9 @@ export function DashboardPage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Recent Feedback</h2>
             <Link href="/dashboard/feedback">
-              <a className="text-sm text-[#094765] hover:text-[#156c8b] font-medium">View all →</a>
+              <span className="text-sm text-[#094765] hover:text-[#156c8b] font-medium cursor-pointer">
+                View all →
+              </span>
             </Link>
           </div>
 

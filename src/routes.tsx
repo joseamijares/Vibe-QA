@@ -22,19 +22,55 @@ export function Routes() {
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/accept-invitation/:id" component={AcceptInvitationPage} />
 
-      {/* Protected routes */}
+      {/* Protected dashboard routes */}
       <Route path="/dashboard">
-        <ProtectedRoute>
-          <DashboardLayout>
-            <Switch>
-              <Route path="/dashboard" component={DashboardPage} />
-              <Route path="/dashboard/projects" component={ProjectsPage} />
-              <Route path="/dashboard/feedback" component={FeedbackPage} />
-              <Route path="/dashboard/team" component={TeamPage} />
-              <Route path="/dashboard/settings" component={SettingsPage} />
-            </Switch>
-          </DashboardLayout>
-        </ProtectedRoute>
+        {() => (
+          <ProtectedRoute>
+            <DashboardLayout>
+              <DashboardPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      </Route>
+      
+      <Route path="/dashboard/projects">
+        {() => (
+          <ProtectedRoute>
+            <DashboardLayout>
+              <ProjectsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      </Route>
+      
+      <Route path="/dashboard/feedback">
+        {() => (
+          <ProtectedRoute>
+            <DashboardLayout>
+              <FeedbackPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      </Route>
+      
+      <Route path="/dashboard/team">
+        {() => (
+          <ProtectedRoute>
+            <DashboardLayout>
+              <TeamPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
+      </Route>
+      
+      <Route path="/dashboard/settings">
+        {() => (
+          <ProtectedRoute>
+            <DashboardLayout>
+              <SettingsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        )}
       </Route>
     </Switch>
   );

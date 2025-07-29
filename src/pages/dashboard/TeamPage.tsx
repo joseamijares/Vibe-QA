@@ -41,25 +41,48 @@ export function TeamPage() {
 
   const fetchTeamMembers = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_organization_members', {
-        org_id: organization!.id,
+      // Fetch organization members with user details
+      const { data: membersData, error: membersError } = await supabase
+        .from('organization_members')
+        .select('*')
+        .eq('organization_id', organization!.id);
+
+      if (membersError) throw membersError;
+
+      // Fetch user details for each member
+      const memberUserIds = membersData?.map(m => m.user_id) || [];
+      const { data: userData, error: userError } = await supabase
+        .from('auth.users')
+        .select('id, email, raw_user_meta_data')
+        .in('id', memberUserIds);
+
+      if (userError) {
+        // If we can't access auth.users, just use member data without user details
+        console.warn('Could not fetch user details:', userError);
+        const transformedMembers: MemberWithUser[] = (membersData || []).map((member) => ({
+          ...member,
+          user: {
+            id: member.user_id,
+            email: 'Loading...',
+            user_metadata: {},
+          },
+        }));
+        setMembers(transformedMembers);
+        return;
+      }
+
+      // Combine member and user data
+      const transformedMembers: MemberWithUser[] = (membersData || []).map((member) => {
+        const user = userData?.find(u => u.id === member.user_id);
+        return {
+          ...member,
+          user: {
+            id: member.user_id,
+            email: user?.email || 'Unknown',
+            user_metadata: user?.raw_user_meta_data || {},
+          },
+        };
       });
-
-      if (error) throw error;
-
-      // Transform the data to match our interface
-      const transformedMembers: MemberWithUser[] = (data || []).map((member: any) => ({
-        id: member.id,
-        organization_id: member.organization_id,
-        user_id: member.user_id,
-        role: member.role,
-        joined_at: member.joined_at,
-        user: {
-          id: member.user_id,
-          email: member.user_email,
-          user_metadata: member.user_metadata || {},
-        },
-      }));
 
       setMembers(transformedMembers);
     } catch (error) {

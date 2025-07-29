@@ -39,30 +39,39 @@ export function ProjectsPage() {
 
   const fetchProjects = async () => {
     try {
-      // Fetch projects with feedback counts
-      const { data, error } = await supabase
+      // Fetch projects first
+      const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
-        .select(
-          `
-          *,
-          feedback_count:feedback(count),
-          recent_feedback_count:feedback(
-            count,
-            created_at.gte.${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()}
-          )
-        `
-        )
+        .select('*')
         .eq('organization_id', organization!.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (projectsError) throw projectsError;
 
-      // Transform the data to include counts
-      const projectsWithStats = (data || []).map((project: any) => ({
-        ...project,
-        feedback_count: project.feedback_count?.[0]?.count || 0,
-        recent_feedback_count: project.recent_feedback_count?.[0]?.count || 0,
-      }));
+      // For each project, fetch feedback counts separately
+      const projectsWithStats = await Promise.all(
+        (projectsData || []).map(async (project) => {
+          // Get total feedback count
+          const { count: feedbackCount } = await supabase
+            .from('feedback')
+            .select('*', { count: 'exact', head: true })
+            .eq('project_id', project.id);
+
+          // Get recent feedback count (last 7 days)
+          const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+          const { count: recentCount } = await supabase
+            .from('feedback')
+            .select('*', { count: 'exact', head: true })
+            .eq('project_id', project.id)
+            .gte('created_at', sevenDaysAgo);
+
+          return {
+            ...project,
+            feedback_count: feedbackCount || 0,
+            recent_feedback_count: recentCount || 0,
+          };
+        })
+      );
 
       setProjects(projectsWithStats);
     } catch (error) {
