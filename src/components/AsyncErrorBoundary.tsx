@@ -131,7 +131,12 @@ function AsyncErrorFallback({ error, retry }: AsyncErrorFallbackProps) {
               )}
             </div>
             <div className="mt-4">
-              <Button onClick={retry} size="sm" variant="outline" className="flex items-center gap-2">
+              <Button
+                onClick={retry}
+                size="sm"
+                variant="outline"
+                className="flex items-center gap-2"
+              >
                 <RefreshCw className="h-3 w-3" />
                 Try Again
               </Button>
