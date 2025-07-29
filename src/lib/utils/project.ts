@@ -54,4 +54,3 @@ export function parseAllowedDomains(input: string): string[] {
       return domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
     });
 }
-
