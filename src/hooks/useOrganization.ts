@@ -20,12 +20,14 @@ export function useOrganization() {
 
     async function fetchOrganization() {
       try {
-        // Get user's organization membership
+        // Get user's organization membership (get first if multiple)
         const { data: membershipData, error: membershipError } = await supabase
           .from('organization_members')
           .select('*')
           .eq('user_id', user!.id)
-          .single();
+          .order('joined_at', { ascending: false }) // Get most recent
+          .limit(1)
+          .maybeSingle(); // Returns null if no rows, data if one row
 
         if (membershipError || !membershipData) {
           // User has no organization yet - this can happen for manually created users
@@ -44,7 +46,11 @@ export function useOrganization() {
           .eq('id', membershipData.organization_id)
           .single();
 
-        if (orgError) throw orgError;
+        if (orgError) {
+          console.error('Error fetching organization details:', orgError);
+          throw orgError;
+        }
+
         setOrganization(orgData);
       } catch (err) {
         console.error('Error fetching organization:', err);

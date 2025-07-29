@@ -76,7 +76,7 @@ SELECT
     o.name as organization_name,
     o.slug as organization_slug,
     om.role,
-    om.created_at as member_since
+    om.joined_at as member_since
 FROM auth.users u
 LEFT JOIN organization_members om ON u.id = om.user_id
 LEFT JOIN organizations o ON om.organization_id = o.id
