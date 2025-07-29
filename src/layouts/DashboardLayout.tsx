@@ -4,6 +4,7 @@ import { useOrganization } from '@/hooks/useOrganization';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useFeedbackRealtimeSubscription } from '@/hooks/useFeedbackNotifications';
 import { Button } from '@/components/ui/button';
+import { NoOrganizationMessage } from '@/components/NoOrganizationMessage';
 import {
   LayoutDashboard,
   Folder,
@@ -25,13 +26,18 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [location] = useLocation();
   const { user, signOut } = useAuth();
-  const { organization, membership } = useOrganization();
+  const { organization, membership, loading: orgLoading, error: orgError } = useOrganization();
   const { canManageProjects } = usePermissions();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   // Enable real-time feedback notifications
   useFeedbackRealtimeSubscription();
+
+  // Show no organization message if user has no org
+  if (!orgLoading && orgError && orgError.message.includes('No organization found')) {
+    return <NoOrganizationMessage />;
+  }
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, show: true },
@@ -92,15 +98,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {navigation.map((item) => {
               const isActive = location === item.href || location.startsWith(item.href + '/');
               return (
-                <Link key={item.name} href={item.href}>
-                  <a
-                    className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      isActive ? 'bg-[#094765] text-white' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.name}
-                  </a>
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    isActive ? 'bg-[#094765] text-white' : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.name}
                 </Link>
               );
             })}

@@ -27,9 +27,12 @@ export function useOrganization() {
           .eq('user_id', user!.id)
           .single();
 
-        if (membershipError) throw membershipError;
-        if (!membershipData) {
-          throw new Error('No organization found for user');
+        if (membershipError || !membershipData) {
+          // User has no organization yet - this can happen for manually created users
+          console.log('No organization found for user, may need to run setup');
+          setError(new Error('No organization found. Please contact support.'));
+          setLoading(false);
+          return;
         }
 
         setMembership(membershipData);
