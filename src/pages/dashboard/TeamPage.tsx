@@ -50,7 +50,7 @@ export function TeamPage() {
       if (membersError) throw membersError;
 
       // Fetch user details for each member
-      const memberUserIds = membersData?.map(m => m.user_id) || [];
+      const memberUserIds = membersData?.map((m) => m.user_id) || [];
       const { data: userData, error: userError } = await supabase
         .from('auth.users')
         .select('id, email, raw_user_meta_data')
@@ -73,7 +73,7 @@ export function TeamPage() {
 
       // Combine member and user data
       const transformedMembers: MemberWithUser[] = (membersData || []).map((member) => {
-        const user = userData?.find(u => u.id === member.user_id);
+        const user = userData?.find((u) => u.id === member.user_id);
         return {
           ...member,
           user: {

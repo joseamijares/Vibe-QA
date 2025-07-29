@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .select('*')
           .eq('user_id', session.user.id)
           .maybeSingle();
-        
+
         if (membershipError) {
           console.error('Error checking organization membership:', membershipError);
         }
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         }
       }
-      
+
       // Set loading to false after auth state change is handled
       setLoading(false);
     });

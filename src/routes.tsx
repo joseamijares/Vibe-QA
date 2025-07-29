@@ -32,7 +32,7 @@ export function Routes() {
           </ProtectedRoute>
         )}
       </Route>
-      
+
       <Route path="/dashboard/projects">
         {() => (
           <ProtectedRoute>
@@ -42,7 +42,7 @@ export function Routes() {
           </ProtectedRoute>
         )}
       </Route>
-      
+
       <Route path="/dashboard/feedback">
         {() => (
           <ProtectedRoute>
@@ -52,7 +52,7 @@ export function Routes() {
           </ProtectedRoute>
         )}
       </Route>
-      
+
       <Route path="/dashboard/team">
         {() => (
           <ProtectedRoute>
@@ -62,7 +62,7 @@ export function Routes() {
           </ProtectedRoute>
         )}
       </Route>
-      
+
       <Route path="/dashboard/settings">
         {() => (
           <ProtectedRoute>
