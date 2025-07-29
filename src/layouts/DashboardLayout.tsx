@@ -52,7 +52,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 lg:flex">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -63,7 +63,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform lg:translate-x-0 lg:static lg:inset-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform lg:translate-x-0 lg:static lg:block lg:h-screen ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -149,7 +149,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="flex-1">
         {/* Top bar */}
         <header className="bg-white shadow-sm border-b">
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
