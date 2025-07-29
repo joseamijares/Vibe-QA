@@ -5,6 +5,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useFeedbackRealtimeSubscription } from '@/hooks/useFeedbackNotifications';
 import { Button } from '@/components/ui/button';
 import { NoOrganizationMessage } from '@/components/NoOrganizationMessage';
+import { AsyncErrorBoundary } from '@/components/AsyncErrorBoundary';
 import {
   LayoutDashboard,
   Folder,
@@ -178,7 +179,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Page content */}
         <main className="flex-1">
-          <div className="py-6 px-4 sm:px-6 lg:px-8">{children}</div>
+          <div className="py-6 px-4 sm:px-6 lg:px-8">
+            <AsyncErrorBoundary>{children}</AsyncErrorBoundary>
+          </div>
         </main>
       </div>
     </div>

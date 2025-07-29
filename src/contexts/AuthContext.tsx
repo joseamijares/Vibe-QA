@@ -90,6 +90,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     });
     if (error) throw error;
+
+    // Organization creation is now handled by database trigger
+    // See migration 009_user_registration_trigger.sql
   };
 
   const signIn = async (email: string, password: string) => {

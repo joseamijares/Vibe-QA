@@ -66,6 +66,12 @@ npm run dev              # Start development server
 npm run build           # Build for production
 npm run start           # Start production server
 
+# Widget
+npm run build:widget     # Build widget for production
+npm run deploy:widget    # Deploy widget to production CDN
+npm run deploy:widget:staging  # Deploy to staging channel
+npm run deploy:widget:beta     # Deploy to beta channel
+
 # Code Quality (ALWAYS run before committing)
 npm run typecheck       # Check TypeScript types
 npm run lint            # Run ESLint
@@ -139,7 +145,7 @@ The application uses Supabase with Row Level Security (RLS) enabled:
 - **organization_members**: User-org relationships with roles
 - **projects**: Organization projects for feedback
 - **feedback**: All feedback submissions with media support
-- **storage buckets**: feedback-media, organization-assets
+- **storage buckets**: feedback-media, organization-assets, widget-assets
 
 ## Authentication Flow
 
@@ -159,9 +165,9 @@ The feedback widget uses:
 Example embed code:
 ```html
 <script 
-  src="https://cdn.vibe.qa/widget.js" 
+  src="https://[project-id].supabase.co/storage/v1/object/public/widget-assets/production/widget.js" 
   data-project-key="proj_abc123"
-  data-api-url="https://api.vibe.qa"
+  data-api-url="https://[project-id].supabase.co/functions/v1"
   async>
 </script>
 ```
@@ -291,6 +297,49 @@ Claude Code includes specialized agents that should be used proactively during d
 2. **Use multiple agents**: Different aspects may need different reviews
 3. **Don't skip agents**: They catch issues that manual review might miss
 4. **Trust agent feedback**: They're configured specifically for this codebase
+
+## Current State (2025-07-29)
+
+### What's Working
+- ✅ Complete authentication system with Supabase Auth
+- ✅ Multi-tenant organization architecture
+- ✅ Dashboard with projects, feedback, and team management
+- ✅ Basic feedback widget with screenshot support
+- ✅ Project creation with API key generation
+- ✅ Feedback submission and management
+- ✅ Widget production build process (vite.widget.config.ts)
+- ✅ Widget CDN deployment to Supabase Storage
+- ✅ Edge Functions deployment (submit-feedback)
+- ✅ Complete widget demo page working
+- ✅ CORS configuration for cross-origin widget embedding
+
+### Recent Progress
+- ✅ Implemented widget production build with Vite
+- ✅ Deployed widget to Supabase Storage CDN (production/staging/beta channels)
+- ✅ Created deployment scripts for easy widget deployment
+- ✅ Set up Edge Functions for feedback submission
+- ✅ Configured email notifications with Brevo
+- ✅ Created comprehensive widget documentation
+
+### Known Issues
+- ⚠️ User role assignment needs fixing (temporary workaround in place)
+- ⚠️ Team page cannot fetch user emails (client-side limitation)
+- ⚠️ Some role restrictions temporarily disabled
+
+### What's Missing
+- ❌ Payment integration (Stripe)
+- ❌ Voice and video feedback
+- ❌ Real-time notifications
+- ❌ Analytics and reporting
+- ❌ Settings page implementation
+- ❌ Production app deployment (widget is deployed)
+
+### Next Steps
+See `/src/docs/roadmap.md` for detailed development plan. Priority focus:
+1. Fix role assignment and permissions
+2. Implement payment integration (Stripe)
+3. Add advanced feedback types (voice, video)
+4. Complete settings page and analytics dashboard
 
 ## Additional Resources
 

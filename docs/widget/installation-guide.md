@@ -12,7 +12,7 @@ window.vibeQAConfig = {
   projectKey: 'YOUR_PROJECT_KEY' // Replace with your actual project key
 };
 </script>
-<script src="https://cdn.vibeqa.com/widget.js" async></script>
+<script src="https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/production/widget.js" async></script>
 ```
 
 That's it! The feedback button will appear in the bottom-right corner of your website.
@@ -26,8 +26,9 @@ The simplest way to add VibeQA to your website:
 ```html
 <!-- Basic installation -->
 <script 
-  src="https://cdn.vibeqa.com/widget.js" 
+  src="https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/production/widget.js" 
   data-project-key="YOUR_PROJECT_KEY"
+  data-api-url="https://oussjxzwtxlanuxtgmtt.supabase.co/functions/v1"
   async>
 </script>
 ```
@@ -50,7 +51,7 @@ window.vibeQAConfig = {
   }
 };
 </script>
-<script src="https://cdn.vibeqa.com/widget.js" async></script>
+<script src="https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/production/widget.js" async></script>
 ```
 
 ### Method 3: NPM Package (Coming Soon)
@@ -160,7 +161,7 @@ function App() {
     };
 
     const script = document.createElement('script');
-    script.src = 'https://cdn.vibeqa.com/widget.js';
+    script.src = 'https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/production/widget.js';
     script.async = true;
     document.body.appendChild(script);
 
@@ -199,7 +200,7 @@ export default {
 
     // Load widget
     const script = document.createElement('script');
-    script.src = 'https://cdn.vibeqa.com/widget.js';
+    script.src = 'https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/production/widget.js';
     script.async = true;
     document.body.appendChild(script);
   },
@@ -235,7 +236,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     // Load widget
     const script = document.createElement('script');
-    script.src = 'https://cdn.vibeqa.com/widget.js';
+    script.src = 'https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/production/widget.js';
     script.async = true;
     document.body.appendChild(script);
   }
@@ -293,7 +294,7 @@ window.vibeQAConfig = {
   triggerType: 'custom' // Hides the default button
 };
 </script>
-<script src="https://cdn.vibeqa.com/widget.js" async></script>
+<script src="https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/production/widget.js" async></script>
 
 <!-- Your custom button -->
 <button onclick="window.VibeQA.open()">
@@ -332,7 +333,7 @@ function onUserLogout() {
 If you use CSP, add these directives:
 
 ```
-script-src 'self' https://cdn.vibeqa.com;
+script-src 'self' https://oussjxzwtxlanuxtgmtt.supabase.co;
 connect-src 'self' https://*.supabase.co;
 style-src 'self' 'unsafe-inline';
 img-src 'self' data: https://*.supabase.co;
@@ -399,10 +400,10 @@ The widget automatically updates to the latest version. To use a specific versio
 
 ```html
 <!-- Specific version -->
-<script src="https://cdn.vibeqa.com/widget@1.0.0.js"></script>
+<script src="https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/v1.0.0/widget.js"></script>
 
 <!-- Latest version (recommended) -->
-<script src="https://cdn.vibeqa.com/widget.js"></script>
+<script src="https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/production/widget.js"></script>
 ```
 
 ---

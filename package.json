@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:widget": "vite build --config vite.widget.config.ts",
+    "deploy:widget": "npm run build:widget && ./scripts/deploy-widget-supabase.sh",
+    "deploy:widget:staging": "npm run build:widget && ./scripts/deploy-widget-supabase.sh staging",
+    "deploy:widget:beta": "npm run build:widget && ./scripts/deploy-widget-supabase.sh beta",
     "dev:widget": "vite serve public --host",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
@@ -71,6 +74,7 @@
     "postcss": "^8.4.35",
     "prettier": "^3.2.5",
     "tailwindcss": "^3.4.1",
+    "terser": "^5.43.1",
     "tsx": "^4.20.3",
     "typescript": "^5.2.2",
     "vite": "^5.1.4"

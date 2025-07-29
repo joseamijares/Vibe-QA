@@ -1,0 +1,12 @@
+{
+  "version": "0.0.0",
+  "channel": "production",
+  "buildTime": "2025-07-29T19:42:51Z",
+  "fileSize":   248688,
+  "checksum": "01735b4333c5afe5fc60c8e5aa3b4b5fd19f5ec05477fd8d3fa94e78db95bccd",
+  "urls": {
+    "versioned": "https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/v0.0.0/widget.js",
+    "channel": "https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/production/widget.js",
+    "latest": "https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/latest/widget.js"
+  }
+}

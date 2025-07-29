@@ -22,8 +22,9 @@
 
 ```html
 <script 
-  src="https://cdn.vibeqa.com/widget.js" 
+  src="https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/production/widget.js" 
   data-project-key="YOUR_PROJECT_KEY"
+  data-api-url="https://oussjxzwtxlanuxtgmtt.supabase.co/functions/v1"
   async>
 </script>
 ```

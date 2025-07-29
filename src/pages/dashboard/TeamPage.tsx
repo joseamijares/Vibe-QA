@@ -41,7 +41,29 @@ export function TeamPage() {
 
   const fetchTeamMembers = async () => {
     try {
-      // Fetch organization members with user details
+      // Try to use the edge function first
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-team-members?organization_id=${organization!.id}`;
+
+      try {
+        const response = await fetch(functionUrl, {
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const functionData = await response.json();
+          if (functionData?.data) {
+            setMembers(functionData.data);
+            return;
+          }
+        }
+      } catch (functionError) {
+        console.error('Edge function error:', functionError);
+      }
+
+      // Fallback to client-side approach if function fails
       const { data: membersData, error: membersError } = await supabase
         .from('organization_members')
         .select('*')
@@ -49,41 +71,17 @@ export function TeamPage() {
 
       if (membersError) throw membersError;
 
-      // Fetch user details for each member
-      const memberUserIds = membersData?.map((m) => m.user_id) || [];
-      const { data: userData, error: userError } = await supabase
-        .from('auth.users')
-        .select('id, email, raw_user_meta_data')
-        .in('id', memberUserIds);
-
-      if (userError) {
-        // If we can't access auth.users, just use member data without user details
-        console.warn('Could not fetch user details:', userError);
-        const transformedMembers: MemberWithUser[] = (membersData || []).map((member) => ({
-          ...member,
-          user: {
-            id: member.user_id,
-            email: 'Loading...',
-            user_metadata: {},
-          },
-        }));
-        setMembers(transformedMembers);
-        return;
-      }
-
-      // Combine member and user data
-      const transformedMembers: MemberWithUser[] = (membersData || []).map((member) => {
-        const user = userData?.find((u) => u.id === member.user_id);
-        return {
-          ...member,
-          user: {
-            id: member.user_id,
-            email: user?.email || 'Unknown',
-            user_metadata: user?.raw_user_meta_data || {},
-          },
-        };
-      });
-
+      const transformedMembers: MemberWithUser[] = (membersData || []).map((member) => ({
+        ...member,
+        user: {
+          id: member.user_id,
+          email:
+            member.user_id === session?.user?.id && session?.user?.email
+              ? session.user.email
+              : `User ${member.user_id.slice(0, 8)}`,
+          user_metadata: {},
+        },
+      }));
       setMembers(transformedMembers);
     } catch (error) {
       console.error('Error fetching team members:', error);

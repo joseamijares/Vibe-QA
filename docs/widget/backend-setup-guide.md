@@ -87,6 +87,20 @@ window.vibeQAConfig = {
 };
 ```
 
+### Production Widget CDN
+
+The widget is now deployed to Supabase Storage CDN:
+
+```html
+<!-- Production Widget -->
+<script 
+  src="https://oussjxzwtxlanuxtgmtt.supabase.co/storage/v1/object/public/widget-assets/production/widget.js"
+  data-project-key="YOUR_PROJECT_KEY"
+  data-api-url="https://oussjxzwtxlanuxtgmtt.supabase.co/functions/v1"
+  async>
+</script>
+```
+
 ## Step 5: Create a Test Project
 
 1. Insert a test project in your database:
