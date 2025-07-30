@@ -3,7 +3,7 @@ modules = ["nodejs-20"]
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "npm run build && npm run preview"]
+run = ["sh", "-c", "npm run build && npm run preview -- --host 0.0.0.0 --port 4173"]
 deploymentTarget = "autoscale"
 
 [[ports]]
