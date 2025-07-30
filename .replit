@@ -4,12 +4,16 @@ channel = "stable-24_05"
 
 [deployment]
 run = ["sh", "-c", "npm run build && npm run preview"]
-deploymentTarget = "static"
+deploymentTarget = "autoscale"
 
 [[ports]]
 localPort = 4173
 externalPort = 80
 exposeLocalhost = true
+
+[[ports]]
+localPort = 5173
+externalPort = 5173
 
 [workflows]
 
