@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { useState } from 'react';
+import logoSvg from '@/assets/vibe-code-logo.svg';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -72,11 +73,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Logo and org */}
           <div className="flex h-16 items-center justify-between px-4 border-b">
             <Link href="/dashboard">
-              <img
-                src="/src/assets/vibe-code-logo.svg"
-                alt="VibeQA"
-                className="h-8 cursor-pointer"
-              />
+              <img src={logoSvg} alt="VibeQA" className="h-8 cursor-pointer" />
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}

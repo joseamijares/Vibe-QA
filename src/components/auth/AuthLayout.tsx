@@ -1,5 +1,6 @@
 import { Link } from 'wouter';
 import { AnimatedBackground, FloatingElements } from '@/components/AnimatedBackground';
+import logoSvg from '@/assets/vibe-code-logo.svg';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -19,7 +20,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
             <div className="text-center mb-8">
               <Link href="/">
                 <img
-                  src="/src/assets/vibe-code-logo.svg"
+                  src={logoSvg}
                   alt="VibeQA"
                   className="h-12 mx-auto mb-8 cursor-pointer hover:opacity-80 transition-opacity"
                 />
