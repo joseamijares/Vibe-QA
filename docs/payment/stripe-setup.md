@@ -20,13 +20,15 @@ This guide walks through setting up Stripe payments for VibeQA.
 - **Name**: VibeQA Basic
 - **Description**: Perfect for small teams
 - **Pricing**: $5.00/month
-- **Price ID**: Copy this for your Edge Function
+- **Price ID**: `price_1RqOW0PPLO371ouZKnwpduMZ`
+- **Product ID**: `prod_SlwOsxuIQxDCxz`
 
 #### Full Plan
 - **Name**: VibeQA Full
 - **Description**: For growing teams
 - **Pricing**: $14.00/month
-- **Price ID**: Copy this for your Edge Function
+- **Price ID**: `price_1RqOWHPPLO371ouZyEUGXuuT`
+- **Product ID**: `prod_SlwPOGHzOMhgl8`
 
 ### Configure Webhook
 
@@ -65,8 +67,8 @@ Edit `/supabase/functions/create-checkout-session/index.ts`:
 ```typescript
 function getPriceId(planId: string): string | null {
   const priceIds: Record<string, string> = {
-    basic: 'price_1ABC...', // Replace with your actual Basic price ID
-    full: 'price_1XYZ...', // Replace with your actual Full price ID
+    basic: 'price_1RqOW0PPLO371ouZKnwpduMZ', // VibeQA Basic - $5/month
+    full: 'price_1RqOWHPPLO371ouZyEUGXuuT', // VibeQA Full - $14/month
   };
   return priceIds[planId] || null;
 }

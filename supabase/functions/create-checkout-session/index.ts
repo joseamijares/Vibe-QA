@@ -114,10 +114,9 @@ serve(async (req) => {
 
 // Helper to get Stripe price ID from plan ID
 function getPriceId(planId: string): string | null {
-  // TODO: Replace with actual Stripe price IDs after creating products in Stripe Dashboard
   const priceIds: Record<string, string> = {
-    basic: 'price_1QqXXXPPLO371ouZXXXXXXXX', // Replace with actual Basic plan price ID
-    full: 'price_1QqYYYPPLO371ouZYYYYYYYY', // Replace with actual Full plan price ID
+    basic: 'price_1RqOW0PPLO371ouZKnwpduMZ', // VibeQA Basic - $5/month
+    full: 'price_1RqOWHPPLO371ouZyEUGXuuT', // VibeQA Full - $14/month
   };
   return priceIds[planId] || null;
 }
