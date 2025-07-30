@@ -24,7 +24,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 4173,
     strictPort: true,
-    allowedHosts: ['all'],
+    allowedHosts: ['all', 'vibeqa.app'],
     cors: {
       origin: '*',
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
