@@ -39,8 +39,8 @@ This roadmap outlines the development plan for VibeQA, consolidating the origina
 - [ ] Set up Stripe account and API keys
 - [ ] Create subscription products:
   - **Free**: 1 project, 100 feedback/month
-  - **Starter**: $9/month, 3 projects, 1,000 feedback
-  - **Pro**: $19/month, 10 projects, 10,000 feedback  
+  - **Basic**: $5/month, 3 projects, 500 feedback/month, 30-day history
+  - **Full Plan**: $14/month, 10 projects, 2,000 feedback/month, 90-day history  
   - **Enterprise**: Custom pricing
 - [ ] Implement billing page components
 - [ ] Create subscription management flows

@@ -492,22 +492,22 @@ export function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
-            {/* Starter Plan */}
+            {/* Basic Plan */}
             <div className="relative group">
               <div className="absolute -inset-1 bg-gradient-to-br from-[#094765] to-[#3387a7] rounded-3xl opacity-20 group-hover:opacity-30 transition-opacity blur-lg"></div>
               <div className="relative glass-modern-light rounded-3xl p-10 h-full hover:shadow-2xl transition-all duration-300">
                 <div className="text-center space-y-6">
                   <div>
-                    <h3 className="text-3xl font-bold mb-2">Starter</h3>
+                    <h3 className="text-3xl font-bold mb-2">Basic</h3>
                     <p className="text-gray-600">Perfect for small teams and startups</p>
                   </div>
 
                   <div className="py-8 border-y border-gray-200">
                     <div className="flex items-baseline justify-center gap-2">
-                      <span className="text-6xl font-bold gradient-text-modern">$9</span>
+                      <span className="text-6xl font-bold gradient-text-modern">$5</span>
                       <span className="text-gray-600 text-lg">/month</span>
                     </div>
-                    <p className="text-sm text-gray-500 mt-2">per project</p>
+                    <p className="text-sm text-gray-500 mt-2">per month</p>
                   </div>
 
                   <ul className="space-y-4 text-left">
@@ -538,32 +538,31 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* Pro Plan */}
+            {/* Full Plan */}
             <div className="relative group transform lg:scale-105">
               <div className="absolute -inset-1 bg-gradient-to-br from-[#FF6B35] to-[#FFB39A] rounded-3xl opacity-30 group-hover:opacity-40 transition-opacity blur-lg"></div>
               <div className="relative pricing-recommended glass-modern-light rounded-3xl p-10 h-full hover:shadow-2xl transition-all duration-300">
                 <div className="text-center space-y-6">
                   <div>
-                    <h3 className="text-3xl font-bold mb-2">Pro</h3>
+                    <h3 className="text-3xl font-bold mb-2">Full Plan</h3>
                     <p className="text-gray-600">For growing teams that need more</p>
                   </div>
 
                   <div className="py-8 border-y border-[#FF6B35]/20">
                     <div className="flex items-baseline justify-center gap-2">
-                      <span className="text-6xl font-bold gradient-text-accent">$19</span>
+                      <span className="text-6xl font-bold gradient-text-accent">$14</span>
                       <span className="text-gray-600 text-lg">/month</span>
                     </div>
-                    <p className="text-sm text-gray-500 mt-2">per project</p>
+                    <p className="text-sm text-gray-500 mt-2">per month</p>
                   </div>
 
                   <ul className="space-y-4 text-left">
                     {[
-                      'Unlimited projects',
+                      '10 projects',
                       '2,000 bug reports/month',
                       '90-day history',
                       'Priority support',
                       'Advanced integrations',
-                      'API access',
                       'Custom workflows',
                       'Analytics dashboard',
                     ].map((feature) => (

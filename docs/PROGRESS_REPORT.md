@@ -174,8 +174,12 @@ The VibeQA platform has been successfully developed with core features including
    - [ ] Create API rate limiting
 
 2. **Payment Integration**
-   - [ ] Stripe subscription setup
-   - [ ] Pricing tiers implementation
+   - [x] Stripe subscription setup
+   - [x] Pricing tiers implementation:
+     - Free: 1 project, 100 feedback/month
+     - Basic: $5/month, 3 projects, 500 feedback/month, 30-day history
+     - Full Plan: $14/month, 10 projects, 2,000 feedback/month, 90-day history
+     - Enterprise: Custom pricing
    - [ ] Usage tracking and limits
    - [ ] Billing portal integration
 
