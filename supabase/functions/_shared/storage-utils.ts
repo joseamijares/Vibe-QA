@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 export interface MediaUpload {
   fieldName: string;
   file: File;
-  type: 'screenshot' | 'voice' | 'video';
+  type: 'screenshot' | 'voice';
 }
 
 export class StorageUtils {

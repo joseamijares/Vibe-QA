@@ -53,7 +53,7 @@ All feedback submissions from users.
 |--------|------|-------------|
 | id | UUID | Primary key |
 | project_id | UUID | FK to projects |
-| type | VARCHAR(50) | 'text', 'voice', 'screenshot', or 'video' |
+| type | VARCHAR(50) | 'text', 'voice', or 'screenshot' |
 | content | TEXT | Text content of feedback |
 | metadata | JSONB | Additional data (browser info, etc) |
 | user_email | VARCHAR(255) | Reporter's email |
@@ -86,7 +86,7 @@ All feedback submissions from users.
 ## Storage Buckets
 
 ### feedback-media
-Stores screenshots, voice recordings, and video files.
+Stores screenshots and voice recordings.
 - Private bucket
 - Access controlled via RLS policies
 

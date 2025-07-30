@@ -166,9 +166,7 @@ export class WidgetUI extends EventEmitter {
           attachments.length > 0
             ? {
                 screenshots: attachments.filter((a) => a.type === 'screenshot').map((a) => a.blob),
-                recordings: attachments
-                  .filter((a) => a.type === 'voice' || a.type === 'video')
-                  .map((a) => a.blob),
+                recordings: attachments.filter((a) => a.type === 'voice').map((a) => a.blob),
               }
             : undefined,
       };

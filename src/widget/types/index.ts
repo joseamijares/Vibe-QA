@@ -31,7 +31,7 @@ export interface WidgetState {
 }
 
 export interface MediaAttachment {
-  type: 'screenshot' | 'voice' | 'video';
+  type: 'screenshot' | 'voice';
   blob: Blob;
   filename: string;
   size: number;

@@ -16,7 +16,6 @@ import {
   Star,
   Github,
   Mic,
-  Video,
   Code,
   Clock,
   ChevronDown,
@@ -119,8 +118,8 @@ export function LandingPage() {
                   variant="outline"
                   className="rounded-full px-8 py-6 text-lg border-gray-300 hover:border-gray-400"
                 >
-                  Watch Demo (2 min)
-                  <Video className="ml-2 h-5 w-5" />
+                  View Documentation
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
 

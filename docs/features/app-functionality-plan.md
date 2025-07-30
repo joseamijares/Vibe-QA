@@ -80,7 +80,6 @@ This document outlines the complete functionality plan for the VibeQA platform, 
 - **Feedback Detail View**
   - Full screenshot with annotations
   - Voice note player
-  - Video replay (if available)
   - Console logs viewer
   - Network requests log
   - Browser/OS information

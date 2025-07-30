@@ -160,7 +160,6 @@ This roadmap outlines the development plan for VibeQA, consolidating the origina
 **Goal**: Scale the platform and add enterprise features
 
 ### Advanced Features
-- [ ] Video feedback (Loom SDK)
 - [ ] Custom branding options
 - [ ] White-label support
 - [ ] SSO/SAML integration

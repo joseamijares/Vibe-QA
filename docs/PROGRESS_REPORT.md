@@ -209,7 +209,6 @@ The VibeQA platform has been successfully developed with core features including
 ### Low Priority
 
 7. **Advanced Features**
-   - [ ] Video recording (Loom SDK integration)
    - [ ] Custom branding for widget
    - [ ] White-label options
    - [ ] API SDK for developers

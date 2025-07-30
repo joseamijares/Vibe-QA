@@ -102,7 +102,6 @@ After running the SQL script, create these storage buckets:
    - Allowed MIME types: 
      - `image/*` (screenshots)
      - `audio/*` (voice recordings)
-     - `video/*` (future video support)
 
 3. **Create `organization-assets` bucket**
    - Name: `organization-assets`

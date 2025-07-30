@@ -1,11 +1,11 @@
 import { screenshotCapture, ScreenshotOptions } from './screenshot';
 
 export interface MediaAttachment {
-  type: 'screenshot' | 'voice' | 'video';
+  type: 'screenshot' | 'voice';
   blob: Blob;
   filename: string;
   size: number;
-  duration?: number; // For audio/video
+  duration?: number; // For audio
   thumbnail?: string; // Base64 thumbnail for preview
 }
 
@@ -119,11 +119,6 @@ export class MediaManager {
       console.error('[VibeQA] Voice capture error:', error);
       throw error;
     }
-  }
-
-  async captureVideo(): Promise<MediaAttachment> {
-    // For now, we'll show a placeholder for Loom integration
-    throw new Error('Video recording will be implemented with Loom SDK integration');
   }
 
   private addAttachment(attachment: MediaAttachment): void {

@@ -127,7 +127,6 @@ The Edge Function allows all origins by default. Domain restrictions are enforce
 - Allowed formats:
   - Screenshots: PNG, JPEG, GIF, WebP
   - Voice: WebM, MP4, OGG, WAV, MP3
-  - Video: MP4, WebM, OGG
 
 ## Deployment
 

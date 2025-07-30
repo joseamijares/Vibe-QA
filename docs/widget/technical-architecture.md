@@ -100,7 +100,6 @@ Handles all media capture functionality with a unified interface.
 class MediaManager {
   async captureScreenshot(options?: ScreenshotOptions): Promise<MediaAttachment>;
   async captureVoice(): Promise<MediaAttachment>;
-  async captureVideo(): Promise<MediaAttachment>;
 }
 ```
 

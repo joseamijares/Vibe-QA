@@ -101,14 +101,12 @@ serve(async (req) => {
       // Extract media files
       for (const [key, value] of formData.entries()) {
         if (value instanceof File && key !== 'data') {
-          let type: 'screenshot' | 'voice' | 'video' = 'screenshot';
+          let type: 'screenshot' | 'voice' = 'screenshot';
           
           if (key.startsWith('screenshot')) {
             type = 'screenshot';
           } else if (key.startsWith('recording')) {
             type = 'voice';
-          } else if (key.startsWith('video')) {
-            type = 'video';
           }
 
           // Validate file size (10MB limit)

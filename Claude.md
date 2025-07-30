@@ -10,7 +10,7 @@ This is an MVP - we prioritize speed while maintaining quality through automated
 
 VibeQA provides:
 - Embeddable feedback widget for any web application
-- Multi-format feedback support (text, voice, screenshot, video)
+- Multi-format feedback support (text, voice, screenshot)
 - Multi-tenant organization architecture
 - Subscription-based billing
 - Real-time feedback notifications
@@ -22,7 +22,7 @@ VibeQA provides:
 - **Backend**: Supabase (Auth, Database, Storage, Realtime)
 - **Widget**: Shadow DOM, html2canvas, WebRTC
 - **Payments**: Stripe/Paddle integration
-- **Media**: Supabase Storage, Loom SDK
+- **Media**: Supabase Storage
 
 ## Project Structure
 
@@ -176,7 +176,6 @@ Example embed code:
 
 - **Screenshots**: html2canvas → Supabase Storage
 - **Voice**: MediaRecorder API → WebM → Supabase Storage
-- **Video**: Loom SDK integration
 - All media uses signed URLs for secure access
 
 ## Development Workflow
@@ -331,7 +330,7 @@ Claude Code includes specialized agents that should be used proactively during d
 
 ### What's Missing
 - ❌ Payment integration (Stripe)
-- ❌ Voice and video feedback in dashboard (widget supports voice)
+- ❌ Voice feedback display in dashboard (widget supports voice)
 - ❌ Real-time notifications
 - ❌ Analytics and reporting dashboard
 - ❌ Settings page implementation

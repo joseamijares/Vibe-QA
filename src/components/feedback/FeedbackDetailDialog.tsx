@@ -23,7 +23,6 @@ import {
   Globe,
   Monitor,
   Download,
-  Video,
   Mic,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -220,16 +219,13 @@ export function FeedbackDetailDialog({
       );
     }
 
-    const MediaIcon = media.type === 'video' ? Video : Mic;
     return (
       <div
         className="w-full h-32 bg-gray-100 rounded flex flex-col items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
         onClick={() => setSelectedMedia(media)}
       >
-        <MediaIcon className="h-8 w-8 text-gray-500 mb-2" />
-        <span className="text-sm text-gray-600">
-          {media.type === 'video' ? 'Video' : 'Audio'} Recording
-        </span>
+        <Mic className="h-8 w-8 text-gray-500 mb-2" />
+        <span className="text-sm text-gray-600">Audio Recording</span>
         {media.duration && <span className="text-xs text-gray-500">{media.duration}s</span>}
       </div>
     );
@@ -462,8 +458,6 @@ export function FeedbackDetailDialog({
                   alt="Screenshot"
                   className="max-w-full max-h-[70vh] object-contain"
                 />
-              ) : selectedMedia.type === 'video' ? (
-                <video src={selectedMedia.url} controls className="max-w-full max-h-[70vh]" />
               ) : (
                 <audio src={selectedMedia.url} controls className="w-full" />
               )}
