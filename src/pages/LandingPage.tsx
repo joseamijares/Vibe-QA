@@ -23,6 +23,7 @@ import {
 import { HeroMockup, DashboardMockup, FeatureMockup } from '@/components/Mockups';
 import { AnimatedBackground, DataVisualization } from '@/components/AnimatedBackground';
 import { useEffect, useState } from 'react';
+import logoSvg from '@/assets/vibe-code-logo.svg';
 
 export function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
@@ -41,7 +42,7 @@ export function LandingPage() {
           <nav className="glass-modern-light rounded-2xl px-8 py-4 flex items-center justify-between">
             <div className="flex items-center space-x-12">
               <Link href="/" className="flex items-center space-x-2">
-                <img src="/src/assets/vibe-code-logo.svg" alt="VibeQA" className="h-9" />
+                <img src={logoSvg} alt="VibeQA" className="h-9" />
               </Link>
               <div className="hidden md:flex items-center space-x-8">
                 <a
@@ -799,7 +800,7 @@ export function LandingPage() {
           <div className="glass-modern-light rounded-3xl p-10">
             <div className="grid md:grid-cols-4 gap-8 mb-8">
               <div>
-                <img src="/src/assets/vibe-code-logo.svg" alt="VibeQA" className="h-10 mb-4" />
+                <img src={logoSvg} alt="VibeQA" className="h-10 mb-4" />
                 <p className="text-sm text-gray-600 mb-6">
                   QA feedback that developers love. Made with care for modern teams.
                 </p>

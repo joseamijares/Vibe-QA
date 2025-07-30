@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckCircle, XCircle, UserPlus, AlertCircle } from 'lucide-react';
 import { Invitation, Organization } from '@/types/database.types';
+import logoSvg from '@/assets/vibe-code-logo.svg';
 
 export function AcceptInvitationPage() {
   const [location, navigate] = useLocation();
@@ -148,7 +149,7 @@ export function AcceptInvitationPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#094765] via-[#3387a7] to-[#156c8b] flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8">
         <div className="text-center mb-6">
-          <img src="/src/assets/vibe-code-logo.svg" alt="VibeQA" className="h-12 mx-auto mb-4" />
+          <img src={logoSvg} alt="VibeQA" className="h-12 mx-auto mb-4" />
 
           {error ? (
             <>
