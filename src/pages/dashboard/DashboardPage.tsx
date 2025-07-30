@@ -266,7 +266,9 @@ export function DashboardPage() {
                         </div>
                         <p className="text-sm text-gray-900 line-clamp-2">{feedback.description}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {formatRelativeTime(feedback.created_at)}
+                          {feedback.created_at
+                            ? formatRelativeTime(feedback.created_at)
+                            : 'Unknown'}
                         </p>
                       </div>
                       <span

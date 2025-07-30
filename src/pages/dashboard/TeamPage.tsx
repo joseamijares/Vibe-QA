@@ -412,7 +412,9 @@ export function TeamPage() {
                     <p className="font-medium text-gray-900">{invitation.email}</p>
                     <p className="text-sm text-gray-500">
                       Invited as {invitation.role} • Expires{' '}
-                      {new Date(invitation.expires_at).toLocaleDateString()}
+                      {invitation.expires_at
+                        ? new Date(invitation.expires_at).toLocaleDateString()
+                        : 'Never'}
                     </p>
                   </div>
                 </div>

@@ -293,9 +293,11 @@ export function FeedbackDetailDialog({
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-medium">{comment.user.email}</span>
                           <span className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(comment.created_at), {
-                              addSuffix: true,
-                            })}
+                            {comment.created_at
+                              ? formatDistanceToNow(new Date(comment.created_at), {
+                                  addSuffix: true,
+                                })
+                              : 'Unknown'}
                           </span>
                         </div>
                         <p className="text-sm">{comment.content}</p>
@@ -337,7 +339,9 @@ export function FeedbackDetailDialog({
                 <div>
                   <Label className="text-xs text-muted-foreground">Submitted</Label>
                   <p className="text-sm font-medium">
-                    {format(new Date(feedback.created_at), 'MMM d, yyyy h:mm a')}
+                    {feedback.created_at
+                      ? format(new Date(feedback.created_at), 'MMM d, yyyy h:mm a')
+                      : 'Unknown'}
                   </p>
                 </div>
 
@@ -427,8 +431,8 @@ export function FeedbackDetailDialog({
                     <SelectContent>
                       <SelectItem value="">Unassigned</SelectItem>
                       {teamMembers.map((member) => (
-                        <SelectItem key={member.user_id} value={member.user_id}>
-                          User {member.user_id.substring(0, 8)}...
+                        <SelectItem key={member.user_id || member.id} value={member.user_id || ''}>
+                          User {member.user_id ? member.user_id.substring(0, 8) : 'Unknown'}...
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -25,7 +25,7 @@ export function PricingCard({ plan, currentPlan, isLoading, onSelect }: PricingC
         !isCurrentPlan && 'hover:shadow-lg'
       )}
     >
-      {plan.id === 'pro' && (
+      {plan.id === 'full' && (
         <div className="absolute top-0 right-0">
           <Badge className="rounded-none rounded-bl-lg">Most Popular</Badge>
         </div>

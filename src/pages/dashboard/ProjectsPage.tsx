@@ -232,7 +232,9 @@ export function ProjectsPage() {
                             </a>
                           </Link>
                           <button
-                            onClick={() => toggleProjectStatus(project.id, project.is_active)}
+                            onClick={() =>
+                              toggleProjectStatus(project.id, project.is_active ?? true)
+                            }
                             className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           >
                             <Power className="h-4 w-4" />

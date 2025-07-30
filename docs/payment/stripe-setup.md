@@ -16,16 +16,16 @@ This guide walks through setting up Stripe payments for VibeQA.
 2. Navigate to **Products** → **Add product**
 3. Create the following products:
 
-#### Starter Plan
-- **Name**: VibeQA Starter
+#### Basic Plan
+- **Name**: VibeQA Basic
 - **Description**: Perfect for small teams
-- **Pricing**: $9.00/month
+- **Pricing**: $5.00/month
 - **Price ID**: Copy this for your Edge Function
 
-#### Pro Plan
-- **Name**: VibeQA Pro
+#### Full Plan
+- **Name**: VibeQA Full
 - **Description**: For growing teams
-- **Pricing**: $19.00/month
+- **Pricing**: $14.00/month
 - **Price ID**: Copy this for your Edge Function
 
 ### Configure Webhook
@@ -65,8 +65,8 @@ Edit `/supabase/functions/create-checkout-session/index.ts`:
 ```typescript
 function getPriceId(planId: string): string | null {
   const priceIds: Record<string, string> = {
-    starter: 'price_1ABC...', // Replace with your actual Starter price ID
-    pro: 'price_1XYZ...', // Replace with your actual Pro price ID
+    basic: 'price_1ABC...', // Replace with your actual Basic price ID
+    full: 'price_1XYZ...', // Replace with your actual Full price ID
   };
   return priceIds[planId] || null;
 }

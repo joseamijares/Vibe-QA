@@ -116,8 +116,8 @@ serve(async (req) => {
 function getPriceId(planId: string): string | null {
   // TODO: Replace with actual Stripe price IDs after creating products in Stripe Dashboard
   const priceIds: Record<string, string> = {
-    starter: 'price_1QqXXXPPLO371ouZXXXXXXXX', // Replace with actual price ID
-    pro: 'price_1QqYYYPPLO371ouZYYYYYYYY', // Replace with actual price ID
+    basic: 'price_1QqXXXPPLO371ouZXXXXXXXX', // Replace with actual Basic plan price ID
+    full: 'price_1QqYYYPPLO371ouZYYYYYYYY', // Replace with actual Full plan price ID
   };
   return priceIds[planId] || null;
 }

@@ -29,10 +29,10 @@ export const SUBSCRIPTION_PLANS = {
       storageGB: 1,
     },
   },
-  starter: {
-    id: 'starter',
-    name: 'Starter',
-    price: 9,
+  basic: {
+    id: 'basic',
+    name: 'Basic',
+    price: 5,
     priceId: '', // To be filled with Stripe price ID
     features: [
       '3 projects',
@@ -50,10 +50,10 @@ export const SUBSCRIPTION_PLANS = {
       storageGB: 5,
     },
   },
-  pro: {
-    id: 'pro',
-    name: 'Pro',
-    price: 19,
+  full: {
+    id: 'full',
+    name: 'Full',
+    price: 14,
     priceId: '', // To be filled with Stripe price ID
     features: [
       '10 projects',

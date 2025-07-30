@@ -349,9 +349,11 @@ export function FeedbackPage() {
                           <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {formatDistanceToNow(new Date(feedback.created_at), {
-                                addSuffix: true,
-                              })}
+                              {feedback.created_at
+                                ? formatDistanceToNow(new Date(feedback.created_at), {
+                                    addSuffix: true,
+                                  })
+                                : 'Unknown'}
                             </span>
                             <span className="flex items-center gap-1">
                               <User className="h-3 w-3" />
