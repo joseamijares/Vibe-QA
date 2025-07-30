@@ -73,11 +73,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Logo and org */}
           <div className="flex h-16 items-center justify-between px-4 border-b">
             <Link href="/dashboard">
-              <img
-                src={logoSvg}
-                alt="VibeQA"
-                className="h-8 cursor-pointer"
-              />
+              <img src={logoSvg} alt="VibeQA" className="h-8 cursor-pointer" />
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
