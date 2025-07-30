@@ -2,6 +2,8 @@ import { useState, useEffect, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+export { useAsyncError } from '@/hooks/useAsyncError';
+
 interface AsyncErrorBoundaryProps {
   children: ReactNode;
   fallback?: (error: Error, retry: () => void) => ReactNode;
@@ -146,15 +148,4 @@ function AsyncErrorFallback({ error, retry }: AsyncErrorFallbackProps) {
       </div>
     </div>
   );
-}
-
-// Hook to manually trigger async errors
-export function useAsyncError() {
-  const [, setError] = useState();
-
-  return (error: Error) => {
-    setError(() => {
-      throw error;
-    });
-  };
 }

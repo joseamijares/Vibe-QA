@@ -31,7 +31,6 @@ export function useOrganization() {
 
         if (membershipError || !membershipData) {
           // User has no organization yet - this can happen for manually created users
-          console.log('No organization found for user, may need to run setup');
           setError(new Error('No organization found. Please contact support.'));
           setLoading(false);
           return;
@@ -47,13 +46,11 @@ export function useOrganization() {
           .single();
 
         if (orgError) {
-          console.error('Error fetching organization details:', orgError);
           throw orgError;
         }
 
         setOrganization(orgData);
       } catch (err) {
-        console.error('Error fetching organization:', err);
         setError(err as Error);
       } finally {
         setLoading(false);

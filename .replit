@@ -7,7 +7,7 @@ run = ["sh", "-c", "npm run build && npm run preview"]
 deploymentTarget = "static"
 
 [[ports]]
-localPort = 5173
+localPort = 4173
 externalPort = 80
 exposeLocalhost = true
 

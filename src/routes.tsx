@@ -39,6 +39,9 @@ const TeamPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('@/pages/dashboard/SettingsPage').then((m) => ({ default: m.SettingsPage }))
 );
+const BillingPage = lazy(() =>
+  import('@/pages/settings/BillingPage').then((m) => ({ default: m.BillingPage }))
+);
 
 // Loading component
 const PageLoader = () => (
@@ -108,6 +111,16 @@ const ProtectedSettings = () => (
   </ProtectedRoute>
 );
 
+const ProtectedBilling = () => (
+  <ProtectedRoute requiredRole={['owner']}>
+    <Suspense fallback={<PageLoader />}>
+      <DashboardLayout>
+        <BillingPage />
+      </DashboardLayout>
+    </Suspense>
+  </ProtectedRoute>
+);
+
 export function Routes() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -126,6 +139,7 @@ export function Routes() {
         <Route path="/dashboard/feedback" component={ProtectedFeedback} />
         <Route path="/dashboard/team" component={ProtectedTeam} />
         <Route path="/dashboard/settings" component={ProtectedSettings} />
+        <Route path="/dashboard/settings/billing" component={ProtectedBilling} />
       </Switch>
     </Suspense>
   );

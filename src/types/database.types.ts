@@ -1,387 +1,754 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
+  // Allows to automatically instanciate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '12.2.12 (cd3cf9e)';
+  };
   public: {
     Tables: {
-      organizations: {
+      activity_logs: {
         Row: {
+          action: string;
+          created_at: string | null;
           id: string;
-          name: string;
-          slug: string;
-          logo_url: string | null;
-          settings: Json;
-          created_at: string;
-          updated_at: string;
+          metadata: Json | null;
+          organization_id: string | null;
+          resource_id: string | null;
+          resource_type: string;
+          user_id: string | null;
         };
         Insert: {
+          action: string;
+          created_at?: string | null;
           id?: string;
-          name: string;
-          slug: string;
-          logo_url?: string | null;
-          settings?: Json;
-          created_at?: string;
-          updated_at?: string;
+          metadata?: Json | null;
+          organization_id?: string | null;
+          resource_id?: string | null;
+          resource_type: string;
+          user_id?: string | null;
         };
         Update: {
+          action?: string;
+          created_at?: string | null;
           id?: string;
-          name?: string;
-          slug?: string;
-          logo_url?: string | null;
-          settings?: Json;
-          created_at?: string;
-          updated_at?: string;
+          metadata?: Json | null;
+          organization_id?: string | null;
+          resource_id?: string | null;
+          resource_type?: string;
+          user_id?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'activity_logs_organization_id_fkey';
+            columns: ['organization_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
       };
-      projects: {
+      comments: {
         Row: {
+          content: string;
+          created_at: string | null;
+          feedback_id: string | null;
           id: string;
-          organization_id: string;
-          name: string;
-          slug: string;
-          description: string | null;
-          api_key: string;
-          settings: Json;
-          allowed_domains: string[];
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
+          is_internal: boolean | null;
+          updated_at: string | null;
+          user_id: string | null;
         };
         Insert: {
+          content: string;
+          created_at?: string | null;
+          feedback_id?: string | null;
           id?: string;
-          organization_id: string;
-          name: string;
-          slug: string;
-          description?: string | null;
-          api_key?: string;
-          settings?: Json;
-          allowed_domains?: string[];
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
+          is_internal?: boolean | null;
+          updated_at?: string | null;
+          user_id?: string | null;
         };
         Update: {
+          content?: string;
+          created_at?: string | null;
+          feedback_id?: string | null;
           id?: string;
-          organization_id?: string;
-          name?: string;
-          slug?: string;
-          description?: string | null;
-          api_key?: string;
-          settings?: Json;
-          allowed_domains?: string[];
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
+          is_internal?: boolean | null;
+          updated_at?: string | null;
+          user_id?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'comments_feedback_id_fkey';
+            columns: ['feedback_id'];
+            isOneToOne: false;
+            referencedRelation: 'feedback';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      email_queue: {
+        Row: {
+          attempts: number | null;
+          created_at: string | null;
+          error: string | null;
+          from_email: string;
+          from_name: string | null;
+          id: string;
+          params: Json | null;
+          scheduled_at: string | null;
+          sent_at: string | null;
+          status: string | null;
+          subject: string;
+          template: string | null;
+          to_email: string;
+          to_name: string | null;
+        };
+        Insert: {
+          attempts?: number | null;
+          created_at?: string | null;
+          error?: string | null;
+          from_email?: string;
+          from_name?: string | null;
+          id?: string;
+          params?: Json | null;
+          scheduled_at?: string | null;
+          sent_at?: string | null;
+          status?: string | null;
+          subject: string;
+          template?: string | null;
+          to_email: string;
+          to_name?: string | null;
+        };
+        Update: {
+          attempts?: number | null;
+          created_at?: string | null;
+          error?: string | null;
+          from_email?: string;
+          from_name?: string | null;
+          id?: string;
+          params?: Json | null;
+          scheduled_at?: string | null;
+          sent_at?: string | null;
+          status?: string | null;
+          subject?: string;
+          template?: string | null;
+          to_email?: string;
+          to_name?: string | null;
+        };
+        Relationships: [];
+      };
+      email_templates: {
+        Row: {
+          created_at: string | null;
+          html_content: string;
+          id: string;
+          name: string;
+          subject: string;
+          text_content: string | null;
+          updated_at: string | null;
+          variables: Json | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          html_content: string;
+          id?: string;
+          name: string;
+          subject: string;
+          text_content?: string | null;
+          updated_at?: string | null;
+          variables?: Json | null;
+        };
+        Update: {
+          created_at?: string | null;
+          html_content?: string;
+          id?: string;
+          name?: string;
+          subject?: string;
+          text_content?: string | null;
+          updated_at?: string | null;
+          variables?: Json | null;
+        };
+        Relationships: [];
+      };
+      feedback: {
+        Row: {
+          assigned_to: string | null;
+          browser_info: Json | null;
+          created_at: string | null;
+          custom_data: Json | null;
+          description: string;
+          device_info: Json | null;
+          id: string;
+          metadata: Json | null;
+          page_url: string | null;
+          priority: Database['public']['Enums']['feedback_priority'];
+          project_id: string | null;
+          reporter_email: string | null;
+          reporter_name: string | null;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          status: Database['public']['Enums']['feedback_status'];
+          title: string | null;
+          type: Database['public']['Enums']['feedback_type'];
+          updated_at: string | null;
+          user_agent: string | null;
+        };
+        Insert: {
+          assigned_to?: string | null;
+          browser_info?: Json | null;
+          created_at?: string | null;
+          custom_data?: Json | null;
+          description: string;
+          device_info?: Json | null;
+          id?: string;
+          metadata?: Json | null;
+          page_url?: string | null;
+          priority?: Database['public']['Enums']['feedback_priority'];
+          project_id?: string | null;
+          reporter_email?: string | null;
+          reporter_name?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          status?: Database['public']['Enums']['feedback_status'];
+          title?: string | null;
+          type?: Database['public']['Enums']['feedback_type'];
+          updated_at?: string | null;
+          user_agent?: string | null;
+        };
+        Update: {
+          assigned_to?: string | null;
+          browser_info?: Json | null;
+          created_at?: string | null;
+          custom_data?: Json | null;
+          description?: string;
+          device_info?: Json | null;
+          id?: string;
+          metadata?: Json | null;
+          page_url?: string | null;
+          priority?: Database['public']['Enums']['feedback_priority'];
+          project_id?: string | null;
+          reporter_email?: string | null;
+          reporter_name?: string | null;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          status?: Database['public']['Enums']['feedback_status'];
+          title?: string | null;
+          type?: Database['public']['Enums']['feedback_type'];
+          updated_at?: string | null;
+          user_agent?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'feedback_project_id_fkey';
+            columns: ['project_id'];
+            isOneToOne: false;
+            referencedRelation: 'projects';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      feedback_media: {
+        Row: {
+          created_at: string | null;
+          duration: number | null;
+          feedback_id: string | null;
+          file_size: number | null;
+          id: string;
+          metadata: Json | null;
+          thumbnail_url: string | null;
+          type: string;
+          url: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          duration?: number | null;
+          feedback_id?: string | null;
+          file_size?: number | null;
+          id?: string;
+          metadata?: Json | null;
+          thumbnail_url?: string | null;
+          type: string;
+          url: string;
+        };
+        Update: {
+          created_at?: string | null;
+          duration?: number | null;
+          feedback_id?: string | null;
+          file_size?: number | null;
+          id?: string;
+          metadata?: Json | null;
+          thumbnail_url?: string | null;
+          type?: string;
+          url?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'feedback_media_feedback_id_fkey';
+            columns: ['feedback_id'];
+            isOneToOne: false;
+            referencedRelation: 'feedback';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      invitations: {
+        Row: {
+          accepted_at: string | null;
+          created_at: string | null;
+          email: string;
+          expires_at: string | null;
+          id: string;
+          invited_by: string | null;
+          organization_id: string | null;
+          role: Database['public']['Enums']['user_role'];
+        };
+        Insert: {
+          accepted_at?: string | null;
+          created_at?: string | null;
+          email: string;
+          expires_at?: string | null;
+          id?: string;
+          invited_by?: string | null;
+          organization_id?: string | null;
+          role?: Database['public']['Enums']['user_role'];
+        };
+        Update: {
+          accepted_at?: string | null;
+          created_at?: string | null;
+          email?: string;
+          expires_at?: string | null;
+          id?: string;
+          invited_by?: string | null;
+          organization_id?: string | null;
+          role?: Database['public']['Enums']['user_role'];
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invitations_organization_id_fkey';
+            columns: ['organization_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      invoices: {
+        Row: {
+          amount_due: number | null;
+          amount_paid: number | null;
+          created_at: string | null;
+          currency: string | null;
+          hosted_invoice_url: string | null;
+          id: string;
+          invoice_pdf: string | null;
+          organization_id: string;
+          period_end: string | null;
+          period_start: string | null;
+          status: string;
+          stripe_invoice_id: string;
+        };
+        Insert: {
+          amount_due?: number | null;
+          amount_paid?: number | null;
+          created_at?: string | null;
+          currency?: string | null;
+          hosted_invoice_url?: string | null;
+          id?: string;
+          invoice_pdf?: string | null;
+          organization_id: string;
+          period_end?: string | null;
+          period_start?: string | null;
+          status: string;
+          stripe_invoice_id: string;
+        };
+        Update: {
+          amount_due?: number | null;
+          amount_paid?: number | null;
+          created_at?: string | null;
+          currency?: string | null;
+          hosted_invoice_url?: string | null;
+          id?: string;
+          invoice_pdf?: string | null;
+          organization_id?: string;
+          period_end?: string | null;
+          period_start?: string | null;
+          status?: string;
+          stripe_invoice_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'invoices_organization_id_fkey';
+            columns: ['organization_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       organization_members: {
         Row: {
           id: string;
-          organization_id: string;
-          user_id: string;
+          joined_at: string | null;
+          organization_id: string | null;
           role: Database['public']['Enums']['user_role'];
-          joined_at: string;
-          email_notifications: Json;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          user_id: string;
-          role?: Database['public']['Enums']['user_role'];
-          joined_at?: string;
-          email_notifications?: Json;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          user_id?: string;
-          role?: Database['public']['Enums']['user_role'];
-          joined_at?: string;
-          email_notifications?: Json;
-        };
-      };
-      feedback: {
-        Row: {
-          id: string;
-          project_id: string;
-          type: Database['public']['Enums']['feedback_type'];
-          status: Database['public']['Enums']['feedback_status'];
-          priority: Database['public']['Enums']['feedback_priority'];
-          title: string | null;
-          description: string;
-          reporter_email: string | null;
-          reporter_name: string | null;
-          page_url: string | null;
-          user_agent: string | null;
-          browser_info: Json | null;
-          device_info: Json | null;
-          custom_data: Json | null;
-          metadata: Json;
-          assigned_to: string | null;
-          resolved_at: string | null;
-          resolved_by: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          project_id: string;
-          type?: Database['public']['Enums']['feedback_type'];
-          status?: Database['public']['Enums']['feedback_status'];
-          priority?: Database['public']['Enums']['feedback_priority'];
-          title?: string | null;
-          description: string;
-          reporter_email?: string | null;
-          reporter_name?: string | null;
-          page_url?: string | null;
-          user_agent?: string | null;
-          browser_info?: Json | null;
-          device_info?: Json | null;
-          custom_data?: Json | null;
-          metadata?: Json;
-          assigned_to?: string | null;
-          resolved_at?: string | null;
-          resolved_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          project_id?: string;
-          type?: Database['public']['Enums']['feedback_type'];
-          status?: Database['public']['Enums']['feedback_status'];
-          priority?: Database['public']['Enums']['feedback_priority'];
-          title?: string | null;
-          description?: string;
-          reporter_email?: string | null;
-          reporter_name?: string | null;
-          page_url?: string | null;
-          user_agent?: string | null;
-          browser_info?: Json | null;
-          device_info?: Json | null;
-          custom_data?: Json | null;
-          metadata?: Json;
-          assigned_to?: string | null;
-          resolved_at?: string | null;
-          resolved_by?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      feedback_media: {
-        Row: {
-          id: string;
-          feedback_id: string;
-          type: 'screenshot' | 'video' | 'audio';
-          url: string;
-          thumbnail_url: string | null;
-          file_size: number | null;
-          duration: number | null;
-          metadata: Json;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          feedback_id: string;
-          type: 'screenshot' | 'video' | 'audio';
-          url: string;
-          thumbnail_url?: string | null;
-          file_size?: number | null;
-          duration?: number | null;
-          metadata?: Json;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          feedback_id?: string;
-          type?: 'screenshot' | 'video' | 'audio';
-          url?: string;
-          thumbnail_url?: string | null;
-          file_size?: number | null;
-          duration?: number | null;
-          metadata?: Json;
-          created_at?: string;
-        };
-      };
-      comments: {
-        Row: {
-          id: string;
-          feedback_id: string;
-          user_id: string;
-          content: string;
-          is_internal: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          feedback_id: string;
-          user_id: string;
-          content: string;
-          is_internal?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          feedback_id?: string;
-          user_id?: string;
-          content?: string;
-          is_internal?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      activity_logs: {
-        Row: {
-          id: string;
-          organization_id: string;
           user_id: string | null;
-          action: string;
-          resource_type: string;
-          resource_id: string | null;
-          metadata: Json;
-          created_at: string;
         };
         Insert: {
           id?: string;
-          organization_id: string;
+          joined_at?: string | null;
+          organization_id?: string | null;
+          role?: Database['public']['Enums']['user_role'];
           user_id?: string | null;
-          action: string;
-          resource_type: string;
-          resource_id?: string | null;
-          metadata?: Json;
-          created_at?: string;
         };
         Update: {
           id?: string;
-          organization_id?: string;
+          joined_at?: string | null;
+          organization_id?: string | null;
+          role?: Database['public']['Enums']['user_role'];
           user_id?: string | null;
-          action?: string;
-          resource_type?: string;
-          resource_id?: string | null;
-          metadata?: Json;
-          created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'organization_members_organization_id_fkey';
+            columns: ['organization_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
       };
-      invitations: {
+      organization_subscriptions: {
         Row: {
+          cancel_at: string | null;
+          canceled_at: string | null;
+          created_at: string | null;
+          current_period_end: string | null;
+          current_period_start: string | null;
           id: string;
+          metadata: Json | null;
           organization_id: string;
-          email: string;
-          role: Database['public']['Enums']['user_role'];
-          invited_by: string | null;
-          accepted_at: string | null;
-          expires_at: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          organization_id: string;
-          email: string;
-          role?: Database['public']['Enums']['user_role'];
-          invited_by?: string | null;
-          accepted_at?: string | null;
-          expires_at?: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          organization_id?: string;
-          email?: string;
-          role?: Database['public']['Enums']['user_role'];
-          invited_by?: string | null;
-          accepted_at?: string | null;
-          expires_at?: string;
-          created_at?: string;
-        };
-      };
-      email_queue: {
-        Row: {
-          id: string;
-          to_email: string;
-          to_name: string | null;
-          from_email: string;
-          from_name: string;
-          subject: string;
-          template: string;
-          params: Json;
+          plan_id: string | null;
           status: string;
-          attempts: number;
-          max_attempts: number;
-          error: string | null;
-          created_at: string;
-          processed_at: string | null;
-          sent_at: string | null;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          trial_end: string | null;
+          updated_at: string | null;
         };
         Insert: {
+          cancel_at?: string | null;
+          canceled_at?: string | null;
+          created_at?: string | null;
+          current_period_end?: string | null;
+          current_period_start?: string | null;
           id?: string;
-          to_email: string;
-          to_name?: string | null;
-          from_email?: string;
-          from_name?: string;
-          subject: string;
-          template: string;
-          params: Json;
+          metadata?: Json | null;
+          organization_id: string;
+          plan_id?: string | null;
           status?: string;
-          attempts?: number;
-          max_attempts?: number;
-          error?: string | null;
-          created_at?: string;
-          processed_at?: string | null;
-          sent_at?: string | null;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          trial_end?: string | null;
+          updated_at?: string | null;
         };
         Update: {
+          cancel_at?: string | null;
+          canceled_at?: string | null;
+          created_at?: string | null;
+          current_period_end?: string | null;
+          current_period_start?: string | null;
           id?: string;
-          to_email?: string;
-          to_name?: string | null;
-          from_email?: string;
-          from_name?: string;
-          subject?: string;
-          template?: string;
-          params?: Json;
+          metadata?: Json | null;
+          organization_id?: string;
+          plan_id?: string | null;
           status?: string;
-          attempts?: number;
-          max_attempts?: number;
-          error?: string | null;
-          created_at?: string;
-          processed_at?: string | null;
-          sent_at?: string | null;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          trial_end?: string | null;
+          updated_at?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'organization_subscriptions_organization_id_fkey';
+            columns: ['organization_id'];
+            isOneToOne: true;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'organization_subscriptions_plan_id_fkey';
+            columns: ['plan_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscription_plans';
+            referencedColumns: ['id'];
+          },
+        ];
       };
-      email_templates: {
+      organization_usage: {
         Row: {
+          api_calls: number | null;
+          created_at: string | null;
+          feedback_count: number | null;
           id: string;
-          name: string;
-          subject: string;
-          html_template: string;
-          text_template: string | null;
-          variables: Json;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
+          month: string;
+          organization_id: string;
+          storage_bytes: number | null;
+          updated_at: string | null;
         };
         Insert: {
+          api_calls?: number | null;
+          created_at?: string | null;
+          feedback_count?: number | null;
           id?: string;
-          name: string;
-          subject: string;
-          html_template: string;
-          text_template?: string | null;
-          variables?: Json;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
+          month: string;
+          organization_id: string;
+          storage_bytes?: number | null;
+          updated_at?: string | null;
         };
         Update: {
+          api_calls?: number | null;
+          created_at?: string | null;
+          feedback_count?: number | null;
           id?: string;
-          name?: string;
-          subject?: string;
-          html_template?: string;
-          text_template?: string | null;
-          variables?: Json;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
+          month?: string;
+          organization_id?: string;
+          storage_bytes?: number | null;
+          updated_at?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'organization_usage_organization_id_fkey';
+            columns: ['organization_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      organizations: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          logo_url: string | null;
+          name: string;
+          settings: Json | null;
+          slug: string;
+          subscription_plan_id: string | null;
+          subscription_status: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          logo_url?: string | null;
+          name: string;
+          settings?: Json | null;
+          slug: string;
+          subscription_plan_id?: string | null;
+          subscription_status?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          logo_url?: string | null;
+          name?: string;
+          settings?: Json | null;
+          slug?: string;
+          subscription_plan_id?: string | null;
+          subscription_status?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'organizations_subscription_plan_id_fkey';
+            columns: ['subscription_plan_id'];
+            isOneToOne: false;
+            referencedRelation: 'subscription_plans';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      payment_methods: {
+        Row: {
+          brand: string | null;
+          created_at: string | null;
+          exp_month: number | null;
+          exp_year: number | null;
+          id: string;
+          is_default: boolean | null;
+          last4: string | null;
+          organization_id: string;
+          stripe_payment_method_id: string;
+          type: string;
+        };
+        Insert: {
+          brand?: string | null;
+          created_at?: string | null;
+          exp_month?: number | null;
+          exp_year?: number | null;
+          id?: string;
+          is_default?: boolean | null;
+          last4?: string | null;
+          organization_id: string;
+          stripe_payment_method_id: string;
+          type: string;
+        };
+        Update: {
+          brand?: string | null;
+          created_at?: string | null;
+          exp_month?: number | null;
+          exp_year?: number | null;
+          id?: string;
+          is_default?: boolean | null;
+          last4?: string | null;
+          organization_id?: string;
+          stripe_payment_method_id?: string;
+          type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'payment_methods_organization_id_fkey';
+            columns: ['organization_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      projects: {
+        Row: {
+          allowed_domains: string[] | null;
+          api_key: string;
+          created_at: string | null;
+          description: string | null;
+          id: string;
+          is_active: boolean | null;
+          name: string;
+          organization_id: string | null;
+          settings: Json | null;
+          slug: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          allowed_domains?: string[] | null;
+          api_key: string;
+          created_at?: string | null;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          name: string;
+          organization_id?: string | null;
+          settings?: Json | null;
+          slug: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          allowed_domains?: string[] | null;
+          api_key?: string;
+          created_at?: string | null;
+          description?: string | null;
+          id?: string;
+          is_active?: boolean | null;
+          name?: string;
+          organization_id?: string | null;
+          settings?: Json | null;
+          slug?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'projects_organization_id_fkey';
+            columns: ['organization_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      subscription_plans: {
+        Row: {
+          created_at: string | null;
+          description: string | null;
+          features: Json | null;
+          id: string;
+          is_active: boolean | null;
+          limits: Json | null;
+          name: string;
+          price_monthly: number | null;
+          price_yearly: number | null;
+          stripe_price_id_monthly: string | null;
+          stripe_price_id_yearly: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          description?: string | null;
+          features?: Json | null;
+          id: string;
+          is_active?: boolean | null;
+          limits?: Json | null;
+          name: string;
+          price_monthly?: number | null;
+          price_yearly?: number | null;
+          stripe_price_id_monthly?: string | null;
+          stripe_price_id_yearly?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          description?: string | null;
+          features?: Json | null;
+          id?: string;
+          is_active?: boolean | null;
+          limits?: Json | null;
+          name?: string;
+          price_monthly?: number | null;
+          price_yearly?: number | null;
+          stripe_price_id_monthly?: string | null;
+          stripe_price_id_yearly?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      widget_versions: {
+        Row: {
+          channel: string;
+          checksum: string | null;
+          created_at: string | null;
+          created_by: string | null;
+          file_path: string;
+          file_size: number | null;
+          id: string;
+          is_latest: boolean | null;
+          release_notes: string | null;
+          version: string;
+        };
+        Insert: {
+          channel?: string;
+          checksum?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          file_path: string;
+          file_size?: number | null;
+          id?: string;
+          is_latest?: boolean | null;
+          release_notes?: string | null;
+          version: string;
+        };
+        Update: {
+          channel?: string;
+          checksum?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          file_path?: string;
+          file_size?: number | null;
+          id?: string;
+          is_latest?: boolean | null;
+          release_notes?: string | null;
+          version?: string;
+        };
+        Relationships: [];
       };
     };
     Views: {
@@ -389,116 +756,165 @@ export type Database = {
     };
     Functions: {
       create_organization_for_user: {
-        Args: {
-          user_id: string;
-          org_name: string;
-          org_slug: string;
-        };
+        Args: { user_id: string; org_name: string; org_slug: string };
         Returns: string;
       };
-      is_organization_member: {
-        Args: {
-          org_id: string;
-          user_id: string;
-        };
-        Returns: boolean;
-      };
-      get_user_role: {
-        Args: {
-          org_id: string;
-          user_id: string;
-        };
-        Returns: Database['public']['Enums']['user_role'];
-      };
-      get_user_organizations: {
-        Args: {
-          user_id: string;
-        };
-        Returns: string[];
-      };
-      cleanup_old_feedback_media: {
+      ensure_all_users_have_organizations: {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
       };
-      get_media_url: {
-        Args: {
-          bucket: string;
-          path: string;
-          expires_in?: number;
-        };
-        Returns: string;
-      };
-      get_organization_members: {
-        Args: {
-          org_id: string;
-        };
-        Returns: {
-          id: string;
-          organization_id: string;
-          user_id: string;
-          role: Database['public']['Enums']['user_role'];
-          joined_at: string;
-          user_email: string;
-          user_metadata: Json;
-        }[];
+      increment_feedback_count: {
+        Args: { org_id: string };
+        Returns: undefined;
       };
     };
     Enums: {
-      user_role: 'owner' | 'admin' | 'member' | 'viewer';
-      feedback_type: 'bug' | 'suggestion' | 'praise' | 'other';
-      feedback_status: 'new' | 'in_progress' | 'resolved' | 'archived';
       feedback_priority: 'low' | 'medium' | 'high' | 'critical';
+      feedback_status: 'new' | 'in_progress' | 'resolved' | 'archived';
+      feedback_type: 'bug' | 'suggestion' | 'praise' | 'other';
+      user_role: 'owner' | 'admin' | 'member' | 'viewer';
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 };
 
-// Helper types
-export type Tables<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Row'];
-export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T];
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>;
 
-// Convenience types
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>];
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
+      Row: infer R;
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema['Tables']
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+      Insert: infer I;
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema['Tables']
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+      Update: infer U;
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema['Enums']
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+    : never;
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema['CompositeTypes']
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+    : never;
+
+export const Constants = {
+  public: {
+    Enums: {
+      feedback_priority: ['low', 'medium', 'high', 'critical'],
+      feedback_status: ['new', 'in_progress', 'resolved', 'archived'],
+      feedback_type: ['bug', 'suggestion', 'praise', 'other'],
+      user_role: ['owner', 'admin', 'member', 'viewer'],
+    },
+  },
+} as const;
+
+// Type exports for backward compatibility
 export type Organization = Tables<'organizations'>;
-export type Project = Tables<'projects'>;
 export type OrganizationMember = Tables<'organization_members'>;
+export type Project = Tables<'projects'>;
 export type Feedback = Tables<'feedback'>;
 export type FeedbackMedia = Tables<'feedback_media'>;
 export type Comment = Tables<'comments'>;
-export type ActivityLog = Tables<'activity_logs'>;
 export type Invitation = Tables<'invitations'>;
-export type EmailQueue = Tables<'email_queue'>;
-export type EmailTemplate = Tables<'email_templates'>;
-
-export type UserRole = Enums<'user_role'>;
-export type FeedbackType = Enums<'feedback_type'>;
-export type FeedbackStatus = Enums<'feedback_status'>;
-export type FeedbackPriority = Enums<'feedback_priority'>;
-
-// Extended types with relations
-export interface OrganizationWithMembers extends Organization {
-  members?: OrganizationMember[];
-}
-
-export interface ProjectWithOrganization extends Project {
-  organization?: Organization;
-}
-
-export interface FeedbackWithDetails extends Feedback {
-  project?: Project;
-  media?: FeedbackMedia[];
-  comments?: Comment[];
-  assigned_user?: {
-    id: string;
-    email: string;
-    full_name?: string;
-  };
-}
-
-export interface CommentWithUser extends Comment {
-  user?: {
-    id: string;
-    email: string;
-    full_name?: string;
-    avatar_url?: string;
-  };
-}
+export type UserRole = Database['public']['Enums']['user_role'];
+export type FeedbackType = Database['public']['Enums']['feedback_type'];
+export type FeedbackStatus = Database['public']['Enums']['feedback_status'];
+export type FeedbackPriority = Database['public']['Enums']['feedback_priority'];

@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   generateSlug,
   generateApiKey,
@@ -26,8 +27,9 @@ interface ProjectFormData {
 
 export function NewProjectPage() {
   const [, navigate] = useLocation();
-  const { organization } = useOrganization();
-  const { canManageProjects } = usePermissions();
+  const { session } = useAuth();
+  const { organization, membership, loading: orgLoading } = useOrganization();
+  const { canManageProjects, role, loading: permLoading } = usePermissions();
   const [isLoading, setIsLoading] = useState(false);
   const [slugPreview, setSlugPreview] = useState('');
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
@@ -51,11 +53,20 @@ export function NewProjectPage() {
 
   // Check if user has permission
   useEffect(() => {
-    if (!canManageProjects) {
+    if (!orgLoading && !permLoading && !canManageProjects) {
       toast.error('You do not have permission to create projects');
       navigate('/dashboard/projects');
     }
-  }, [canManageProjects, navigate]);
+  }, [
+    canManageProjects,
+    navigate,
+    role,
+    organization,
+    membership,
+    orgLoading,
+    permLoading,
+    session,
+  ]);
 
   // Generate slug preview as user types
   useEffect(() => {

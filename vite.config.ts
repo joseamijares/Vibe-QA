@@ -20,5 +20,14 @@ export default defineConfig({
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Project-Key'],
     },
   },
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Project-Key'],
+    },
+  },
   publicDir: 'public',
 })
