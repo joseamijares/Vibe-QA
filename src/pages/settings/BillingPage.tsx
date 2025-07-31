@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useSubscription } from '@/hooks/useSubscription';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useTrialStatus } from '@/hooks/useTrialStatus';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,9 +25,10 @@ export function BillingPage() {
   const { organization } = useOrganization();
   const { subscription, plan, loading: subLoading } = useSubscription();
   const { canManageBilling } = usePermissions();
+  const { isInTrial, daysRemaining } = useTrialStatus();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Handle success/cancel from Stripe
+  // Handle success/cancel from Stripe and plan selection
   useEffect(() => {
     if (searchParams.includes('success=true')) {
       toast.success('Subscription updated successfully!');
@@ -36,7 +38,17 @@ export function BillingPage() {
       toast.info('Subscription update canceled');
       navigate('/dashboard/settings/billing', { replace: true });
     }
-  }, [searchParams, navigate]);
+
+    // Check if a plan was passed in the URL (from paywall modal)
+    const urlParams = new URLSearchParams(searchParams);
+    const planParam = urlParams.get('plan');
+    if (planParam && !subLoading && organization) {
+      // Auto-select the plan
+      handlePlanSelect(planParam);
+      // Clear the plan param
+      navigate('/dashboard/settings/billing', { replace: true });
+    }
+  }, [searchParams, navigate, subLoading, organization]);
 
   // Check permissions
   useEffect(() => {
@@ -104,8 +116,40 @@ export function BillingPage() {
   };
 
   const handleManageSubscription = async () => {
-    // Create portal session for managing existing subscription
-    toast.info('Customer portal coming soon');
+    if (!organization || !session?.access_token) return;
+
+    setIsLoading(true);
+    try {
+      // Call Edge Function to create portal session
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-portal-session`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            organizationId: organization.id,
+            returnUrl: window.location.href,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to create portal session');
+      }
+
+      const { url } = await response.json();
+
+      // Redirect to Stripe Customer Portal
+      window.location.href = url;
+    } catch (error) {
+      console.error('Error creating portal session:', error);
+      toast.error('Failed to open customer portal');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (subLoading) {
@@ -136,13 +180,24 @@ export function BillingPage() {
                 <Badge variant={subscription.status === 'active' ? 'default' : 'secondary'}>
                   {subscription.status}
                 </Badge>
+                {isInTrial && (
+                  <Badge variant="outline" className="border-blue-600 text-blue-600">
+                    Trial - {daysRemaining} days left
+                  </Badge>
+                )}
               </h2>
               <p className="text-muted-foreground mt-1">
-                {subscription.currentPeriodEnd && subscription.status === 'active' && (
-                  <>Renews on {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</>
-                )}
-                {subscription.cancelAt && (
-                  <>Cancels on {new Date(subscription.cancelAt).toLocaleDateString()}</>
+                {isInTrial ? (
+                  <>Free trial ends in {daysRemaining} days</>
+                ) : (
+                  <>
+                    {subscription.currentPeriodEnd && subscription.status === 'active' && (
+                      <>Renews on {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</>
+                    )}
+                    {subscription.cancelAt && (
+                      <>Cancels on {new Date(subscription.cancelAt).toLocaleDateString()}</>
+                    )}
+                  </>
                 )}
               </p>
             </div>
@@ -227,8 +282,8 @@ export function BillingPage() {
           <div className="text-sm text-blue-900">
             <p className="font-semibold mb-1">Billing Information</p>
             <ul className="list-disc list-inside space-y-1 text-blue-800">
-              <li>All plans include a 14-day free trial</li>
-              <li>No credit card required for the free plan</li>
+              <li>All plans include a 7-day free trial</li>
+              <li>No credit card required during trial</li>
               <li>Cancel or change your plan anytime</li>
               <li>Prices are in USD and billed monthly</li>
             </ul>

@@ -23,28 +23,57 @@ export function usePermissions(): Permissions & { role: UserRole | null; loading
   const { membership, loading } = useOrganization();
   const role = membership?.role || null;
 
-  // Define permissions based on role
+  // Superadmin has all permissions
+  if (role === 'superadmin') {
+    const allPermissions: Permissions = {
+      canManageTeam: true,
+      canManageProjects: true,
+      canManageFeedback: true,
+      canViewFeedback: true,
+      canManageOrganization: true,
+      canDeleteOrganization: true,
+      canInviteMembers: true,
+      canRemoveMembers: true,
+      canUpdateMemberRoles: true,
+      canCreateComments: true,
+      canDeleteFeedback: true,
+      canExportData: true,
+      canManageIntegrations: true,
+      canViewAnalytics: true,
+      canManageBilling: true,
+    };
+
+    return {
+      ...allPermissions,
+      role,
+      loading,
+    };
+  }
+
+  // Simplified permissions for MVP - treat admin as member, viewer as limited member
+  const isOwner = role === 'owner';
+  const isMember = role === 'member' || role === 'admin'; // Treat admin as member for MVP
+
+  // Define permissions based on simplified roles
   const permissions: Permissions = {
-    // Owner permissions
-    canDeleteOrganization: role === 'owner',
-    canUpdateMemberRoles: role === 'owner',
-    canManageBilling: role === 'owner',
+    // Owner-only permissions
+    canDeleteOrganization: isOwner,
+    canUpdateMemberRoles: isOwner,
+    canManageBilling: isOwner,
+    canManageTeam: isOwner,
+    canManageProjects: isOwner,
+    canManageOrganization: isOwner,
+    canInviteMembers: isOwner,
+    canRemoveMembers: isOwner,
+    canManageIntegrations: isOwner,
 
-    // Owner and Admin permissions
-    canManageTeam: role === 'owner' || role === 'admin',
-    canManageProjects: role === 'owner' || role === 'admin',
-    canManageOrganization: role === 'owner' || role === 'admin',
-    canInviteMembers: role === 'owner' || role === 'admin',
-    canRemoveMembers: role === 'owner' || role === 'admin',
-    canDeleteFeedback: role === 'owner' || role === 'admin',
-    canManageIntegrations: role === 'owner' || role === 'admin',
+    // Owner and Member permissions
+    canManageFeedback: isOwner || isMember,
+    canCreateComments: isOwner || isMember,
+    canExportData: isOwner || isMember,
+    canDeleteFeedback: isOwner || isMember,
 
-    // Member permissions (owner, admin, member)
-    canManageFeedback: role === 'owner' || role === 'admin' || role === 'member',
-    canCreateComments: role === 'owner' || role === 'admin' || role === 'member',
-    canExportData: role === 'owner' || role === 'admin' || role === 'member',
-
-    // All roles including viewer
+    // All authenticated users (including viewer)
     canViewFeedback: !!role,
     canViewAnalytics: !!role,
   };
@@ -66,6 +95,7 @@ export function isRoleHigherOrEqual(userRole: UserRole | null, targetRole: UserR
   if (!userRole) return false;
 
   const roleHierarchy: Record<UserRole, number> = {
+    superadmin: 5,
     owner: 4,
     admin: 3,
     member: 2,

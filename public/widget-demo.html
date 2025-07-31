@@ -195,8 +195,42 @@ window.vibeQAConfig = {
     // Update the API URL based on your deployment:
     // - Local Supabase: http://localhost:54321/functions/v1
     // - Production: https://[YOUR-PROJECT-ID].supabase.co/functions/v1
+    
+    // Read configuration from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectKey = urlParams.get('projectKey') || 'proj_test123456789';
+    const position = urlParams.get('position') || 'bottom-right';
+    const theme = urlParams.get('theme') || 'auto';
+    const primaryColor = urlParams.get('primaryColor') || '#094765';
+    const buttonText = urlParams.get('buttonText') || 'Feedback';
+    const showLauncher = urlParams.get('showLauncher') !== 'false';
+    
+    // Update form fields with URL parameters after DOM loads
+    document.addEventListener('DOMContentLoaded', function() {
+      if (document.getElementById('projectKey')) {
+        document.getElementById('projectKey').value = projectKey;
+      }
+      if (document.getElementById('position')) {
+        document.getElementById('position').value = position;
+      }
+      if (document.getElementById('theme')) {
+        document.getElementById('theme').value = theme;
+      }
+      if (document.getElementById('primaryColor')) {
+        document.getElementById('primaryColor').value = primaryColor;
+      }
+      if (document.getElementById('buttonText')) {
+        document.getElementById('buttonText').value = buttonText;
+      }
+    });
+    
     window.vibeQAConfig = {
-      projectKey: 'proj_test123456789',
+      projectKey: projectKey,
+      position: position,
+      theme: theme,
+      primaryColor: primaryColor,
+      buttonText: buttonText,
+      showLauncher: showLauncher,
       apiUrl: 'https://oussjxzwtxlanuxtgmtt.supabase.co/functions/v1', // Using your Supabase URL
       debug: true,
       onSuccess: function(feedbackId) {

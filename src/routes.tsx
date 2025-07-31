@@ -42,6 +42,50 @@ const SettingsPage = lazy(() =>
 const BillingPage = lazy(() =>
   import('@/pages/settings/BillingPage').then((m) => ({ default: m.BillingPage }))
 );
+const ProjectDetailPage = lazy(() =>
+  import('@/pages/dashboard/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage }))
+);
+const WidgetConfigPage = lazy(() =>
+  import('@/pages/dashboard/WidgetConfigPage').then((m) => ({ default: m.WidgetConfigPage }))
+);
+const EditProjectPage = lazy(() =>
+  import('@/pages/dashboard/EditProjectPage').then((m) => ({ default: m.EditProjectPage }))
+);
+const TrialExpiredPage = lazy(() =>
+  import('@/pages/TrialExpiredPage').then((m) => ({ default: m.TrialExpiredPage }))
+);
+
+// Superadmin pages
+const SuperadminDashboard = lazy(() =>
+  import('@/pages/dashboard/superadmin/SuperadminDashboard').then((m) => ({
+    default: m.SuperadminDashboard,
+  }))
+);
+const SuperadminUsers = lazy(() =>
+  import('@/pages/dashboard/superadmin/SuperadminUsers').then((m) => ({
+    default: m.SuperadminUsers,
+  }))
+);
+const SuperadminSubscriptions = lazy(() =>
+  import('@/pages/dashboard/superadmin/SuperadminSubscriptions').then((m) => ({
+    default: m.SuperadminSubscriptions,
+  }))
+);
+const SuperadminCoupons = lazy(() =>
+  import('@/pages/dashboard/superadmin/SuperadminCoupons').then((m) => ({
+    default: m.SuperadminCoupons,
+  }))
+);
+const SuperadminMetrics = lazy(() =>
+  import('@/pages/dashboard/superadmin/SuperadminMetrics').then((m) => ({
+    default: m.SuperadminMetrics,
+  }))
+);
+const SuperadminRevenue = lazy(() =>
+  import('@/pages/dashboard/superadmin/SuperadminRevenue').then((m) => ({
+    default: m.SuperadminRevenue,
+  }))
+);
 
 // Loading component
 const PageLoader = () => (
@@ -92,7 +136,7 @@ const ProtectedFeedback = () => (
 );
 
 const ProtectedTeam = () => (
-  <ProtectedRoute requiredRole={['owner', 'admin']}>
+  <ProtectedRoute>
     <Suspense fallback={<PageLoader />}>
       <DashboardLayout>
         <TeamPage />
@@ -102,7 +146,7 @@ const ProtectedTeam = () => (
 );
 
 const ProtectedSettings = () => (
-  <ProtectedRoute requiredRole={['owner', 'admin']}>
+  <ProtectedRoute>
     <Suspense fallback={<PageLoader />}>
       <DashboardLayout>
         <SettingsPage />
@@ -121,6 +165,97 @@ const ProtectedBilling = () => (
   </ProtectedRoute>
 );
 
+const ProtectedProjectDetail = () => (
+  <ProtectedRoute>
+    <Suspense fallback={<PageLoader />}>
+      <DashboardLayout>
+        <ProjectDetailPage />
+      </DashboardLayout>
+    </Suspense>
+  </ProtectedRoute>
+);
+
+const ProtectedWidgetConfig = () => (
+  <ProtectedRoute>
+    <Suspense fallback={<PageLoader />}>
+      <DashboardLayout>
+        <WidgetConfigPage />
+      </DashboardLayout>
+    </Suspense>
+  </ProtectedRoute>
+);
+
+const ProtectedEditProject = () => (
+  <ProtectedRoute>
+    <Suspense fallback={<PageLoader />}>
+      <DashboardLayout>
+        <EditProjectPage />
+      </DashboardLayout>
+    </Suspense>
+  </ProtectedRoute>
+);
+
+// Superadmin protected routes
+const ProtectedSuperadminDashboard = () => (
+  <ProtectedRoute requiredRole={['superadmin']}>
+    <Suspense fallback={<PageLoader />}>
+      <DashboardLayout>
+        <SuperadminDashboard />
+      </DashboardLayout>
+    </Suspense>
+  </ProtectedRoute>
+);
+
+const ProtectedSuperadminUsers = () => (
+  <ProtectedRoute requiredRole={['superadmin']}>
+    <Suspense fallback={<PageLoader />}>
+      <DashboardLayout>
+        <SuperadminUsers />
+      </DashboardLayout>
+    </Suspense>
+  </ProtectedRoute>
+);
+
+const ProtectedSuperadminSubscriptions = () => (
+  <ProtectedRoute requiredRole={['superadmin']}>
+    <Suspense fallback={<PageLoader />}>
+      <DashboardLayout>
+        <SuperadminSubscriptions />
+      </DashboardLayout>
+    </Suspense>
+  </ProtectedRoute>
+);
+
+const ProtectedSuperadminCoupons = () => (
+  <ProtectedRoute requiredRole={['superadmin']}>
+    <Suspense fallback={<PageLoader />}>
+      <DashboardLayout>
+        <SuperadminCoupons />
+      </DashboardLayout>
+    </Suspense>
+  </ProtectedRoute>
+);
+
+const ProtectedSuperadminMetrics = () => (
+  <ProtectedRoute requiredRole={['superadmin']}>
+    <Suspense fallback={<PageLoader />}>
+      <DashboardLayout>
+        <SuperadminMetrics />
+      </DashboardLayout>
+    </Suspense>
+  </ProtectedRoute>
+);
+
+const ProtectedSuperadminRevenue = () => (
+  <ProtectedRoute requiredRole={['superadmin']}>
+    <Suspense fallback={<PageLoader />}>
+      <DashboardLayout>
+        <SuperadminRevenue />
+      </DashboardLayout>
+    </Suspense>
+  </ProtectedRoute>
+);
+
 export function Routes() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -131,15 +266,30 @@ export function Routes() {
         <Route path="/register" component={RegisterPage} />
         <Route path="/forgot-password" component={ForgotPasswordPage} />
         <Route path="/accept-invitation/:id" component={AcceptInvitationPage} />
+        <Route path="/trial-expired" component={TrialExpiredPage} />
 
         {/* Protected dashboard routes */}
         <Route path="/dashboard" component={ProtectedDashboard} />
         <Route path="/dashboard/projects" component={ProtectedProjects} />
         <Route path="/dashboard/projects/new" component={ProtectedNewProject} />
+        <Route path="/dashboard/projects/:id" component={ProtectedProjectDetail} />
+        <Route path="/dashboard/projects/:id/edit" component={ProtectedEditProject} />
+        <Route path="/dashboard/projects/:id/widget" component={ProtectedWidgetConfig} />
         <Route path="/dashboard/feedback" component={ProtectedFeedback} />
         <Route path="/dashboard/team" component={ProtectedTeam} />
         <Route path="/dashboard/settings" component={ProtectedSettings} />
         <Route path="/dashboard/settings/billing" component={ProtectedBilling} />
+
+        {/* Superadmin routes */}
+        <Route path="/dashboard/superadmin" component={ProtectedSuperadminDashboard} />
+        <Route path="/dashboard/superadmin/users" component={ProtectedSuperadminUsers} />
+        <Route
+          path="/dashboard/superadmin/subscriptions"
+          component={ProtectedSuperadminSubscriptions}
+        />
+        <Route path="/dashboard/superadmin/coupons" component={ProtectedSuperadminCoupons} />
+        <Route path="/dashboard/superadmin/metrics" component={ProtectedSuperadminMetrics} />
+        <Route path="/dashboard/superadmin/revenue" component={ProtectedSuperadminRevenue} />
       </Switch>
     </Suspense>
   );
