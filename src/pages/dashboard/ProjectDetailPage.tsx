@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Project } from '@/types/database.types';
+import { WidgetButtonPreview } from '@/components/WidgetButtonPreview';
 import {
   ArrowLeft,
   Copy,
@@ -393,6 +394,12 @@ export function ProjectDetailPage() {
                 Test Widget
               </Button>
             </div>
+          </Card>
+
+          {/* Widget Preview */}
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Widget Preview</h2>
+            <WidgetButtonPreview />
           </Card>
 
           {/* Additional Resources */}

@@ -51,6 +51,9 @@ const WidgetConfigPage = lazy(() =>
 const EditProjectPage = lazy(() =>
   import('@/pages/dashboard/EditProjectPage').then((m) => ({ default: m.EditProjectPage }))
 );
+const TrialExpiredPage = lazy(() =>
+  import('@/pages/TrialExpiredPage').then((m) => ({ default: m.TrialExpiredPage }))
+);
 
 // Superadmin pages
 const SuperadminDashboard = lazy(() =>
@@ -263,6 +266,7 @@ export function Routes() {
         <Route path="/register" component={RegisterPage} />
         <Route path="/forgot-password" component={ForgotPasswordPage} />
         <Route path="/accept-invitation/:id" component={AcceptInvitationPage} />
+        <Route path="/trial-expired" component={TrialExpiredPage} />
 
         {/* Protected dashboard routes */}
         <Route path="/dashboard" component={ProtectedDashboard} />

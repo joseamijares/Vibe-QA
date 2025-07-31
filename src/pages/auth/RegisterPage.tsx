@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
+import { PaywallModal } from '@/components/PaywallModal';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { getAuthErrorMessage } from '@/lib/auth-errors';
 
@@ -24,6 +25,7 @@ export function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   // Get redirect URL from query params
   const searchParams = new URLSearchParams(location.split('?')[1] || '');
@@ -44,9 +46,10 @@ export function RegisterPage() {
       await signUp(data.email, data.password);
       toast({
         title: 'Account created!',
-        description: 'Please check your email to verify your account.',
+        description: 'Welcome to your 7-day free trial.',
       });
-      navigate(redirectTo);
+      // Show paywall modal after successful registration
+      setShowPaywall(true);
     } catch (error: any) {
       toast({
         title: 'Registration Failed',
@@ -56,6 +59,11 @@ export function RegisterPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePaywallComplete = () => {
+    setShowPaywall(false);
+    navigate(redirectTo);
   };
 
   const handleGoogleSignIn = async () => {
@@ -246,6 +254,13 @@ export function RegisterPage() {
           </Link>
         </p>
       </form>
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onComplete={handlePaywallComplete}
+      />
     </AuthLayout>
   );
 }

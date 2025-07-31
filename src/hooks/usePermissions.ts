@@ -50,28 +50,30 @@ export function usePermissions(): Permissions & { role: UserRole | null; loading
     };
   }
 
-  // Define permissions based on role
+  // Simplified permissions for MVP - treat admin as member, viewer as limited member
+  const isOwner = role === 'owner';
+  const isMember = role === 'member' || role === 'admin'; // Treat admin as member for MVP
+
+  // Define permissions based on simplified roles
   const permissions: Permissions = {
-    // Owner permissions
-    canDeleteOrganization: role === 'owner',
-    canUpdateMemberRoles: role === 'owner',
-    canManageBilling: role === 'owner',
+    // Owner-only permissions
+    canDeleteOrganization: isOwner,
+    canUpdateMemberRoles: isOwner,
+    canManageBilling: isOwner,
+    canManageTeam: isOwner,
+    canManageProjects: isOwner,
+    canManageOrganization: isOwner,
+    canInviteMembers: isOwner,
+    canRemoveMembers: isOwner,
+    canManageIntegrations: isOwner,
 
-    // Owner and Admin permissions
-    canManageTeam: role === 'owner' || role === 'admin',
-    canManageProjects: role === 'owner' || role === 'admin',
-    canManageOrganization: role === 'owner' || role === 'admin',
-    canInviteMembers: role === 'owner' || role === 'admin',
-    canRemoveMembers: role === 'owner' || role === 'admin',
-    canDeleteFeedback: role === 'owner' || role === 'admin',
-    canManageIntegrations: role === 'owner' || role === 'admin',
+    // Owner and Member permissions
+    canManageFeedback: isOwner || isMember,
+    canCreateComments: isOwner || isMember,
+    canExportData: isOwner || isMember,
+    canDeleteFeedback: isOwner || isMember,
 
-    // Member permissions (owner, admin, member)
-    canManageFeedback: role === 'owner' || role === 'admin' || role === 'member',
-    canCreateComments: role === 'owner' || role === 'admin' || role === 'member',
-    canExportData: role === 'owner' || role === 'admin' || role === 'member',
-
-    // All roles including viewer
+    // All authenticated users (including viewer)
     canViewFeedback: !!role,
     canViewAnalytics: !!role,
   };

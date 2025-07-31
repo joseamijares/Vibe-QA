@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Project } from '@/types/database.types';
+import { WidgetButtonPreview } from '@/components/WidgetButtonPreview';
 import {
   ArrowLeft,
   Copy,
@@ -157,21 +158,6 @@ window.vibeQAConfig = {
     setTimeout(() => setCopiedCode(false), 3000);
   };
 
-  const openPreview = () => {
-    if (!project) return;
-
-    const params = new URLSearchParams({
-      projectKey: project.api_key,
-      position: config.position,
-      theme: config.theme,
-      primaryColor: config.primaryColor,
-      buttonText: config.buttonText,
-      showLauncher: config.showLauncher.toString(),
-    });
-
-    window.open(`/widget-demo.html?${params.toString()}`, '_blank');
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -213,10 +199,6 @@ window.vibeQAConfig = {
             <p className="text-gray-600 mt-1">{project.name}</p>
           </div>
         </div>
-        <Button onClick={openPreview}>
-          <Eye className="h-4 w-4 mr-2" />
-          Preview Widget
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -450,6 +432,21 @@ window.vibeQAConfig = {
               <li>• Use callbacks to track widget usage in your analytics</li>
               <li>• The widget automatically adapts to mobile devices</li>
             </ul>
+          </Card>
+
+          {/* Live Preview */}
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Live Preview</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              This is how your feedback button will appear on your website
+            </p>
+            <WidgetButtonPreview
+              position={config.position}
+              theme={config.theme}
+              primaryColor={config.primaryColor}
+              buttonText={config.buttonText}
+              showLauncher={config.showLauncher}
+            />
           </Card>
         </div>
       </div>

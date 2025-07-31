@@ -369,7 +369,10 @@ export function DashboardPage() {
               <Button className="bg-white text-[#094765] hover:bg-gray-100">Create Project</Button>
             </Link>
             <Link href="/dashboard/projects">
-              <Button variant="outline" className="border-white text-white hover:bg-white/10">
+              <Button
+                variant="outline"
+                className="border-white text-white bg-transparent hover:bg-white hover:text-[#094765]"
+              >
                 View Projects
               </Button>
             </Link>

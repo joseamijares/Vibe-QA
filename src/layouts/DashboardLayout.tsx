@@ -3,9 +3,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useFeedbackRealtimeSubscription } from '@/hooks/useFeedbackNotifications';
+import { useTrialBlock } from '@/hooks/useTrialStatus';
 import { Button } from '@/components/ui/button';
 import { NoOrganizationMessage } from '@/components/NoOrganizationMessage';
 import { AsyncErrorBoundary } from '@/components/AsyncErrorBoundary';
+import { TrialBanner } from '@/components/TrialBanner';
 import {
   LayoutDashboard,
   Folder,
@@ -19,27 +21,44 @@ import {
   X,
   Shield,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import logoSvg from '@/assets/vibe-code-logo.svg';
+import { TrialExpiredPage } from '@/pages/TrialExpiredPage';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { session, signOut } = useAuth();
   const { organization, membership, loading: orgLoading, error: orgError } = useOrganization();
   const { canManageProjects, role } = usePermissions();
+  const { isBlocked, trialStatus } = useTrialBlock();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   // Enable real-time feedback notifications
   useFeedbackRealtimeSubscription();
 
+  // Check if trial has expired and redirect accordingly
+  useEffect(() => {
+    if (isBlocked && !trialStatus.isLoading) {
+      // Allow access to billing page even if trial expired
+      if (!location.includes('/dashboard/settings/billing')) {
+        navigate('/trial-expired');
+      }
+    }
+  }, [isBlocked, trialStatus.isLoading, location, navigate]);
+
   // Show no organization message if user has no org
   if (!orgLoading && orgError && orgError.message.includes('No organization found')) {
     return <NoOrganizationMessage />;
+  }
+
+  // Show trial expired page if blocked (except on billing page)
+  if (isBlocked && !location.includes('/dashboard/settings/billing')) {
+    return <TrialExpiredPage />;
   }
 
   const navigation = [
@@ -183,6 +202,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </div>
         </header>
+
+        {/* Trial Banner */}
+        <TrialBanner />
 
         {/* Page content */}
         <main className="flex-1">

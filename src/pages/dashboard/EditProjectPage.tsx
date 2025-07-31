@@ -85,11 +85,11 @@ export function EditProjectPage() {
 
   // Check permissions
   useEffect(() => {
-    if (!canManageProjects) {
+    if (!permLoading && !canManageProjects) {
       toast.error('You do not have permission to edit projects');
       navigate(`/dashboard/projects/${id}`);
     }
-  }, [canManageProjects, navigate, id]);
+  }, [canManageProjects, permLoading, navigate, id]);
 
   // Generate slug preview as user types
   useEffect(() => {

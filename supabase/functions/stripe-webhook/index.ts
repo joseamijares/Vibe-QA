@@ -62,6 +62,12 @@ serve(async (req) => {
         break;
       }
 
+      case 'customer.subscription.trial_will_end': {
+        const subscription = event.data.object as Stripe.Subscription;
+        await handleTrialWillEnd(supabaseClient, subscription);
+        break;
+      }
+
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
@@ -124,6 +130,9 @@ async function handleSubscriptionUpdate(
         : null,
       canceled_at: subscription.canceled_at 
         ? new Date(subscription.canceled_at * 1000).toISOString() 
+        : null,
+      trial_end: subscription.trial_end
+        ? new Date(subscription.trial_end * 1000).toISOString()
         : null,
     })
     .eq('stripe_customer_id', customerId);
@@ -244,5 +253,65 @@ async function handleInvoicePaymentFailed(
       .eq('id', sub.organization_id);
 
     // TODO: Send email notification about failed payment
+  }
+}
+
+async function handleTrialWillEnd(
+  supabase: any,
+  subscription: Stripe.Subscription
+) {
+  const customerId = subscription.customer as string;
+
+  // Get organization details
+  const { data: sub } = await supabase
+    .from('organization_subscriptions')
+    .select('organization_id')
+    .eq('stripe_customer_id', customerId)
+    .single();
+
+  if (!sub) return;
+
+  // Get organization and owner details
+  const { data: orgData } = await supabase
+    .from('organizations')
+    .select(`
+      id,
+      name,
+      organization_members!inner(
+        user_id,
+        role
+      )
+    `)
+    .eq('id', sub.organization_id)
+    .eq('organization_members.role', 'owner')
+    .single();
+
+  if (!orgData) return;
+
+  // Get owner email
+  const { data: userData } = await supabase.auth.admin.getUserById(
+    orgData.organization_members[0].user_id
+  );
+
+  if (!userData?.user?.email) return;
+
+  // Send trial ending email notification
+  try {
+    await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-feedback-notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+      },
+      body: JSON.stringify({
+        type: 'trial_ending',
+        to: userData.user.email,
+        organizationName: orgData.name,
+        daysRemaining: 3,
+        upgradeUrl: `${Deno.env.get('APP_URL')}/dashboard/settings/billing`,
+      }),
+    });
+  } catch (error) {
+    console.error('Error sending trial ending notification:', error);
   }
 }

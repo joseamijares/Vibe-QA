@@ -73,8 +73,18 @@ serve(async (req) => {
       );
     }
 
-    // Create checkout session
-    const session = await stripe.checkout.sessions.create({
+    // Check if organization is still in trial
+    const { data: orgData } = await supabaseClient
+      .from('organization_trial_status')
+      .select('trial_status, days_remaining')
+      .eq('organization_id', organizationId)
+      .single();
+
+    const isInTrial = orgData?.trial_status === 'active';
+    const daysRemaining = orgData?.days_remaining || 0;
+
+    // Create checkout session with trial configuration
+    const sessionConfig: any = {
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [
@@ -91,7 +101,25 @@ serve(async (req) => {
         user_id: userId,
         plan_id: planId,
       },
-    });
+      // Configure payment collection behavior
+      payment_method_collection: 'if_required',
+      // Allow promotion codes
+      allow_promotion_codes: true,
+    };
+
+    // If still in trial, configure trial days
+    if (isInTrial && daysRemaining > 0) {
+      sessionConfig.subscription_data = {
+        trial_period_days: daysRemaining,
+        trial_settings: {
+          end_behavior: {
+            missing_payment_method: 'pause', // Pause subscription if no payment method at trial end
+          },
+        },
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     return new Response(
       JSON.stringify({ sessionId: session.id, url: session.url }),

@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Users, UserPlus, Mail, Shield, Trash2, Crown, User, Send, X, Copy } from 'lucide-react';
+import { Users, UserPlus, Mail, Trash2, Crown, User, Send, X, Copy } from 'lucide-react';
 import { OrganizationMember, Invitation, UserRole } from '@/types/database.types';
 import { toast } from 'sonner';
 import { EmailService } from '@/lib/email';
@@ -30,7 +30,7 @@ export function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<UserRole>('member');
+  const [inviteRole, setInviteRole] = useState<UserRole>('member'); // Always 'member' for MVP
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
@@ -201,29 +201,7 @@ export function TeamPage() {
     toast.success('Invitation link copied to clipboard');
   };
 
-  const handleUpdateRole = async (memberId: string, newRole: UserRole) => {
-    // Prevent changing owner role
-    const member = members.find((m) => m.id === memberId);
-    if (member?.role === 'owner') {
-      toast.error('Cannot change owner role');
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('organization_members')
-        .update({ role: newRole })
-        .eq('id', memberId);
-
-      if (error) throw error;
-
-      setMembers(members.map((m) => (m.id === memberId ? { ...m, role: newRole } : m)));
-      toast.success('Role updated successfully');
-    } catch (error) {
-      console.error('Error updating role:', error);
-      toast.error('Failed to update role');
-    }
-  };
+  // Role updates removed for MVP - only owners and members exist
 
   const handleRemoveMember = async (memberId: string) => {
     const member = members.find((m) => m.id === memberId);
@@ -247,16 +225,14 @@ export function TeamPage() {
     }
   };
 
-  const canManageTeam = membership?.role === 'owner' || membership?.role === 'admin';
+  const canManageTeam = membership?.role === 'owner'; // Only owners can manage team in MVP
 
   const getRoleIcon = (role: UserRole) => {
     switch (role) {
       case 'owner':
         return <Crown className="h-4 w-4" />;
-      case 'admin':
-        return <Shield className="h-4 w-4" />;
       default:
-        return <User className="h-4 w-4" />;
+        return <User className="h-4 w-4" />; // All non-owners show as regular users
     }
   };
 
@@ -264,12 +240,8 @@ export function TeamPage() {
     switch (role) {
       case 'owner':
         return 'text-purple-600 bg-purple-100';
-      case 'admin':
-        return 'text-blue-600 bg-blue-100';
-      case 'member':
-        return 'text-green-600 bg-green-100';
-      case 'viewer':
-        return 'text-gray-600 bg-gray-100';
+      default:
+        return 'text-green-600 bg-green-100'; // All non-owners show as green (member color)
     }
   };
 
@@ -315,14 +287,14 @@ export function TeamPage() {
         </Card>
         <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Shield className="h-6 w-6 text-purple-600" />
+            <div className="p-3 bg-green-100 rounded-lg">
+              <User className="h-6 w-6 text-green-600" />
             </div>
             <div>
               <p className="text-2xl font-bold">
-                {members.filter((m) => m.role === 'admin').length}
+                {members.filter((m) => m.role !== 'owner').length}
               </p>
-              <p className="text-sm text-gray-600">Administrators</p>
+              <p className="text-sm text-gray-600">Members</p>
             </div>
           </div>
         </Card>
@@ -363,7 +335,7 @@ export function TeamPage() {
                       )}`}
                     >
                       {getRoleIcon(member.role)}
-                      {member.role}
+                      {member.role === 'owner' ? 'Owner' : 'Member'}
                     </span>
                   </div>
                   <p className="text-sm text-gray-500">{member.user.email}</p>
@@ -372,18 +344,10 @@ export function TeamPage() {
 
               {canManageTeam && member.role !== 'owner' && (
                 <div className="flex items-center gap-2">
-                  <select
-                    value={member.role}
-                    onChange={(e) => handleUpdateRole(member.id, e.target.value as UserRole)}
-                    className="text-sm border-gray-300 rounded-md"
-                  >
-                    <option value="admin">Admin</option>
-                    <option value="member">Member</option>
-                    <option value="viewer">Viewer</option>
-                  </select>
                   <button
                     onClick={() => handleRemoveMember(member.id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Remove member"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -411,7 +375,7 @@ export function TeamPage() {
                   <div>
                     <p className="font-medium text-gray-900">{invitation.email}</p>
                     <p className="text-sm text-gray-500">
-                      Invited as {invitation.role} • Expires{' '}
+                      Invited as Member • Expires{' '}
                       {invitation.expires_at
                         ? new Date(invitation.expires_at).toLocaleDateString()
                         : 'Never'}
@@ -474,19 +438,8 @@ export function TeamPage() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <select
-                    id="role"
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value as UserRole)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#094765]"
-                  >
-                    <option value="admin">Admin - Can manage team and projects</option>
-                    <option value="member">Member - Can manage projects</option>
-                    <option value="viewer">Viewer - Can only view feedback</option>
-                  </select>
-                </div>
+                {/* Role is always 'member' for MVP - field hidden */}
+                <input type="hidden" value="member" />
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-sm text-blue-800">

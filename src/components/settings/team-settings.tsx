@@ -3,13 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+// Select components removed - no longer needed for simplified MVP
 import { useToast } from '@/components/ui/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 import { supabase } from '@/lib/supabase';
@@ -98,24 +92,14 @@ export function TeamSettings() {
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="default-role">Default Role for New Members</Label>
-          <Select
-            value={formData.defaultRole}
-            onValueChange={(value: UserRole) =>
-              setFormData((prev) => ({ ...prev, defaultRole: value }))
-            }
-          >
-            <SelectTrigger id="default-role">
-              <SelectValue placeholder="Select default role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="viewer">Viewer - Can only view feedback</SelectItem>
-              <SelectItem value="member">Member - Can create and manage feedback</SelectItem>
-              <SelectItem value="admin">Admin - Can manage team and projects</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-sm text-muted-foreground">
-            The role automatically assigned to new team members when they join.
-          </p>
+          <div className="p-3 bg-gray-50 rounded-md border">
+            <p className="text-sm font-medium text-gray-900">Member</p>
+            <p className="text-xs text-gray-500 mt-1">
+              All new team members are added as Members by default
+            </p>
+          </div>
+          {/* Hidden field to maintain form data structure */}
+          <input type="hidden" value={formData.defaultRole} />
         </div>
 
         <div className="space-y-2">
