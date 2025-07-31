@@ -17,6 +17,7 @@ import {
   Plus,
   Menu,
   X,
+  Shield,
 } from 'lucide-react';
 import { useState } from 'react';
 import logoSvg from '@/assets/vibe-code-logo.svg';
@@ -29,7 +30,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [location] = useLocation();
   const { session, signOut } = useAuth();
   const { organization, membership, loading: orgLoading, error: orgError } = useOrganization();
-  const { canManageProjects } = usePermissions();
+  const { canManageProjects, role } = usePermissions();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
@@ -47,6 +48,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'Feedback', href: '/dashboard/feedback', icon: MessageSquare, show: true },
     { name: 'Team', href: '/dashboard/team', icon: Users, show: true },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings, show: true },
+    {
+      name: 'Superadmin',
+      href: '/dashboard/superadmin',
+      icon: Shield,
+      show: role === 'superadmin',
+    },
   ].filter((item) => item.show);
 
   const handleSignOut = async () => {
@@ -94,7 +101,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Navigation */}
           <nav className="flex-1 space-y-1 px-4 py-4">
             {navigation.map((item) => {
-              const isActive = location === item.href || location.startsWith(item.href + '/');
+              const isActive =
+                item.href === '/dashboard'
+                  ? location === '/dashboard'
+                  : location === item.href || location.startsWith(item.href + '/');
               return (
                 <Link
                   key={item.name}

@@ -23,6 +23,33 @@ export function usePermissions(): Permissions & { role: UserRole | null; loading
   const { membership, loading } = useOrganization();
   const role = membership?.role || null;
 
+  // Superadmin has all permissions
+  if (role === 'superadmin') {
+    const allPermissions: Permissions = {
+      canManageTeam: true,
+      canManageProjects: true,
+      canManageFeedback: true,
+      canViewFeedback: true,
+      canManageOrganization: true,
+      canDeleteOrganization: true,
+      canInviteMembers: true,
+      canRemoveMembers: true,
+      canUpdateMemberRoles: true,
+      canCreateComments: true,
+      canDeleteFeedback: true,
+      canExportData: true,
+      canManageIntegrations: true,
+      canViewAnalytics: true,
+      canManageBilling: true,
+    };
+
+    return {
+      ...allPermissions,
+      role,
+      loading,
+    };
+  }
+
   // Define permissions based on role
   const permissions: Permissions = {
     // Owner permissions
@@ -66,6 +93,7 @@ export function isRoleHigherOrEqual(userRole: UserRole | null, targetRole: UserR
   if (!userRole) return false;
 
   const roleHierarchy: Record<UserRole, number> = {
+    superadmin: 5,
     owner: 4,
     admin: 3,
     member: 2,

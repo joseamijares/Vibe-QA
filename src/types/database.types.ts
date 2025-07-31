@@ -87,6 +87,112 @@ export type Database = {
           },
         ];
       };
+      coupon_usage: {
+        Row: {
+          applied_at: string | null;
+          coupon_id: string | null;
+          created_by: string | null;
+          discount_amount: number;
+          id: string;
+          organization_id: string | null;
+          stripe_discount_id: string | null;
+          subscription_id: string | null;
+        };
+        Insert: {
+          applied_at?: string | null;
+          coupon_id?: string | null;
+          created_by?: string | null;
+          discount_amount: number;
+          id?: string;
+          organization_id?: string | null;
+          stripe_discount_id?: string | null;
+          subscription_id?: string | null;
+        };
+        Update: {
+          applied_at?: string | null;
+          coupon_id?: string | null;
+          created_by?: string | null;
+          discount_amount?: number;
+          id?: string;
+          organization_id?: string | null;
+          stripe_discount_id?: string | null;
+          subscription_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'coupon_usage_coupon_id_fkey';
+            columns: ['coupon_id'];
+            isOneToOne: false;
+            referencedRelation: 'coupons';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'coupon_usage_organization_id_fkey';
+            columns: ['organization_id'];
+            isOneToOne: false;
+            referencedRelation: 'organizations';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'coupon_usage_subscription_id_fkey';
+            columns: ['subscription_id'];
+            isOneToOne: false;
+            referencedRelation: 'organization_subscriptions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      coupons: {
+        Row: {
+          applicable_plans: string[] | null;
+          code: string;
+          created_at: string | null;
+          created_by: string | null;
+          description: string | null;
+          id: string;
+          status: Database['public']['Enums']['coupon_status'] | null;
+          type: Database['public']['Enums']['coupon_type'];
+          updated_at: string | null;
+          usage_limit: number | null;
+          used_count: number | null;
+          valid_from: string | null;
+          valid_until: string | null;
+          value: number;
+        };
+        Insert: {
+          applicable_plans?: string[] | null;
+          code: string;
+          created_at?: string | null;
+          created_by?: string | null;
+          description?: string | null;
+          id?: string;
+          status?: Database['public']['Enums']['coupon_status'] | null;
+          type: Database['public']['Enums']['coupon_type'];
+          updated_at?: string | null;
+          usage_limit?: number | null;
+          used_count?: number | null;
+          valid_from?: string | null;
+          valid_until?: string | null;
+          value: number;
+        };
+        Update: {
+          applicable_plans?: string[] | null;
+          code?: string;
+          created_at?: string | null;
+          created_by?: string | null;
+          description?: string | null;
+          id?: string;
+          status?: Database['public']['Enums']['coupon_status'] | null;
+          type?: Database['public']['Enums']['coupon_type'];
+          updated_at?: string | null;
+          usage_limit?: number | null;
+          used_count?: number | null;
+          valid_from?: string | null;
+          valid_until?: string | null;
+          value?: number;
+        };
+        Relationships: [];
+      };
       email_queue: {
         Row: {
           attempts: number | null;
@@ -616,6 +722,33 @@ export type Database = {
           },
         ];
       };
+      profiles: {
+        Row: {
+          avatar_url: string | null;
+          created_at: string | null;
+          full_name: string | null;
+          id: string;
+          notification_preferences: Json | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          avatar_url?: string | null;
+          created_at?: string | null;
+          full_name?: string | null;
+          id: string;
+          notification_preferences?: Json | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          avatar_url?: string | null;
+          created_at?: string | null;
+          full_name?: string | null;
+          id?: string;
+          notification_preferences?: Json | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       projects: {
         Row: {
           allowed_domains: string[] | null;
@@ -666,6 +799,27 @@ export type Database = {
           },
         ];
       };
+      revenue_reports: {
+        Row: {
+          generated_at: string | null;
+          id: string;
+          metrics: Json;
+          report_date: string;
+        };
+        Insert: {
+          generated_at?: string | null;
+          id?: string;
+          metrics: Json;
+          report_date: string;
+        };
+        Update: {
+          generated_at?: string | null;
+          id?: string;
+          metrics?: Json;
+          report_date?: string;
+        };
+        Relationships: [];
+      };
       subscription_plans: {
         Row: {
           created_at: string | null;
@@ -708,6 +862,72 @@ export type Database = {
           stripe_price_id_monthly?: string | null;
           stripe_price_id_yearly?: string | null;
           updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      superadmin_audit_log: {
+        Row: {
+          action: string;
+          admin_user_id: string | null;
+          created_at: string | null;
+          details: Json | null;
+          id: string;
+          ip_address: unknown | null;
+          resource_id: string | null;
+          resource_type: string;
+          user_agent: string | null;
+        };
+        Insert: {
+          action: string;
+          admin_user_id?: string | null;
+          created_at?: string | null;
+          details?: Json | null;
+          id?: string;
+          ip_address?: unknown | null;
+          resource_id?: string | null;
+          resource_type: string;
+          user_agent?: string | null;
+        };
+        Update: {
+          action?: string;
+          admin_user_id?: string | null;
+          created_at?: string | null;
+          details?: Json | null;
+          id?: string;
+          ip_address?: unknown | null;
+          resource_id?: string | null;
+          resource_type?: string;
+          user_agent?: string | null;
+        };
+        Relationships: [];
+      };
+      system_metrics: {
+        Row: {
+          id: string;
+          metric_name: string;
+          metric_type: string;
+          metric_value: Json;
+          period_end: string | null;
+          period_start: string | null;
+          recorded_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          metric_name: string;
+          metric_type: string;
+          metric_value: Json;
+          period_end?: string | null;
+          period_start?: string | null;
+          recorded_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          metric_name?: string;
+          metric_type?: string;
+          metric_value?: Json;
+          period_end?: string | null;
+          period_start?: string | null;
+          recorded_at?: string | null;
         };
         Relationships: [];
       };
@@ -755,24 +975,75 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      apply_coupon: {
+        Args: {
+          p_coupon_id: string;
+          p_organization_id: string;
+          p_subscription_id: string;
+          p_discount_amount: number;
+          p_stripe_discount_id?: string;
+        };
+        Returns: string;
+      };
+      calculate_revenue_metrics: {
+        Args: { p_date?: string };
+        Returns: Json;
+      };
       create_organization_for_user: {
         Args: { user_id: string; org_name: string; org_slug: string };
         Returns: string;
+      };
+      create_user_as_superadmin: {
+        Args: { user_email: string; user_password: string };
+        Returns: string;
+      };
+      delete_user_as_superadmin: {
+        Args: { user_id: string };
+        Returns: undefined;
       };
       ensure_all_users_have_organizations: {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
       };
+      get_all_users_with_organizations: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          id: string;
+          email: string;
+          created_at: string;
+          organizations: Json;
+        }[];
+      };
       increment_feedback_count: {
         Args: { org_id: string };
         Returns: undefined;
       };
+      is_superadmin: {
+        Args: { user_id: string };
+        Returns: boolean;
+      };
+      record_system_metrics: {
+        Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
+      validate_coupon: {
+        Args: { coupon_code: string };
+        Returns: {
+          is_valid: boolean;
+          coupon_id: string;
+          discount_type: Database['public']['Enums']['coupon_type'];
+          discount_value: number;
+          message: string;
+        }[];
+      };
     };
     Enums: {
+      coupon_status: 'active' | 'expired' | 'depleted';
+      coupon_type: 'percentage' | 'fixed_amount';
       feedback_priority: 'low' | 'medium' | 'high' | 'critical';
       feedback_status: 'new' | 'in_progress' | 'resolved' | 'archived';
       feedback_type: 'bug' | 'suggestion' | 'praise' | 'other';
-      user_role: 'owner' | 'admin' | 'member' | 'viewer';
+      user_role: 'owner' | 'superadmin' | 'admin' | 'member' | 'viewer';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -898,23 +1169,27 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      coupon_status: ['active', 'expired', 'depleted'],
+      coupon_type: ['percentage', 'fixed_amount'],
       feedback_priority: ['low', 'medium', 'high', 'critical'],
       feedback_status: ['new', 'in_progress', 'resolved', 'archived'],
       feedback_type: ['bug', 'suggestion', 'praise', 'other'],
-      user_role: ['owner', 'admin', 'member', 'viewer'],
+      user_role: ['owner', 'superadmin', 'admin', 'member', 'viewer'],
     },
   },
 } as const;
 
-// Type exports for backward compatibility
+// Export convenience types for tables
+export type Project = Tables<'projects'>;
 export type Organization = Tables<'organizations'>;
 export type OrganizationMember = Tables<'organization_members'>;
-export type Project = Tables<'projects'>;
 export type Feedback = Tables<'feedback'>;
 export type FeedbackMedia = Tables<'feedback_media'>;
 export type Comment = Tables<'comments'>;
 export type Invitation = Tables<'invitations'>;
-export type UserRole = Database['public']['Enums']['user_role'];
-export type FeedbackType = Database['public']['Enums']['feedback_type'];
-export type FeedbackStatus = Database['public']['Enums']['feedback_status'];
-export type FeedbackPriority = Database['public']['Enums']['feedback_priority'];
+
+// Export enums
+export type UserRole = Enums<'user_role'>;
+export type FeedbackType = Enums<'feedback_type'>;
+export type FeedbackStatus = Enums<'feedback_status'>;
+export type FeedbackPriority = Enums<'feedback_priority'>;
