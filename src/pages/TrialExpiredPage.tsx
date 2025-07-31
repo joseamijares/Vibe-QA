@@ -106,10 +106,9 @@ export function TrialExpiredPage() {
                 <PricingCard
                   key={plan.id}
                   plan={plan}
-                  currentPlan={null}
+                  currentPlan={undefined}
                   isLoading={false}
                   onSelect={handlePlanSelect}
-                  showFreeTrial={false}
                 />
               ))}
             </div>

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { CheckCircle, Sparkles, Clock, Users, BarChart3, Shield, Zap, X } from 'lucide-react';
+import { CheckCircle, Sparkles, Clock, Users, BarChart3, Shield, Zap } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { SUBSCRIPTION_PLANS } from '@/lib/stripe';
 
