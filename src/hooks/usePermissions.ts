@@ -50,9 +50,11 @@ export function usePermissions(): Permissions & { role: UserRole | null; loading
     };
   }
 
-  // Simplified permissions for MVP - treat admin as member, viewer as limited member
+  // MVP Permission System: Owner has full control, everyone else is a member
   const isOwner = role === 'owner';
-  const isMember = role === 'member' || role === 'admin'; // Treat admin as member for MVP
+  // Treat admin/member/viewer all as regular members for MVP simplicity
+  const isMember = role === 'member' || role === 'admin' || role === 'viewer';
+  const isAuthenticated = !!role; // Any valid role means authenticated
 
   // Define permissions based on simplified roles
   const permissions: Permissions = {
@@ -67,15 +69,15 @@ export function usePermissions(): Permissions & { role: UserRole | null; loading
     canRemoveMembers: isOwner,
     canManageIntegrations: isOwner,
 
-    // Owner and Member permissions
+    // Owner and Member permissions (all non-owners can do these)
     canManageFeedback: isOwner || isMember,
     canCreateComments: isOwner || isMember,
     canExportData: isOwner || isMember,
     canDeleteFeedback: isOwner || isMember,
 
-    // All authenticated users (including viewer)
-    canViewFeedback: !!role,
-    canViewAnalytics: !!role,
+    // All authenticated users can view
+    canViewFeedback: isAuthenticated,
+    canViewAnalytics: isAuthenticated,
   };
 
   return {
@@ -90,17 +92,12 @@ export function hasRole(userRole: UserRole | null, allowedRoles: UserRole[]): bo
   return userRole !== null && allowedRoles.includes(userRole);
 }
 
-// Role hierarchy helper
-export function isRoleHigherOrEqual(userRole: UserRole | null, targetRole: UserRole): boolean {
-  if (!userRole) return false;
+// Simplified role check for MVP - only distinguish owner from members
+export function isOwnerRole(userRole: UserRole | null): boolean {
+  return userRole === 'owner';
+}
 
-  const roleHierarchy: Record<UserRole, number> = {
-    superadmin: 5,
-    owner: 4,
-    admin: 3,
-    member: 2,
-    viewer: 1,
-  };
-
-  return roleHierarchy[userRole] >= roleHierarchy[targetRole];
+// Check if user is a member (anyone who isn't owner or superadmin)
+export function isMemberRole(userRole: UserRole | null): boolean {
+  return userRole !== null && userRole !== 'owner' && userRole !== 'superadmin';
 }

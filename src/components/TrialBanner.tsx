@@ -9,13 +9,28 @@ export function TrialBanner() {
   const [isVisible, setIsVisible] = useState(true);
   const [, navigate] = useLocation();
 
-  // Check if banner was dismissed in this session
+  // Check if banner was dismissed recently
   useEffect(() => {
-    const dismissed = sessionStorage.getItem('trial-banner-dismissed');
-    if (dismissed === 'true') {
-      setIsVisible(false);
+    const dismissedData = localStorage.getItem('trial-banner-dismissed');
+    if (dismissedData) {
+      try {
+        const { timestamp, daysRemaining: dismissedDays } = JSON.parse(dismissedData);
+        const dismissedTime = new Date(timestamp).getTime();
+        const currentTime = new Date().getTime();
+        const hoursSinceDismissed = (currentTime - dismissedTime) / (1000 * 60 * 60);
+
+        // Show banner again if:
+        // 1. More than 24 hours have passed, OR
+        // 2. Days remaining has changed (trial is ending sooner)
+        if (hoursSinceDismissed < 24 && dismissedDays === daysRemaining) {
+          setIsVisible(false);
+        }
+      } catch (e) {
+        // If parsing fails, show the banner
+        localStorage.removeItem('trial-banner-dismissed');
+      }
     }
-  }, []);
+  }, [daysRemaining]);
 
   if (isLoading || !isInTrial || !isVisible) {
     return null;
@@ -23,7 +38,14 @@ export function TrialBanner() {
 
   const handleDismiss = () => {
     setIsVisible(false);
-    sessionStorage.setItem('trial-banner-dismissed', 'true');
+    // Store dismissal with timestamp and current days remaining
+    localStorage.setItem(
+      'trial-banner-dismissed',
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        daysRemaining: daysRemaining,
+      })
+    );
   };
 
   const handleUpgrade = () => {

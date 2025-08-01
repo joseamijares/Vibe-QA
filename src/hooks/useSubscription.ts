@@ -44,12 +44,19 @@ export function useSubscription() {
 
         // Get current usage
         const currentMonth = new Date().toISOString().slice(0, 7) + '-01';
-        const { data: usageData } = await supabase
+
+        // Get feedback count for current month
+        const { data: currentMonthUsage } = await supabase
           .from('organization_usage')
-          .select('feedback_count, storage_bytes')
+          .select('feedback_count')
           .eq('organization_id', organization!.id)
           .eq('month', currentMonth)
           .single();
+
+        // Get cumulative storage usage (sum across all months)
+        const { data: storageData } = await supabase.rpc('get_organization_storage_usage', {
+          org_id: organization!.id,
+        });
 
         // Count projects
         const { count: projectCount } = await supabase
@@ -63,7 +70,9 @@ export function useSubscription() {
           .select('*', { count: 'exact', head: true })
           .eq('organization_id', organization!.id);
 
-        const planId = (subData?.plan_id || organization?.subscription_plan_id || 'free') as PlanId;
+        const planId = (subData?.plan_id ||
+          organization?.subscription_plan_id ||
+          'basic') as PlanId;
 
         setSubscription({
           planId,
@@ -72,9 +81,9 @@ export function useSubscription() {
           cancelAt: subData?.cancel_at,
           usage: {
             projects: projectCount || 0,
-            feedbackThisMonth: usageData?.feedback_count || 0,
+            feedbackThisMonth: currentMonthUsage?.feedback_count || 0,
             teamMembers: memberCount || 0,
-            storageGB: usageData ? Math.round((usageData.storage_bytes / 1073741824) * 10) / 10 : 0,
+            storageGB: storageData?.[0]?.usage_gb || 0,
           },
         });
       } catch (err) {

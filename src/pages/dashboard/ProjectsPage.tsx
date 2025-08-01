@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { useOrganization } from '@/hooks/useOrganization';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Project } from '@/types/database.types';
+import { LimitExceededModal } from '@/components/LimitExceededModal';
 import {
   Folder,
   Plus,
@@ -35,9 +37,11 @@ interface ProjectWithStats extends Project {
 export function ProjectsPage() {
   const { organization } = useOrganization();
   const { canManageProjects } = usePermissions();
+  const { limits } = useUsageLimits();
   const [projects, setProjects] = useState<ProjectWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   useEffect(() => {
     if (!organization) return;
@@ -139,6 +143,13 @@ export function ProjectsPage() {
     toast.success('Installation code copied to clipboard');
   };
 
+  const handleNewProjectClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (limits && limits.isAtProjectLimit) {
+      e.preventDefault();
+      setShowLimitModal(true);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -159,7 +170,7 @@ export function ProjectsPage() {
           <p className="text-gray-600 mt-1">Manage your projects and view their feedback</p>
         </div>
         {canManageProjects && (
-          <Link href="/dashboard/projects/new">
+          <Link href="/dashboard/projects/new" onClick={handleNewProjectClick}>
             <Button className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               New Project
@@ -199,7 +210,7 @@ export function ProjectsPage() {
             </div>
 
             {canManageProjects && (
-              <Link href="/dashboard/projects/new">
+              <Link href="/dashboard/projects/new" onClick={handleNewProjectClick}>
                 <Button size="lg" className="px-8">
                   <Plus className="h-5 w-5 mr-2" />
                   Create Your First Project
@@ -524,6 +535,18 @@ export function ProjectsPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Limit Exceeded Modal */}
+      {limits && (
+        <LimitExceededModal
+          isOpen={showLimitModal}
+          onClose={() => setShowLimitModal(false)}
+          limitType="projects"
+          currentPlan={limits.planId}
+          currentUsage={limits.currentProjects}
+          limit={limits.projectLimit}
+        />
       )}
     </div>
   );

@@ -34,10 +34,10 @@ export function TeamPage() {
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    if (!organization) return;
+    if (!organization?.id) return;
     fetchTeamMembers();
     fetchInvitations();
-  }, [organization]);
+  }, [organization?.id]);
 
   const fetchTeamMembers = async () => {
     try {
@@ -228,21 +228,16 @@ export function TeamPage() {
   const canManageTeam = membership?.role === 'owner'; // Only owners can manage team in MVP
 
   const getRoleIcon = (role: UserRole) => {
-    switch (role) {
-      case 'owner':
-        return <Crown className="h-4 w-4" />;
-      default:
-        return <User className="h-4 w-4" />; // All non-owners show as regular users
-    }
+    return role === 'owner' ? <Crown className="h-4 w-4" /> : <User className="h-4 w-4" />;
   };
 
   const getRoleColor = (role: UserRole) => {
-    switch (role) {
-      case 'owner':
-        return 'text-purple-600 bg-purple-100';
-      default:
-        return 'text-green-600 bg-green-100'; // All non-owners show as green (member color)
-    }
+    return role === 'owner' ? 'text-purple-600 bg-purple-100' : 'text-green-600 bg-green-100';
+  };
+
+  const getRoleDisplayName = (role: UserRole) => {
+    // For MVP: Only show Owner or Member
+    return role === 'owner' ? 'Owner' : 'Member';
   };
 
   if (loading) {
@@ -287,14 +282,14 @@ export function TeamPage() {
         </Card>
         <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <User className="h-6 w-6 text-green-600" />
+            <div className="p-3 bg-purple-100 rounded-lg">
+              <Crown className="h-6 w-6 text-purple-600" />
             </div>
             <div>
               <p className="text-2xl font-bold">
-                {members.filter((m) => m.role !== 'owner').length}
+                {members.filter((m) => m.role === 'owner').length}
               </p>
-              <p className="text-sm text-gray-600">Members</p>
+              <p className="text-sm text-gray-600">Owners</p>
             </div>
           </div>
         </Card>
@@ -335,7 +330,7 @@ export function TeamPage() {
                       )}`}
                     >
                       {getRoleIcon(member.role)}
-                      {member.role === 'owner' ? 'Owner' : 'Member'}
+                      {getRoleDisplayName(member.role)}
                     </span>
                   </div>
                   <p className="text-sm text-gray-500">{member.user.email}</p>

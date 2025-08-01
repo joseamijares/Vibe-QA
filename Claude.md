@@ -297,7 +297,7 @@ Claude Code includes specialized agents that should be used proactively during d
 3. **Don't skip agents**: They catch issues that manual review might miss
 4. **Trust agent feedback**: They're configured specifically for this codebase
 
-## Current State (2025-07-30)
+## Current State (2025-07-31)
 
 ### What's Working
 - ✅ Complete authentication system with Supabase Auth
@@ -312,42 +312,54 @@ Claude Code includes specialized agents that should be used proactively during d
 - ✅ Complete widget demo page working
 - ✅ CORS configuration for cross-origin widget embedding
 - ✅ Stripe payment integration with subscription plans
-- ✅ Billing page with usage metrics
+- ✅ Billing page with usage metrics and Customer Portal
 - ✅ Subscription plans: Free, Basic ($5), Full ($14), Enterprise
+- ✅ 7-day free trial system with automatic expiration
+- ✅ Trial status tracking and enforcement
+- ✅ Superadmin role with elevated permissions
+- ✅ Enhanced permissions system
 
 ### Recent Progress
-- ✅ Implemented widget production build with Vite
-- ✅ Deployed widget to Supabase Storage CDN (production/staging/beta channels)
-- ✅ Created deployment scripts for easy widget deployment
-- ✅ Set up Edge Functions for feedback submission
-- ✅ Configured email notifications with Brevo
-- ✅ Created comprehensive widget documentation
+- ✅ Implemented 7-day free trial with countdown and expiration handling
+- ✅ Added trial status hooks (useTrialStatus, useTrialBlock)
+- ✅ Created trial UI components (TrialBanner, PaywallModal, TrialExpiredPage)
+- ✅ Implemented Stripe Customer Portal integration
+- ✅ Added trial consistency fixes with better date synchronization
+- ✅ Created webhook event idempotency tracking
+- ✅ Added configurable trial duration via app_settings table
+- ✅ Implemented superadmin role with full system access
+- ✅ Enhanced permission system with role-based access control
 
 ### Known Issues
 - ⚠️ Team page cannot fetch user emails (client-side limitation)
-- ⚠️ Some role restrictions temporarily disabled
+- ⚠️ Some role restrictions temporarily disabled for MVP
 - ⚠️ Debug artifacts still in code (console logs, debug panel)
 
 ### What's Missing
-- ✅ Payment integration (Stripe) - Complete with subscription plans
 - ❌ Voice feedback display in dashboard (widget supports voice)
 - ❌ Real-time notifications
 - ❌ Analytics and reporting dashboard
-- ❌ Settings page implementation
+- ❌ Settings page implementation (partial)
 - ❌ Feedback management UI
 - ❌ Production app deployment (widget is deployed)
+- ❌ Usage limit enforcement
+- ❌ Team invitation email templates
 
 ### Recent Fixes
 - ✅ User role assignment fixed with database trigger
 - ✅ Automatic organization creation on user signup
 - ✅ Widget production build and deployment complete
+- ✅ Trial date synchronization between tables
+- ✅ Accurate trial days calculation
+- ✅ Webhook event deduplication
 
 ### Next Steps
 See `/docs/roadmap.md` for detailed development plan. Priority focus:
-1. Configure Stripe products in dashboard
-2. Build feedback management UI
-3. Add analytics dashboard
-4. Fix security issues in Edge Functions
+1. Build feedback management UI with filtering and status updates
+2. Implement usage tracking and limit enforcement
+3. Complete settings page implementation
+4. Add analytics dashboard
+5. Fix remaining security issues
 
 ## Additional Resources
 

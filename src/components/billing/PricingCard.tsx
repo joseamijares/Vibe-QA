@@ -14,8 +14,6 @@ interface PricingCardProps {
 
 export function PricingCard({ plan, currentPlan, isLoading, onSelect }: PricingCardProps) {
   const isCurrentPlan = currentPlan === plan.id;
-  const isEnterprise = plan.id === 'enterprise';
-  const isFree = plan.id === 'free';
 
   return (
     <Card
@@ -60,22 +58,9 @@ export function PricingCard({ plan, currentPlan, isLoading, onSelect }: PricingC
             <Button className="w-full" disabled variant="outline">
               Current Plan
             </Button>
-          ) : isEnterprise ? (
-            <Button className="w-full" variant="outline" onClick={() => onSelect(plan.id)}>
-              Contact Sales
-            </Button>
-          ) : isFree ? (
-            <Button
-              className="w-full"
-              variant="outline"
-              disabled={isLoading}
-              onClick={() => onSelect(plan.id)}
-            >
-              Downgrade to Free
-            </Button>
           ) : (
             <Button className="w-full" disabled={isLoading} onClick={() => onSelect(plan.id)}>
-              {currentPlan === 'free' ? 'Upgrade' : 'Switch'} to {plan.name}
+              {currentPlan === 'basic' && plan.id === 'full' ? 'Upgrade' : 'Switch'} to {plan.name}
             </Button>
           )}
         </div>
@@ -85,19 +70,10 @@ export function PricingCard({ plan, currentPlan, isLoading, onSelect }: PricingC
       <div className="border-t px-6 py-4 bg-muted/50">
         <h4 className="text-sm font-semibold mb-2">Limits</h4>
         <div className="space-y-1 text-sm text-muted-foreground">
-          <div>Projects: {plan.limits.projects === -1 ? 'Unlimited' : plan.limits.projects}</div>
-          <div>
-            Feedback/month:{' '}
-            {plan.limits.feedbackPerMonth === -1
-              ? 'Unlimited'
-              : plan.limits.feedbackPerMonth.toLocaleString()}
-          </div>
-          <div>
-            Team members: {plan.limits.teamMembers === -1 ? 'Unlimited' : plan.limits.teamMembers}
-          </div>
-          <div>
-            Storage: {plan.limits.storageGB === -1 ? 'Unlimited' : `${plan.limits.storageGB}GB`}
-          </div>
+          <div>Projects: {plan.limits.projects}</div>
+          <div>Feedback/month: {plan.limits.feedbackPerMonth.toLocaleString()}</div>
+          <div>Team members: {plan.limits.teamMembers}</div>
+          <div>Storage: {plan.limits.storageGB}GB</div>
         </div>
       </div>
     </Card>

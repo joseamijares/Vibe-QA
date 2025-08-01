@@ -10,6 +10,18 @@ serve(async (req) => {
   }
 
   try {
+    // Get the authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
       apiVersion: '2023-10-16',
     });
@@ -19,13 +31,45 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    const { planId, organizationId, userId, email } = await req.json();
+    // Verify the user token
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid token' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
-    if (!planId || !organizationId || !userId) {
+    const { planId, organizationId } = await req.json();
+
+    if (!planId || !organizationId) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         { 
           status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Verify user has access to this organization
+    const { data: member } = await supabaseClient
+      .from('organization_members')
+      .select('role')
+      .eq('organization_id', organizationId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!member || member.role !== 'owner') {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - only owners can manage billing' }),
+        { 
+          status: 403, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
@@ -43,10 +87,10 @@ serve(async (req) => {
     if (!customerId) {
       // Create new Stripe customer
       const customer = await stripe.customers.create({
-        email,
+        email: user.email,
         metadata: {
           organization_id: organizationId,
-          user_id: userId,
+          user_id: user.id,
         },
       });
       customerId = customer.id;
@@ -98,7 +142,7 @@ serve(async (req) => {
       cancel_url: `${Deno.env.get('APP_URL')}/dashboard/settings/billing?canceled=true`,
       metadata: {
         organization_id: organizationId,
-        user_id: userId,
+        user_id: user.id,
         plan_id: planId,
       },
       // Configure payment collection behavior

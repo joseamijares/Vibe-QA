@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useOrganization } from './useOrganization';
+import { useSubscription } from './useSubscription';
 import { supabase } from '@/lib/supabase';
 
 interface TrialStatus {
   isInTrial: boolean;
   trialEndsAt: Date | null;
   daysRemaining: number;
-  trialStatus: 'active' | 'converted' | 'canceled' | 'expired';
+  trialStatus: 'active' | 'converted' | 'canceled' | 'expired' | 'loading';
   isLoading: boolean;
 }
 
@@ -16,7 +17,7 @@ export function useTrialStatus(): TrialStatus {
     isInTrial: false,
     trialEndsAt: null,
     daysRemaining: 0,
-    trialStatus: 'expired',
+    trialStatus: 'loading', // Changed from 'expired' to 'loading'
     isLoading: true,
   });
 
@@ -26,21 +27,38 @@ export function useTrialStatus(): TrialStatus {
       return;
     }
 
+    let isMounted = true;
+
+    const orgId = organization.id; // organization is guaranteed to exist here
+
     async function fetchTrialStatus() {
       try {
+        console.log('[useTrialStatus] Fetching trial status for org:', orgId);
+
         const { data, error } = await supabase
           .from('organization_trial_status')
           .select('*')
-          .eq('organization_id', organization!.id)
+          .eq('organization_id', orgId)
           .single();
 
+        if (!isMounted) return;
+
         if (error) {
-          console.error('Error fetching trial status:', error);
+          console.error('[useTrialStatus] Error fetching trial status:', error);
           setTrialData((prev) => ({ ...prev, isLoading: false }));
           return;
         }
 
         if (data) {
+          console.log('[useTrialStatus] Trial data received:', {
+            organization_id: data.organization_id,
+            trial_status: data.trial_status,
+            trial_ends_at: data.trial_ends_at,
+            days_remaining: data.days_remaining,
+            subscription_status: data.subscription_status,
+            plan_id: data.plan_id,
+          });
+
           setTrialData({
             isInTrial: data.trial_status === 'active',
             trialEndsAt: data.trial_ends_at ? new Date(data.trial_ends_at) : null,
@@ -50,31 +68,36 @@ export function useTrialStatus(): TrialStatus {
           });
         }
       } catch (error) {
-        console.error('Error in useTrialStatus:', error);
+        if (!isMounted) return;
+        console.error('[useTrialStatus] Exception in fetchTrialStatus:', error);
         setTrialData((prev) => ({ ...prev, isLoading: false }));
       }
     }
 
-    fetchTrialStatus();
-
     // Set up realtime subscription for trial status changes
     const subscription = supabase
-      .channel(`trial-status-${organization.id}`)
+      .channel(`trial-status-${orgId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'organization_subscriptions',
-          filter: `organization_id=eq.${organization.id}`,
+          filter: `organization_id=eq.${orgId}`,
         },
         () => {
-          fetchTrialStatus();
+          if (isMounted) {
+            fetchTrialStatus();
+          }
         }
       )
       .subscribe();
 
+    // Initial fetch
+    fetchTrialStatus();
+
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [organization]);
@@ -87,10 +110,22 @@ export function useTrialBlock() {
   const trialStatus = useTrialStatus();
   const { subscription } = useSubscription();
 
+  console.log('[useTrialBlock] Checking trial block status:', {
+    isLoading: trialStatus.isLoading,
+    trialStatus: trialStatus.trialStatus,
+    isInTrial: trialStatus.isInTrial,
+    daysRemaining: trialStatus.daysRemaining,
+    subscriptionStatus: subscription?.status,
+    subscriptionPlan: subscription?.planId,
+  });
+
   const isBlocked =
     !trialStatus.isLoading &&
+    trialStatus.trialStatus !== 'loading' && // Make sure data is loaded
     trialStatus.trialStatus === 'expired' &&
     (!subscription || subscription.status !== 'active');
+
+  console.log('[useTrialBlock] Result:', { isBlocked });
 
   return {
     isBlocked,
@@ -100,6 +135,3 @@ export function useTrialBlock() {
       : null,
   };
 }
-
-// Import useSubscription to avoid circular dependency
-import { useSubscription } from './useSubscription';

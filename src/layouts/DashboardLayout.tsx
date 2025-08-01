@@ -20,10 +20,10 @@ import {
   Menu,
   X,
   Shield,
+  BarChart3,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import logoSvg from '@/assets/vibe-code-logo.svg';
-import { TrialExpiredPage } from '@/pages/TrialExpiredPage';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -43,9 +43,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Check if trial has expired and redirect accordingly
   useEffect(() => {
+    console.log('[DashboardLayout] Trial check:', {
+      isBlocked,
+      isLoading: trialStatus.isLoading,
+      trialStatus: trialStatus.trialStatus,
+      location,
+    });
+
     if (isBlocked && !trialStatus.isLoading) {
       // Allow access to billing page even if trial expired
       if (!location.includes('/dashboard/settings/billing')) {
+        console.log('[DashboardLayout] Redirecting to trial-expired page');
         navigate('/trial-expired');
       }
     }
@@ -56,15 +64,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return <NoOrganizationMessage />;
   }
 
-  // Show trial expired page if blocked (except on billing page)
+  // The redirect is handled in useEffect above
   if (isBlocked && !location.includes('/dashboard/settings/billing')) {
-    return <TrialExpiredPage />;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, show: true },
     { name: 'Projects', href: '/dashboard/projects', icon: Folder, show: true },
     { name: 'Feedback', href: '/dashboard/feedback', icon: MessageSquare, show: true },
+    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, show: true },
     { name: 'Team', href: '/dashboard/team', icon: Users, show: true },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings, show: true },
     {

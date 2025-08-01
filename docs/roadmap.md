@@ -1,6 +1,6 @@
 # VibeQA Development Roadmap
 
-**Last Updated**: July 29, 2025  
+**Last Updated**: July 31, 2025  
 **Status**: MVP Development - Phase 2
 
 ## Overview
@@ -18,16 +18,21 @@ This roadmap outlines the development plan for VibeQA, consolidating the origina
 - **Team Management**: Invitations, role assignment, member management
 - **Backend API**: Edge Functions for feedback submission
 - **Widget Deployment**: Production-ready with staging/beta channels
+- **Payment Integration**: ✅ Complete Stripe integration with subscriptions
+- **Trial System**: ✅ 7-day free trial with automatic expiration
+- **Billing Page**: ✅ Subscription management with Customer Portal
+- **Access Control**: ✅ Trial/subscription-based feature blocking
+- **Superadmin Role**: ✅ System administration capabilities
 
 ### 🚧 In Progress
-- **User Organization Fix**: ✅ Resolved - automatic organization creation on signup
 - **Documentation**: Updating and consolidating docs
+- **Usage Tracking**: Implementing plan limit enforcement
 
 ### ❌ Not Started (High Priority)
-- **Payment Integration**: Stripe subscriptions
 - **Feedback Management UI**: Dashboard for managing feedback
-- **Settings Page**: Organization and user preferences
+- **Settings Page**: Organization and user preferences (partial)
 - **Analytics Dashboard**: Usage statistics and insights
+- **Production Deployment**: Domain and SSL configuration
 
 ## Phase 2: Core Features (Current Phase)
 **Timeline**: 2-4 weeks  
@@ -35,19 +40,19 @@ This roadmap outlines the development plan for VibeQA, consolidating the origina
 
 ### Week 1-2: Payment Integration & Settings
 
-#### Stripe Integration
-- [ ] Set up Stripe account and API keys
-- [ ] Create subscription products:
-  - **Free**: 1 project, 100 feedback/month
-  - **Basic**: $5/month, 3 projects, 500 feedback/month, 30-day history
-  - **Full Plan**: $14/month, 10 projects, 2,000 feedback/month, 90-day history  
-  - **Enterprise**: Custom pricing
-- [ ] Implement billing page components
-- [ ] Create subscription management flows
-- [ ] Add webhook handlers for events
-- [ ] Implement usage tracking and limits
-- [ ] Add payment method management
-- [ ] Create upgrade/downgrade flows
+#### Stripe Integration ✅ COMPLETED
+- [x] Set up Stripe account and API keys
+- [x] Create subscription products:
+  - **Basic**: $5/month, 3 projects, 500 feedback/month, 30-day history (includes 7-day trial)
+  - **Full Plan**: $14/month, 10 projects, 2,000 feedback/month, 90-day history
+- [x] Implement billing page components
+- [x] Create subscription management flows
+- [x] Add webhook handlers for events
+- [x] Add payment method management
+- [x] Create upgrade/downgrade flows
+- [x] Implement 7-day trial system
+- [x] Add Customer Portal integration
+- [x] Implement usage tracking and limits ✅ COMPLETED
 
 #### Settings Page Implementation
 - [ ] Create `/dashboard/settings` route structure
@@ -65,7 +70,7 @@ This roadmap outlines the development plan for VibeQA, consolidating the origina
 - [ ] API keys management tab:
   - [ ] View organization API usage
   - [ ] Regenerate keys functionality
-- [ ] Billing tab (from Stripe integration)
+- [x] Billing tab (completed with Stripe integration)
 
 ### Week 3-4: Feedback Management
 
@@ -89,19 +94,24 @@ This roadmap outlines the development plan for VibeQA, consolidating the origina
   - [ ] Custom metadata display
 
 #### Collaboration Features
-- [ ] Assignment system:
-  - [ ] Assign to team members
+- [x] Assignment system:
+  - [x] Assign to team members
   - [ ] Auto-assignment rules
   - [ ] Assignment notifications
-- [ ] Comment threads:
-  - [ ] Rich text editor
+- [x] Comment threads:
+  - [x] Basic text editor
   - [ ] @mentions with autocomplete
-  - [ ] Edit/delete own comments
+  - [x] Edit/delete own comments
   - [ ] Comment notifications
-- [ ] Status workflow:
+- [x] Status workflow:
   - [ ] Customizable status labels
-  - [ ] Status change history
-  - [ ] Bulk status updates
+  - [x] Status change history
+  - [x] Bulk status updates
+- [x] Activity logging system:
+  - [x] Automatic activity tracking via database triggers
+  - [x] Activity timeline component
+  - [x] Real-time updates
+  - [x] User profile integration
 - [ ] Tags and categories:
   - [ ] Create custom tags
   - [ ] Auto-tagging rules
@@ -177,22 +187,24 @@ This roadmap outlines the development plan for VibeQA, consolidating the origina
 
 ## Immediate Action Items (This Week)
 
-1. **Documentation** ✅
+1. **Documentation**
    - [x] Create this roadmap
-   - [ ] Update Claude.md with resolved issues
+   - [x] Update Claude.md with resolved issues
    - [ ] Clean up debug code
 
-2. **Start Stripe Integration**
-   - [ ] Set up Stripe test account
-   - [ ] Design subscription database schema
-   - [ ] Create billing UI components
-   - [ ] Implement subscription creation flow
+2. **Complete Usage Tracking**
+   - [ ] Implement feedback count tracking
+   - [ ] Add project limit enforcement
+   - [ ] Create usage display components
+   - [ ] Add limit exceeded warnings
 
 3. **Begin Feedback UI**
    - [ ] Design feedback list component
    - [ ] Create filter UI
    - [ ] Implement pagination
    - [ ] Build detail view modal
+   - [ ] Add status management
+   - [ ] Implement assignment system
 
 ## Success Metrics
 

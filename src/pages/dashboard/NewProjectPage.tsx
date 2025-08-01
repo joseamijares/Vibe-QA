@@ -3,12 +3,14 @@ import { useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { useOrganization } from '@/hooks/useOrganization';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { LimitExceededModal } from '@/components/LimitExceededModal';
 import { toast } from 'sonner';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,10 +32,12 @@ export function NewProjectPage() {
   const { session } = useAuth();
   const { organization, membership, loading: orgLoading } = useOrganization();
   const { canManageProjects, role, loading: permLoading } = usePermissions();
+  const { limits, checkCanCreateProject } = useUsageLimits();
   const [isLoading, setIsLoading] = useState(false);
   const [slugPreview, setSlugPreview] = useState('');
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [slugError, setSlugError] = useState<string | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   const {
     register,
@@ -109,6 +113,13 @@ export function NewProjectPage() {
   const onSubmit = async (data: ProjectFormData) => {
     if (!organization) {
       toast.error('No organization found');
+      return;
+    }
+
+    // Check if organization can create more projects
+    const canCreate = await checkCanCreateProject();
+    if (!canCreate) {
+      setShowLimitModal(true);
       return;
     }
 
@@ -273,6 +284,18 @@ export function NewProjectPage() {
           </div>
         </form>
       </Card>
+
+      {/* Limit Exceeded Modal */}
+      {limits && (
+        <LimitExceededModal
+          isOpen={showLimitModal}
+          onClose={() => setShowLimitModal(false)}
+          limitType="projects"
+          currentPlan={limits.planId}
+          currentUsage={limits.currentProjects}
+          limit={limits.projectLimit}
+        />
+      )}
     </div>
   );
 }

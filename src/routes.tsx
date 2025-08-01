@@ -48,6 +48,9 @@ const ProjectDetailPage = lazy(() =>
 const WidgetConfigPage = lazy(() =>
   import('@/pages/dashboard/WidgetConfigPage').then((m) => ({ default: m.WidgetConfigPage }))
 );
+const AnalyticsPage = lazy(() =>
+  import('@/pages/dashboard/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage }))
+);
 const EditProjectPage = lazy(() =>
   import('@/pages/dashboard/EditProjectPage').then((m) => ({ default: m.EditProjectPage }))
 );
@@ -116,7 +119,7 @@ const ProtectedProjects = () => (
 );
 
 const ProtectedNewProject = () => (
-  <ProtectedRoute requiredRole={['owner', 'admin']}>
+  <ProtectedRoute requiredRole={['owner']}>
     <Suspense fallback={<PageLoader />}>
       <DashboardLayout>
         <NewProjectPage />
@@ -140,6 +143,16 @@ const ProtectedTeam = () => (
     <Suspense fallback={<PageLoader />}>
       <DashboardLayout>
         <TeamPage />
+      </DashboardLayout>
+    </Suspense>
+  </ProtectedRoute>
+);
+
+const ProtectedAnalytics = () => (
+  <ProtectedRoute>
+    <Suspense fallback={<PageLoader />}>
+      <DashboardLayout>
+        <AnalyticsPage />
       </DashboardLayout>
     </Suspense>
   </ProtectedRoute>
@@ -276,6 +289,7 @@ export function Routes() {
         <Route path="/dashboard/projects/:id/edit" component={ProtectedEditProject} />
         <Route path="/dashboard/projects/:id/widget" component={ProtectedWidgetConfig} />
         <Route path="/dashboard/feedback" component={ProtectedFeedback} />
+        <Route path="/dashboard/analytics" component={ProtectedAnalytics} />
         <Route path="/dashboard/team" component={ProtectedTeam} />
         <Route path="/dashboard/settings" component={ProtectedSettings} />
         <Route path="/dashboard/settings/billing" component={ProtectedBilling} />

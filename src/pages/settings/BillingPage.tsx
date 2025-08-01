@@ -8,6 +8,7 @@ import { useOrganization } from '@/hooks/useOrganization';
 import { useSubscription } from '@/hooks/useSubscription';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useTrialStatus } from '@/hooks/useTrialStatus';
+import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -61,19 +62,17 @@ export function BillingPage() {
   const handlePlanSelect = async (planId: string) => {
     if (!organization || !session?.user) return;
 
-    if (planId === 'enterprise') {
-      window.open('mailto:sales@vibeqa.app?subject=Enterprise Plan Inquiry', '_blank');
-      return;
-    }
-
-    if (planId === 'free' && subscription?.planId !== 'free') {
-      // Handle downgrade to free
-      toast.info('Please contact support to downgrade your plan');
-      return;
-    }
-
     setIsLoading(true);
     try {
+      // Get the current session token
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+
+      if (!currentSession?.access_token) {
+        throw new Error('No active session');
+      }
+
       // Use Supabase Edge Function for Stripe checkout
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`,
@@ -81,13 +80,11 @@ export function BillingPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            Authorization: `Bearer ${currentSession.access_token}`,
           },
           body: JSON.stringify({
             planId,
             organizationId: organization.id,
-            userId: session.user.id,
-            email: session.user.email,
           }),
         }
       );
@@ -201,7 +198,7 @@ export function BillingPage() {
                 )}
               </p>
             </div>
-            {subscription.planId !== 'free' && subscription.status === 'active' && (
+            {subscription.status === 'active' && (
               <Button variant="outline" onClick={handleManageSubscription}>
                 <CreditCard className="h-4 w-4 mr-2" />
                 Manage Subscription
@@ -214,45 +211,113 @@ export function BillingPage() {
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Projects</p>
-                <p className="text-2xl font-semibold">
-                  {subscription.usage.projects}
-                  {plan.limits.projects !== -1 && (
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-semibold">
+                    {subscription.usage.projects}
                     <span className="text-sm text-muted-foreground">/{plan.limits.projects}</span>
+                  </p>
+                  {subscription.usage.projects >= plan.limits.projects && (
+                    <Badge variant="destructive" className="text-xs">
+                      Limit reached
+                    </Badge>
                   )}
-                </p>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                  <div
+                    className={`h-1.5 rounded-full ${
+                      subscription.usage.projects >= plan.limits.projects
+                        ? 'bg-destructive'
+                        : 'bg-primary'
+                    }`}
+                    style={{
+                      width: `${Math.min((subscription.usage.projects / plan.limits.projects) * 100, 100)}%`,
+                    }}
+                  />
+                </div>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Feedback this month</p>
-                <p className="text-2xl font-semibold">
-                  {subscription.usage.feedbackThisMonth.toLocaleString()}
-                  {plan.limits.feedbackPerMonth !== -1 && (
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-semibold">
+                    {subscription.usage.feedbackThisMonth.toLocaleString()}
                     <span className="text-sm text-muted-foreground">
                       /{plan.limits.feedbackPerMonth.toLocaleString()}
                     </span>
+                  </p>
+                  {subscription.usage.feedbackThisMonth >= plan.limits.feedbackPerMonth && (
+                    <Badge variant="destructive" className="text-xs">
+                      Limit reached
+                    </Badge>
                   )}
-                </p>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                  <div
+                    className={`h-1.5 rounded-full ${
+                      subscription.usage.feedbackThisMonth >= plan.limits.feedbackPerMonth
+                        ? 'bg-destructive'
+                        : 'bg-primary'
+                    }`}
+                    style={{
+                      width: `${Math.min((subscription.usage.feedbackThisMonth / plan.limits.feedbackPerMonth) * 100, 100)}%`,
+                    }}
+                  />
+                </div>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Team members</p>
-                <p className="text-2xl font-semibold">
-                  {subscription.usage.teamMembers}
-                  {plan.limits.teamMembers !== -1 && (
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-semibold">
+                    {subscription.usage.teamMembers}
                     <span className="text-sm text-muted-foreground">
                       /{plan.limits.teamMembers}
                     </span>
+                  </p>
+                  {subscription.usage.teamMembers >= plan.limits.teamMembers && (
+                    <Badge variant="destructive" className="text-xs">
+                      Limit reached
+                    </Badge>
                   )}
-                </p>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                  <div
+                    className={`h-1.5 rounded-full ${
+                      subscription.usage.teamMembers >= plan.limits.teamMembers
+                        ? 'bg-destructive'
+                        : 'bg-primary'
+                    }`}
+                    style={{
+                      width: `${Math.min((subscription.usage.teamMembers / plan.limits.teamMembers) * 100, 100)}%`,
+                    }}
+                  />
+                </div>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Storage used</p>
-                <p className="text-2xl font-semibold">
-                  {subscription.usage.storageGB}GB
-                  {plan.limits.storageGB !== -1 && (
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-semibold">
+                    {subscription.usage.storageGB}GB
                     <span className="text-sm text-muted-foreground">
                       /{plan.limits.storageGB}GB
                     </span>
+                  </p>
+                  {subscription.usage.storageGB >= plan.limits.storageGB && (
+                    <Badge variant="destructive" className="text-xs">
+                      Limit reached
+                    </Badge>
                   )}
-                </p>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                  <div
+                    className={`h-1.5 rounded-full ${
+                      subscription.usage.storageGB >= plan.limits.storageGB
+                        ? 'bg-destructive'
+                        : 'bg-primary'
+                    }`}
+                    style={{
+                      width: `${Math.min((subscription.usage.storageGB / plan.limits.storageGB) * 100, 100)}%`,
+                    }}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -262,7 +327,7 @@ export function BillingPage() {
       {/* Pricing Plans */}
       <div>
         <h2 className="text-2xl font-semibold mb-4">Available Plans</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2">
           {Object.values(SUBSCRIPTION_PLANS).map((plan) => (
             <PricingCard
               key={plan.id}

@@ -30,6 +30,30 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
+    // Check if event was already processed (idempotency)
+    const { data: existingEvent } = await supabaseClient
+      .from('processed_webhook_events')
+      .select('id')
+      .eq('stripe_event_id', event.id)
+      .single();
+
+    if (existingEvent) {
+      console.log(`Event ${event.id} already processed, skipping`);
+      return new Response(JSON.stringify({ received: true }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+
+    // Mark event as processed
+    await supabaseClient
+      .from('processed_webhook_events')
+      .insert({
+        stripe_event_id: event.id,
+        event_type: event.type,
+        metadata: { livemode: event.livemode }
+      });
+
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -116,7 +140,7 @@ async function handleSubscriptionUpdate(
   subscription: Stripe.Subscription
 ) {
   const customerId = subscription.customer as string;
-  const planId = subscription.metadata.plan_id || 'free';
+  const planId = subscription.metadata.plan_id || 'basic';
 
   await supabase
     .from('organization_subscriptions')
@@ -181,7 +205,7 @@ async function handleSubscriptionDeleted(
       .from('organizations')
       .update({
         subscription_status: 'canceled',
-        subscription_plan_id: 'free',
+        subscription_plan_id: 'basic',
       })
       .eq('id', sub.organization_id);
   }

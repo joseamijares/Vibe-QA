@@ -10,25 +10,6 @@ export const stripePromise = loadStripe(
 
 // Subscription plans configuration
 export const SUBSCRIPTION_PLANS = {
-  free: {
-    id: 'free',
-    name: 'Free',
-    price: 0,
-    priceId: null,
-    features: [
-      '1 project',
-      '100 feedback per month',
-      'Basic support',
-      'Screenshot capture',
-      '7-day data retention',
-    ],
-    limits: {
-      projects: 1,
-      feedbackPerMonth: 100,
-      teamMembers: 2,
-      storageGB: 1,
-    },
-  },
   basic: {
     id: 'basic',
     name: 'Basic',
@@ -70,29 +51,6 @@ export const SUBSCRIPTION_PLANS = {
       storageGB: 20,
     },
   },
-  enterprise: {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: null,
-    priceId: null,
-    features: [
-      'Unlimited projects',
-      'Unlimited feedback',
-      'Dedicated support',
-      'All features',
-      'Custom integrations',
-      'SSO/SAML',
-      'SLA guarantee',
-      'White-label options',
-      'Advanced security',
-    ],
-    limits: {
-      projects: -1, // Unlimited
-      feedbackPerMonth: -1,
-      teamMembers: -1,
-      storageGB: -1,
-    },
-  },
 } as const;
 
 export type PlanId = keyof typeof SUBSCRIPTION_PLANS;
@@ -117,7 +75,7 @@ export function isWithinPlanLimits(
   const plan = SUBSCRIPTION_PLANS[planId];
   const limits = plan.limits;
 
-  if (usage.projects !== undefined && limits.projects !== -1 && usage.projects >= limits.projects) {
+  if (usage.projects !== undefined && usage.projects >= limits.projects) {
     return {
       allowed: false,
       message: `You've reached the limit of ${limits.projects} project${
@@ -126,11 +84,7 @@ export function isWithinPlanLimits(
     };
   }
 
-  if (
-    usage.feedbackThisMonth !== undefined &&
-    limits.feedbackPerMonth !== -1 &&
-    usage.feedbackThisMonth >= limits.feedbackPerMonth
-  ) {
+  if (usage.feedbackThisMonth !== undefined && usage.feedbackThisMonth >= limits.feedbackPerMonth) {
     return {
       allowed: false,
       message: `You've reached the limit of ${limits.feedbackPerMonth.toLocaleString()} feedback submissions this month for the ${
@@ -139,22 +93,14 @@ export function isWithinPlanLimits(
     };
   }
 
-  if (
-    usage.teamMembers !== undefined &&
-    limits.teamMembers !== -1 &&
-    usage.teamMembers >= limits.teamMembers
-  ) {
+  if (usage.teamMembers !== undefined && usage.teamMembers >= limits.teamMembers) {
     return {
       allowed: false,
       message: `You've reached the limit of ${limits.teamMembers} team members for the ${plan.name} plan.`,
     };
   }
 
-  if (
-    usage.storageGB !== undefined &&
-    limits.storageGB !== -1 &&
-    usage.storageGB >= limits.storageGB
-  ) {
+  if (usage.storageGB !== undefined && usage.storageGB >= limits.storageGB) {
     return {
       allowed: false,
       message: `You've reached the storage limit of ${limits.storageGB}GB for the ${plan.name} plan.`,

@@ -134,16 +134,8 @@ LEFT JOIN public.organization_subscriptions os ON os.organization_id = o.id;
 -- Grant access to the view
 GRANT SELECT ON organization_trial_status TO authenticated;
 
--- Create RLS policy for the view
-CREATE POLICY "Users can view their organization trial status"
-  ON organization_trial_status FOR SELECT
-  USING (
-    organization_id IN (
-      SELECT organization_id 
-      FROM public.organization_members
-      WHERE user_id = auth.uid()
-    )
-  );
+-- Note: Views don't support RLS policies directly
+-- Access control is enforced through the underlying tables
 
 -- Add index for performance
 CREATE INDEX IF NOT EXISTS idx_org_trial_ends_at ON public.organizations(trial_ends_at);

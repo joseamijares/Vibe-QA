@@ -226,6 +226,33 @@ export class VibeQAWidget implements WidgetAPI {
 
       if (!response.ok) {
         const error = await response.json();
+
+        // Handle specific error codes
+        if (response.status === 429 && error.code === 'FEEDBACK_LIMIT_EXCEEDED') {
+          // Show a more detailed error for limit exceeded
+          this.ui?.showNotification(
+            'error',
+            'Feedback Limit Reached',
+            error.message ||
+              'Your organization has reached its monthly feedback limit. Please contact your administrator to upgrade your plan.'
+          );
+          throw new Error(error.message || 'Feedback limit exceeded');
+        }
+
+        if (response.status === 429 && error.code === 'STORAGE_LIMIT_EXCEEDED') {
+          // Show a more detailed error for storage limit exceeded
+          const details = error.details || {};
+          this.ui?.showNotification(
+            'error',
+            'Storage Limit Reached',
+            error.message ||
+              `Your organization has reached its storage limit${
+                details.currentUsageGB ? ` (${details.currentUsageGB}GB/${details.limitGB}GB)` : ''
+              }. Please contact your administrator to upgrade your plan or free up space.`
+          );
+          throw new Error(error.message || 'Storage limit exceeded');
+        }
+
         throw new Error(error.message || 'Failed to submit feedback');
       }
 

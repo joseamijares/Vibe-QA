@@ -194,6 +194,115 @@ serve(async (req) => {
       );
     }
 
+    // Check if organization can submit more feedback
+    const { data: canSubmit, error: limitError } = await supabase
+      .rpc('can_submit_feedback', { org_id: project.organization_id });
+    
+    if (limitError) {
+      console.error('Error checking feedback limit:', limitError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to check feedback limits' }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    if (!canSubmit) {
+      // Get organization's current plan for better error message
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('subscription_plan_id')
+        .eq('id', project.organization_id)
+        .single();
+      
+      const { data: planData } = await supabase
+        .from('subscription_plans')
+        .select('name, limits')
+        .eq('id', orgData?.subscription_plan_id || 'basic')
+        .single();
+      
+      const feedbackLimit = planData?.limits?.feedbackPerMonth || 500;
+      const planName = planData?.name || 'Basic';
+      
+      return new Response(
+        JSON.stringify({ 
+          error: 'Feedback limit exceeded',
+          message: `Your ${planName} plan allows ${feedbackLimit} feedback submissions per month. Please upgrade your plan to submit more feedback.`,
+          code: 'FEEDBACK_LIMIT_EXCEEDED'
+        }),
+        { 
+          status: 429, // Too Many Requests
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // Check storage limits if there are media uploads
+    if (mediaUploads.length > 0) {
+      // Calculate total size of uploads
+      const totalUploadSize = mediaUploads.reduce((sum, upload) => sum + upload.file.size, 0);
+      
+      // Check if organization can upload these files
+      const { data: canUpload, error: storageError } = await supabase
+        .rpc('can_upload_file', { 
+          org_id: project.organization_id,
+          file_size_bytes: totalUploadSize 
+        });
+      
+      if (storageError) {
+        console.error('Error checking storage limit:', storageError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to check storage limits' }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      
+      if (!canUpload) {
+        // Get organization's storage usage and limit for better error message
+        const { data: storageData } = await supabase
+          .rpc('get_organization_storage_usage', { org_id: project.organization_id });
+        
+        const { data: planData } = await supabase
+          .from('subscription_plans')
+          .select('name, limits')
+          .eq('id', 
+            (await supabase
+              .from('organizations')
+              .select('subscription_plan_id')
+              .eq('id', project.organization_id)
+              .single()
+            ).data?.subscription_plan_id || 'basic'
+          )
+          .single();
+        
+        const storageLimit = planData?.limits?.storageGB || 5;
+        const planName = planData?.name || 'Basic';
+        const currentUsageGB = storageData?.[0]?.usage_gb || 0;
+        
+        return new Response(
+          JSON.stringify({ 
+            error: 'Storage limit exceeded',
+            message: `Your ${planName} plan allows ${storageLimit}GB of storage. You are currently using ${currentUsageGB}GB. Please upgrade your plan or delete old files to upload new content.`,
+            code: 'STORAGE_LIMIT_EXCEEDED',
+            details: {
+              currentUsageGB,
+              limitGB: storageLimit,
+              requestedSizeMB: Math.round(totalUploadSize / 1048576 * 10) / 10
+            }
+          }),
+          { 
+            status: 429, // Too Many Requests
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    }
+
     // Create feedback entry
     const { data: feedback, error: feedbackError } = await supabase
       .from('feedback')

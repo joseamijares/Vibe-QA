@@ -20,6 +20,8 @@ export function useOrganization() {
 
     async function fetchOrganization() {
       try {
+        console.log('[useOrganization] Fetching organization for user:', session!.user.id);
+
         // Get user's organization membership (get first if multiple)
         const { data: membershipData, error: membershipError } = await supabase
           .from('organization_members')
@@ -29,8 +31,14 @@ export function useOrganization() {
           .limit(1)
           .maybeSingle(); // Returns null if no rows, data if one row
 
+        console.log('[useOrganization] Membership query result:', {
+          membershipData,
+          membershipError,
+        });
+
         if (membershipError || !membershipData) {
           // User has no organization yet - this can happen for manually created users
+          console.log('[useOrganization] No membership found for user');
           setError(new Error('No organization found. Please contact support.'));
           setLoading(false);
           return;
@@ -39,14 +47,22 @@ export function useOrganization() {
         setMembership(membershipData);
 
         // Get organization details
+        console.log('[useOrganization] Fetching organization:', membershipData.organization_id);
+
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
           .select('*')
           .eq('id', membershipData.organization_id)
-          .single();
+          .maybeSingle();
+
+        console.log('[useOrganization] Organization query result:', { orgData, orgError });
 
         if (orgError) {
           throw orgError;
+        }
+
+        if (!orgData) {
+          throw new Error('Organization not found');
         }
 
         setOrganization(orgData);
