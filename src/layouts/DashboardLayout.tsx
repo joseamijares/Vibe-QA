@@ -95,45 +95,52 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 lg:flex">
+    <div className="min-h-screen lg:flex relative">
+      {/* Dashboard background with subtle aurora */}
+      <div className="dashboard-bg" />
+      <div className="dashboard-aurora">
+        <div className="dashboard-aurora-1" />
+        <div className="dashboard-aurora-2" />
+      </div>
+
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-gray-900/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar with glassmorphism */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform lg:translate-x-0 lg:static lg:block lg:h-screen ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 glass-sidebar transform transition-transform lg:translate-x-0 lg:static lg:block lg:h-screen ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex h-full flex-col">
           {/* Logo and org */}
-          <div className="flex h-16 items-center justify-between px-4 border-b">
+          <div className="flex h-16 items-center justify-between px-4 border-b border-gray-100/20">
             <Link href="/dashboard">
               <img src={logoSvg} alt="VibeQA" className="h-8 cursor-pointer" />
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
+              className="lg:hidden text-gray-600 hover:text-gray-800 transition-colors"
             >
               <X className="h-6 w-6" />
             </button>
           </div>
 
           {/* Organization selector */}
-          <div className="px-4 py-4 border-b">
-            <button className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-              <span className="truncate">{organization?.name || 'Loading...'}</span>
+          <div className="px-4 py-4 border-b border-gray-100/20">
+            <button className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 glass-dashboard-dark rounded-xl hover:bg-gray-50/50 transition-all">
+              <span className="truncate font-semibold">{organization?.name || 'Loading...'}</span>
               <ChevronDown className="h-4 w-4 text-gray-500" />
             </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-1 px-4 py-4">
+          <nav className="flex-1 space-y-1.5 px-4 py-4">
             {navigation.map((item) => {
               const isActive =
                 item.href === '/dashboard'
@@ -143,41 +150,45 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    isActive ? 'bg-[#094765] text-white' : 'text-gray-700 hover:bg-gray-100'
+                  className={`nav-item-dashboard flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all ${
+                    isActive
+                      ? 'active shadow-lg'
+                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50/50'
                   }`}
                 >
-                  <item.icon className="h-5 w-5" />
-                  {item.name}
+                  <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : ''}`} />
+                  <span className={isActive ? 'text-white' : ''}>{item.name}</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* User menu */}
-          <div className="border-t px-4 py-4">
+          <div className="border-t border-gray-100/20 px-4 py-4">
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium text-gray-700 rounded-xl hover:bg-gray-50/50 transition-all"
               >
-                <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-[#094765] to-[#3387a7] rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#094765] to-[#3387a7] rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-md">
                   {session?.user?.email?.[0].toUpperCase()}
                 </div>
                 <div className="flex-1 text-left">
-                  <div className="truncate">{session?.user?.email}</div>
-                  <div className="text-xs text-gray-500">{membership?.role}</div>
+                  <div className="truncate font-medium">{session?.user?.email}</div>
+                  <div className="text-xs text-gray-500 capitalize">{membership?.role}</div>
                 </div>
-                <ChevronDown className="h-4 w-4 text-gray-500" />
+                <ChevronDown
+                  className={`h-4 w-4 text-gray-500 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
+                />
               </button>
 
               {userMenuOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
-                  <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-lg shadow-lg border overflow-hidden z-20">
+                  <div className="absolute bottom-full left-0 right-0 mb-2 glass-card-dashboard rounded-xl overflow-hidden z-20">
                     <button
                       onClick={handleSignOut}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-red-50/50 hover:text-red-600 transition-all"
                     >
                       <LogOut className="h-4 w-4" />
                       Sign out
@@ -191,13 +202,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Main content */}
-      <div className="flex-1">
-        {/* Top bar */}
-        <header className="bg-white shadow-sm border-b">
+      <div className="flex-1 relative">
+        {/* Top bar with glassmorphism */}
+        <header className="glass-dashboard border-b border-gray-100/20 sticky top-0 z-30">
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
+              className="lg:hidden text-gray-600 hover:text-gray-800 transition-colors"
             >
               <Menu className="h-6 w-6" />
             </button>
@@ -208,7 +219,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex items-center gap-4">
               {canManageProjects && (
                 <Link href="/dashboard/projects/new">
-                  <Button className="hidden sm:flex items-center gap-2">
+                  <Button className="hidden sm:flex items-center gap-2 btn-dashboard-primary rounded-full px-6">
                     <Plus className="h-4 w-4" />
                     New Project
                   </Button>

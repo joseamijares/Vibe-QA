@@ -1,0 +1,250 @@
+name: Security Scan
+
+on:
+  push:
+    branches:
+      - main
+      - Dev
+  pull_request:
+  schedule:
+    # Run security scan daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  secret-scanning:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "### Checking for hardcoded secrets" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for potential API keys
+          if grep -r "sk_live_\|pk_live_\|service_role.*=.*ey\|anon.*=.*ey" \
+            --include="*.ts" --include="*.tsx" --include="*.js" --exclude-dir=node_modules .; then
+            echo "❌ Found potential hardcoded secrets!" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ No hardcoded secrets found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check environment variable usage
+        run: |
+          # Ensure sensitive vars are not logged
+          if grep -r "console.log.*SUPABASE_SERVICE_ROLE\|console.log.*STRIPE_SECRET" \
+            --include="*.ts" --include="*.tsx" --exclude-dir=node_modules .; then
+            echo "⚠️ Found console.log statements with sensitive variables" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: |
+          npm audit --production > audit-report.txt || true
+          
+          echo "### NPM Audit Report" >> $GITHUB_STEP_SUMMARY
+          
+          # Count vulnerabilities
+          CRITICAL=$(grep -c "critical" audit-report.txt || echo 0)
+          HIGH=$(grep -c "high" audit-report.txt || echo 0)
+          
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "❌ Found $CRITICAL critical vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            cat audit-report.txt >> $GITHUB_STEP_SUMMARY
+            exit 1
+          elif [ "$HIGH" -gt 0 ]; then
+            echo "⚠️ Found $HIGH high vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No critical or high vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check for outdated dependencies
+        run: |
+          npx npm-check-updates --errorLevel 2 > outdated.txt || true
+          
+          if [ -s outdated.txt ]; then
+            echo "### Outdated Dependencies" >> $GITHUB_STEP_SUMMARY
+            cat outdated.txt >> $GITHUB_STEP_SUMMARY
+          fi
+
+  code-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint security plugin
+        run: |
+          npm install -D eslint-plugin-security
+          
+          # Create temporary ESLint config for security
+          cat > .eslintrc.security.json << EOF
+          {
+            "extends": ["./.eslintrc.json"],
+            "plugins": ["security"],
+            "rules": {
+              "security/detect-object-injection": "warn",
+              "security/detect-non-literal-regexp": "warn",
+              "security/detect-unsafe-regex": "error",
+              "security/detect-buffer-noassert": "error",
+              "security/detect-eval-with-expression": "error",
+              "security/detect-no-csrf-before-method-override": "error",
+              "security/detect-possible-timing-attacks": "warn"
+            }
+          }
+          EOF
+          
+          npx eslint src --ext ts,tsx --config .eslintrc.security.json --format json > security-report.json || true
+          
+          # Parse and summarize results
+          node -e "
+            const report = require('./security-report.json');
+            const issues = report.reduce((acc, file) => acc + file.errorCount + file.warningCount, 0);
+            console.log('Security issues found:', issues);
+          "
+
+  supabase-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check RLS policies
+        run: |
+          echo "### Checking RLS Policies" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for tables without RLS
+          for file in supabase/migrations/*.sql; do
+            if grep -i "create table" "$file" | grep -v "if not exists"; then
+              table_name=$(grep -i "create table" "$file" | sed 's/.*table\s\+\([^ ]*\).*/\1/')
+              
+              # Check if RLS is enabled for this table
+              if ! grep -i "alter table.*$table_name.*enable row level security" supabase/migrations/*.sql; then
+                echo "⚠️ Table $table_name might not have RLS enabled" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+
+      - name: Check for unsafe RLS policies
+        run: |
+          # Check for overly permissive policies
+          if grep -r "using (true)" supabase/migrations/*.sql; then
+            echo "⚠️ Found RLS policies with 'using (true)' - might be too permissive" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check for missing auth checks
+          if grep -r "create policy" supabase/migrations/*.sql | grep -v "auth.uid()"; then
+            echo "⚠️ Found RLS policies without auth.uid() checks" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Validate storage bucket policies
+        run: |
+          echo "### Storage Bucket Security" >> $GITHUB_STEP_SUMMARY
+          
+          # Check storage bucket configurations
+          if grep -r "create policy.*storage.objects" supabase/migrations/*.sql; then
+            echo "✅ Found storage bucket policies" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No storage bucket policies found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  api-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check API route security
+        run: |
+          echo "### API Route Security Check" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for auth in API routes
+          for file in src/app/api/**/*.ts; do
+            if [ -f "$file" ]; then
+              if ! grep -q "auth\|session\|jwt" "$file"; then
+                echo "⚠️ $file might be missing authentication checks" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+
+      - name: Check CORS configuration
+        run: |
+          # Check for proper CORS headers
+          if ! grep -r "Access-Control-Allow-Origin" src/; then
+            echo "⚠️ No CORS configuration found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  permissions-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Audit file permissions
+        run: |
+          echo "### File Permissions Audit" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for executable files that shouldn't be
+          find . -type f -perm /111 -not -path "./node_modules/*" -not -path "./.git/*" \
+            -not -name "*.sh" -not -name "gradlew" | while read file; do
+            echo "⚠️ Unexpected executable: $file" >> $GITHUB_STEP_SUMMARY
+          done
+
+      - name: Check for sensitive file patterns
+        run: |
+          # Check for backup files or sensitive patterns
+          patterns=("*.bak" "*.backup" "*.old" ".env.*" "*.key" "*.pem")
+          
+          for pattern in "${patterns[@]}"; do
+            if find . -name "$pattern" -not -path "./node_modules/*" -not -path "./.git/*" | grep .; then
+              echo "⚠️ Found potentially sensitive files matching $pattern" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  create-security-report:
+    needs: [secret-scanning, dependency-check, code-security, supabase-security, api-security, permissions-audit]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create security summary
+        run: |
+          echo "# Security Scan Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Scan completed at: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Add recommendations
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "- Review all warnings and fix critical issues immediately" >> $GITHUB_STEP_SUMMARY
+          echo "- Keep dependencies updated regularly" >> $GITHUB_STEP_SUMMARY
+          echo "- Ensure all database tables have proper RLS policies" >> $GITHUB_STEP_SUMMARY
+          echo "- Never commit secrets or API keys" >> $GITHUB_STEP_SUMMARY

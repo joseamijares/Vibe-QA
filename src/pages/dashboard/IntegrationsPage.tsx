@@ -74,7 +74,7 @@ export function IntegrationsPage() {
                     </div>
                     <CardTitle className="text-lg">{integration.name}</CardTitle>
                   </div>
-                  <Badge variant="secondary" className="bg-gray-100">
+                  <Badge className="bg-gray-700 text-white border-gray-600 hover:bg-gray-800">
                     Coming Soon
                   </Badge>
                 </div>

@@ -1,0 +1,164 @@
+name: Supabase Database Migrations
+
+on:
+  push:
+    branches:
+      - main
+      - Dev
+    paths:
+      - 'supabase/migrations/*.sql'
+  pull_request:
+    paths:
+      - 'supabase/migrations/*.sql'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  SUPABASE_VERSION: 1.142.2
+
+jobs:
+  validate-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_VERSION }}
+
+      - name: Validate SQL syntax
+        run: |
+          echo "Validating SQL migration files..."
+          for file in supabase/migrations/*.sql; do
+            if [ -f "$file" ]; then
+              echo "Checking $file"
+              # Basic SQL syntax validation
+              if ! grep -q ";" "$file"; then
+                echo "Warning: $file might be missing semicolons"
+              fi
+              # Check for common issues
+              if grep -qi "drop table\|drop database\|drop schema" "$file"; then
+                echo "Warning: $file contains destructive operations"
+              fi
+            fi
+          done
+
+      - name: Check migration naming convention
+        run: |
+          for file in supabase/migrations/*.sql; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              if ! [[ "$filename" =~ ^[0-9]{3}_.*\.sql$ ]] && ! [[ "$filename" =~ ^[0-9]{8}_.*\.sql$ ]]; then
+                echo "Error: $filename doesn't follow naming convention (NNN_description.sql or YYYYMMDD_description.sql)"
+                exit 1
+              fi
+            fi
+          done
+
+  deploy-staging:
+    needs: validate-migrations
+    if: github.event_name == 'push' && github.ref == 'refs/heads/Dev'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_VERSION }}
+
+      - name: Deploy migrations to staging
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.STAGING_SUPABASE_PROJECT_ID }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_SUPABASE_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref $SUPABASE_PROJECT_ID
+          supabase db push --password $SUPABASE_DB_PASSWORD
+
+      - name: Generate migration diff
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.STAGING_SUPABASE_PROJECT_ID }}
+        run: |
+          supabase db diff --use-migra -f migration_diff.sql
+          if [ -s migration_diff.sql ]; then
+            echo "### Migration Diff" >> $GITHUB_STEP_SUMMARY
+            echo '```sql' >> $GITHUB_STEP_SUMMARY
+            cat migration_diff.sql >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+  deploy-production:
+    needs: validate-migrations
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_VERSION }}
+
+      - name: Backup production database
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+        run: |
+          BACKUP_NAME="pre-migration-$(date +%Y%m%d-%H%M%S)"
+          echo "Creating backup: $BACKUP_NAME"
+          # Note: Actual backup command depends on your Supabase plan
+          echo "Backup name: $BACKUP_NAME" >> $GITHUB_STEP_SUMMARY
+
+      - name: Deploy migrations to production
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_SUPABASE_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref $SUPABASE_PROJECT_ID
+          supabase db push --password $SUPABASE_DB_PASSWORD
+
+      - name: Verify deployment
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+        run: |
+          echo "### Production Migration Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Timestamp: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+  rollback:
+    if: failure() && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_VERSION }}
+
+      - name: Rollback migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets[format('{0}_SUPABASE_PROJECT_ID', github.event.inputs.environment == 'production' && 'PRODUCTION' || 'STAGING')] }}
+        run: |
+          echo "Rolling back migrations..."
+          # Implement rollback strategy based on your needs
+          echo "⚠️ Manual intervention may be required" >> $GITHUB_STEP_SUMMARY

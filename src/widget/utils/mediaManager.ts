@@ -31,7 +31,7 @@ export class MediaManager {
       const attachment: MediaAttachment = {
         type: 'screenshot',
         blob,
-        filename: `screenshot-${Date.now()}.png`,
+        filename: `screenshot-${options?.mode || 'fullpage'}-${Date.now()}.png`,
         size: blob.size,
         thumbnail: await this.generateThumbnail(blob),
       };
@@ -142,6 +142,26 @@ export class MediaManager {
 
   clearAll(): void {
     this.clearAttachments();
+  }
+
+  async addScreenshot(
+    blob: Blob,
+    mode: 'fullpage' | 'area' | 'element' = 'fullpage'
+  ): Promise<MediaAttachment> {
+    if (blob.size > this.maxFileSize) {
+      throw new Error(`Screenshot too large. Maximum size is ${this.maxFileSize / 1024 / 1024}MB`);
+    }
+
+    const attachment: MediaAttachment = {
+      type: 'screenshot',
+      blob,
+      filename: `screenshot-${mode}-${Date.now()}.png`,
+      size: blob.size,
+      thumbnail: await this.generateThumbnail(blob),
+    };
+
+    this.addAttachment(attachment);
+    return attachment;
   }
 
   private async generateThumbnail(blob: Blob): Promise<string> {

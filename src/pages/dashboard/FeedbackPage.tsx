@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useOrganization } from '@/hooks/useOrganization';
 import { supabase } from '@/lib/supabase';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -550,10 +549,10 @@ export function FeedbackPage() {
     const PriorityIcon = feedbackPriorityConfig[feedback.priority].icon;
 
     return (
-      <Card
+      <div
         key={feedback.id}
         className={cn(
-          'group hover:shadow-md transition-all duration-200 cursor-pointer',
+          'glass-card-dashboard rounded-xl group hover:scale-[1.01] transition-all duration-200 cursor-pointer',
           feedbackPriorityConfig[feedback.priority].borderColor
         )}
         onClick={() => openFeedbackDetail(feedback)}
@@ -737,7 +736,7 @@ export function FeedbackPage() {
             </div>
           </div>
         </div>
-      </Card>
+      </div>
     );
   };
 
@@ -745,7 +744,7 @@ export function FeedbackPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-[#094765]">Feedback</h2>
+          <h2 className="text-2xl font-bold gradient-text-modern">Feedback</h2>
           <p className="text-muted-foreground">
             Manage and respond to user feedback across all projects
           </p>
@@ -755,7 +754,7 @@ export function FeedbackPage() {
           size="sm"
           onClick={exportToCSV}
           disabled={filteredFeedback.length === 0}
-          className="text-[#094765] border-[#094765] hover:bg-[#094765] hover:text-white"
+          className="btn-dashboard-secondary rounded-full"
         >
           <Download className="h-4 w-4 mr-2" />
           Export CSV
@@ -780,7 +779,7 @@ export function FeedbackPage() {
       </div>
 
       {/* Filters Bar */}
-      <Card className="p-4 bg-gradient-to-r from-[#094765]/5 to-[#3387a7]/5 border-[#094765]/10">
+      <div className="glass-card-dashboard rounded-2xl p-6">
         <div className="flex flex-wrap items-center gap-3">
           {/* Type Filter */}
           <div className="flex items-center gap-2">
@@ -923,11 +922,11 @@ export function FeedbackPage() {
             </div>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Bulk Actions Bar */}
       {selectedItems.size > 0 && (
-        <Card className="p-4 bg-[#3387a7]/10 border-[#3387a7]/20">
+        <div className="glass-card-dashboard rounded-xl p-4 border-[#094765]/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-[#094765]">
@@ -968,7 +967,7 @@ export function FeedbackPage() {
               </DropdownMenu>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Results Summary */}
@@ -996,9 +995,9 @@ export function FeedbackPage() {
       {/* Feedback List by Status */}
       <div className="space-y-8">
         {filteredFeedback.length === 0 ? (
-          <Card className="p-8 text-center">
+          <div className="glass-card-dashboard rounded-xl p-8 text-center">
             <p className="text-muted-foreground">No feedback found matching your filters.</p>
-          </Card>
+          </div>
         ) : sortBy === 'status' ? (
           // Group by status when sorting by status
           ['new', 'in_progress', 'resolved', 'archived'].map((status) => {

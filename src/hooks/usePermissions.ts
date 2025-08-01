@@ -64,7 +64,6 @@ export function usePermissions(): Permissions & { role: UserRole | null; loading
     // Owner-only permissions
     canDeleteOrganization: isOwner,
     canUpdateMemberRoles: isOwner,
-    canManageBilling: isOwner,
     canManageTeam: isOwner,
     canManageProjects: isOwner,
     canManageOrganization: isOwner,
@@ -81,6 +80,7 @@ export function usePermissions(): Permissions & { role: UserRole | null; loading
     // All authenticated users can view
     canViewFeedback: isAuthenticated,
     canViewAnalytics: isAuthenticated,
+    canManageBilling: isAuthenticated, // Allow all authenticated users to view billing (purchase still restricted)
   };
 
   return {

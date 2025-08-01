@@ -1,0 +1,256 @@
+name: Deploy Widget
+
+on:
+  push:
+    branches:
+      - main
+      - Dev
+    paths:
+      - 'src/widget/**'
+      - 'vite.widget.config.ts'
+      - 'scripts/deploy-widget-supabase.sh'
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'src/widget/**'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Deployment channel'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - production
+          - staging
+          - beta
+
+jobs:
+  build-widget:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build widget
+        run: npm run build:widget
+
+      - name: Calculate widget metrics
+        id: metrics
+        run: |
+          FILESIZE=$(wc -c < dist-widget/widget.js)
+          GZIPSIZE=$(gzip -c dist-widget/widget.js | wc -c)
+          echo "filesize=$FILESIZE" >> $GITHUB_OUTPUT
+          echo "gzipsize=$GZIPSIZE" >> $GITHUB_OUTPUT
+          
+          echo "### Widget Build Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- File size: $(numfmt --to=iec-i --suffix=B $FILESIZE)" >> $GITHUB_STEP_SUMMARY
+          echo "- Gzip size: $(numfmt --to=iec-i --suffix=B $GZIPSIZE)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check widget size limits
+        run: |
+          MAX_SIZE=500000  # 500KB limit
+          FILESIZE=${{ steps.metrics.outputs.filesize }}
+          
+          if [ $FILESIZE -gt $MAX_SIZE ]; then
+            echo "❌ Widget size exceeds limit ($FILESIZE > $MAX_SIZE bytes)" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Upload widget artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: widget-build
+          path: dist-widget/
+          retention-days: 30
+
+  test-widget:
+    needs: build-widget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download widget artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: widget-build
+          path: dist-widget/
+
+      - name: Run widget tests
+        run: |
+          # Add your widget-specific tests here
+          echo "Running widget integration tests..."
+          
+          # Check widget initialization
+          if ! grep -q "window.VibeQA" dist-widget/widget.js; then
+            echo "Error: Widget doesn't expose VibeQA global"
+            exit 1
+          fi
+          
+          # Validate shadow DOM setup
+          if ! grep -q "attachShadow" dist-widget/widget.js; then
+            echo "Error: Widget doesn't use Shadow DOM"
+            exit 1
+          fi
+
+  deploy-staging:
+    needs: test-widget
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/Dev') ||
+      (github.event_name == 'pull_request') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.channel == 'staging')
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to staging
+        env:
+          SUPABASE_PROJECT_ID: ${{ secrets.STAGING_SUPABASE_PROJECT_ID }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npm run deploy:widget:staging
+          
+          echo "### Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Widget URL: https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/widget-assets/staging/widget.js" >> $GITHUB_STEP_SUMMARY
+
+      - name: Post PR comment with preview
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = `https://${{ secrets.STAGING_SUPABASE_PROJECT_ID }}.supabase.co/storage/v1/object/public/widget-assets/staging/widget.js`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### 🚀 Widget Preview Ready!\n\nTest the widget with:\n\`\`\`html\n<script src="${url}" data-project-key="test-key" async></script>\n\`\`\``
+            });
+
+  deploy-beta:
+    needs: test-widget
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.channel == 'beta')
+    runs-on: ubuntu-latest
+    environment: beta
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to beta
+        env:
+          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npm run deploy:widget:beta
+          
+          echo "### Beta Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Widget URL: https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/widget-assets/beta/widget.js" >> $GITHUB_STEP_SUMMARY
+
+  deploy-production:
+    needs: test-widget
+    if: |
+      (github.event_name == 'release') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.channel == 'production')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy to production
+        env:
+          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npm run deploy:widget
+          
+          VERSION=$(node -p "require('./package.json').version")
+          
+          echo "### Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Version: v${VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "Widget URLs:" >> $GITHUB_STEP_SUMMARY
+          echo "- Latest: https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/widget-assets/production/widget.js" >> $GITHUB_STEP_SUMMARY
+          echo "- Versioned: https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/widget-assets/v${VERSION}/widget.js" >> $GITHUB_STEP_SUMMARY
+
+      - name: Invalidate CDN cache
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          # If using Cloudflare CDN
+          if [ -n "$CLOUDFLARE_ZONE_ID" ]; then
+            curl -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              --data '{"files":["https://cdn.vibeqa.com/widget.js"]}'
+          fi
+
+      - name: Create release notes
+        if: github.event_name == 'release'
+        run: |
+          echo "### Widget Release Notes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "${{ github.event.release.body }}" >> $GITHUB_STEP_SUMMARY
+
+  rollback:
+    if: failure()
+    needs: [deploy-production]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rollback to previous version
+        env:
+          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "⚠️ Rolling back widget deployment..."
+          # Implement rollback logic here
+          # This could involve copying the previous version back to production/widget.js

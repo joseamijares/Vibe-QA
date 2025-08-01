@@ -9,6 +9,8 @@ export class WidgetUI extends EventEmitter {
   private state: WidgetState;
   private shadowRoot: ShadowRoot | null = null;
   private formData: Partial<FeedbackSubmission> = {};
+  private screenshotMode: 'fullpage' | 'area' | 'element' = 'fullpage';
+  private dropdownOpen = false;
 
   constructor(config: Required<VibeQAWidgetConfig>, state: WidgetState) {
     super();
@@ -177,11 +179,40 @@ export class WidgetUI extends EventEmitter {
       this.emit('submit', submission);
     });
 
-    // Media buttons
+    // Screenshot button and dropdown
     const screenshotBtn = this.shadowRoot.querySelector('[data-vibeqa-screenshot]');
-    if (screenshotBtn) {
-      screenshotBtn.addEventListener('click', () => {
-        this.emit('screenshot');
+    const screenshotDropdown = this.shadowRoot.querySelector('.vibeqa-screenshot-dropdown');
+
+    if (screenshotBtn && screenshotDropdown) {
+      // Toggle dropdown on button click
+      screenshotBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.dropdownOpen = !this.dropdownOpen;
+        screenshotDropdown.setAttribute('data-open', this.dropdownOpen.toString());
+      });
+
+      // Handle screenshot mode selection
+      const screenshotModes = this.shadowRoot.querySelectorAll('[data-screenshot-mode]');
+      screenshotModes.forEach((modeEl) => {
+        modeEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const mode = (e.currentTarget as HTMLElement).getAttribute('data-screenshot-mode') as
+            | 'fullpage'
+            | 'area'
+            | 'element';
+          this.screenshotMode = mode;
+          this.dropdownOpen = false;
+          screenshotDropdown.setAttribute('data-open', 'false');
+          this.emit('screenshot', { mode });
+        });
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', () => {
+        if (this.dropdownOpen) {
+          this.dropdownOpen = false;
+          screenshotDropdown.setAttribute('data-open', 'false');
+        }
       });
     }
 
@@ -412,6 +443,10 @@ export class WidgetUI extends EventEmitter {
 
   getState(): WidgetState {
     return this.state;
+  }
+
+  getScreenshotMode(): 'fullpage' | 'area' | 'element' {
+    return this.screenshotMode;
   }
 
   showNotification(type: 'success' | 'error', title: string, message?: string): void {

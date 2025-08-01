@@ -4,6 +4,7 @@ import { detectBrowserInfo, detectDeviceInfo } from './utils/deviceDetection';
 import { validateProjectKey } from './utils/validation';
 import { WIDGET_STYLES } from './styles/widgetStyles';
 import { mediaManager } from './utils/mediaManager';
+import { screenshotCapture } from './utils/screenshot';
 
 export class VibeQAWidget implements WidgetAPI {
   private config: Required<VibeQAWidgetConfig>;
@@ -112,7 +113,9 @@ export class VibeQAWidget implements WidgetAPI {
     this.ui.on('toggle', () => this.toggle());
     this.ui.on('close', () => this.close());
     this.ui.on('submit', (submission: Partial<FeedbackSubmission>) => this.submit(submission));
-    this.ui.on('screenshot', () => this.captureScreenshot());
+    this.ui.on('screenshot', (options?: { mode?: 'fullpage' | 'area' | 'element' }) =>
+      this.captureScreenshot(options?.mode)
+    );
     this.ui.on('record', () => this.startRecording());
 
     // Listen for keyboard shortcuts
@@ -304,34 +307,67 @@ export class VibeQAWidget implements WidgetAPI {
     }
   }
 
-  private async captureScreenshot(): Promise<void> {
-    this.log('Screenshot capture requested');
+  private async captureScreenshot(
+    mode: 'fullpage' | 'area' | 'element' = 'fullpage'
+  ): Promise<void> {
+    this.log(`Screenshot capture requested - mode: ${mode}`);
 
     try {
-      // Minimize the widget temporarily
-      this.state.isMinimized = true;
-      this.ui?.setState({ isMinimized: true });
+      // Hide widget during screenshot for all modes
+      const wasOpen = this.state.isOpen;
+      if (wasOpen) {
+        // For area/element selection, temporarily close the widget
+        if (mode === 'area' || mode === 'element') {
+          this.state.isOpen = false;
+          this.ui?.setState({ isOpen: false });
+        } else {
+          // For fullpage, just minimize
+          this.state.isMinimized = true;
+          this.ui?.setState({ isMinimized: true });
+        }
+      }
 
       // Wait a bit for UI to update
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Capture screenshot
-      const attachment = await mediaManager.captureScreenshot({
-        quality: 0.8,
+      // Capture screenshot with the selected mode
+      const blob = await screenshotCapture.capture({
+        mode,
+        quality: 0.9,
         maxWidth: 1920,
         maxHeight: 1080,
       });
 
-      // Restore widget
-      this.state.isMinimized = false;
-      this.ui?.setState({ isMinimized: false });
+      if (blob) {
+        // Add to media manager with mode info
+        const attachment = await mediaManager.addScreenshot(blob, mode);
 
-      // Update UI to show attachment
-      this.ui?.emit('attachment-added', attachment);
+        // Update UI to show attachment
+        this.ui?.emit('attachment-added', attachment);
 
-      this.log('Screenshot captured successfully', attachment);
+        // Show success notification
+        this.ui?.showNotification(
+          'success',
+          'Screenshot captured!',
+          `${mode === 'fullpage' ? 'Full page' : mode === 'area' ? 'Selected area' : 'Element'} captured successfully`
+        );
+
+        this.log('Screenshot captured successfully', attachment);
+      }
+
+      // Restore widget state
+      if (wasOpen) {
+        this.state.isOpen = true;
+        this.state.isMinimized = false;
+        this.ui?.setState({ isOpen: true, isMinimized: false });
+      }
     } catch (error) {
       this.handleError(error as Error);
+
+      // Make sure to restore widget state on error
+      this.state.isOpen = true;
+      this.state.isMinimized = false;
+      this.ui?.setState({ isOpen: true, isMinimized: false });
     }
   }
 

@@ -1,0 +1,309 @@
+name: Edge Functions CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - Dev
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/edge-functions.yml'
+  pull_request:
+    paths:
+      - 'supabase/functions/**'
+  workflow_dispatch:
+    inputs:
+      function:
+        description: 'Specific function to deploy (leave empty for all)'
+        required: false
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  SUPABASE_VERSION: 1.142.2
+  DENO_VERSION: 1.41.0
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+
+      - name: Lint Edge Functions
+        run: |
+          echo "### Linting Edge Functions" >> $GITHUB_STEP_SUMMARY
+          
+          for func in supabase/functions/*/; do
+            if [ -d "$func" ] && [ -f "$func/index.ts" ]; then
+              func_name=$(basename "$func")
+              echo "Linting $func_name..."
+              
+              if deno lint "$func/index.ts"; then
+                echo "✅ $func_name passed linting" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "❌ $func_name failed linting" >> $GITHUB_STEP_SUMMARY
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Format check
+        run: |
+          deno fmt --check supabase/functions/
+
+      - name: Type check
+        run: |
+          for func in supabase/functions/*/; do
+            if [ -d "$func" ] && [ -f "$func/index.ts" ]; then
+              func_name=$(basename "$func")
+              echo "Type checking $func_name..."
+              
+              cd "$func"
+              deno check index.ts
+              cd -
+            fi
+          done
+
+      - name: Run tests
+        run: |
+          # Run any Deno tests for edge functions
+          for func in supabase/functions/*/; do
+            if [ -d "$func" ] && [ -f "$func/index.test.ts" ]; then
+              func_name=$(basename "$func")
+              echo "Testing $func_name..."
+              
+              cd "$func"
+              deno test --allow-all index.test.ts
+              cd -
+            fi
+          done
+
+  validate-functions:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_VERSION }}
+
+      - name: Validate function configurations
+        run: |
+          echo "### Validating Function Configurations" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for required environment variables
+          for func in supabase/functions/*/; do
+            if [ -d "$func" ] && [ -f "$func/index.ts" ]; then
+              func_name=$(basename "$func")
+              
+              # Check if function uses environment variables
+              if grep -q "Deno.env.get" "$func/index.ts"; then
+                echo "⚠️ $func_name uses environment variables" >> $GITHUB_STEP_SUMMARY
+                
+                # List the env vars used
+                grep -o "Deno.env.get([\"'][^\"']*[\"'])" "$func/index.ts" | \
+                  sed "s/Deno.env.get(['\"]\(.*\)['\"])/  - \1/" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+
+      - name: Check CORS configuration
+        run: |
+          # Ensure all functions have proper CORS setup
+          for func in supabase/functions/*/; do
+            if [ -d "$func" ] && [ -f "$func/index.ts" ]; then
+              func_name=$(basename "$func")
+              
+              if ! grep -q "cors" "$func/index.ts"; then
+                echo "⚠️ $func_name might be missing CORS configuration" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+
+  build-functions:
+    needs: validate-functions
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - function: submit-feedback
+          - function: send-invitation-email
+          - function: stripe-webhook
+          - function: create-checkout-session
+          - function: create-portal-session
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+
+      - name: Bundle function
+        run: |
+          FUNC_PATH="supabase/functions/${{ matrix.function }}"
+          
+          if [ -f "$FUNC_PATH/index.ts" ]; then
+            echo "Bundling ${{ matrix.function }}..."
+            
+            # Create a bundled version for size analysis
+            deno bundle "$FUNC_PATH/index.ts" "$FUNC_PATH/bundle.js"
+            
+            # Get bundle size
+            BUNDLE_SIZE=$(wc -c < "$FUNC_PATH/bundle.js")
+            echo "Bundle size for ${{ matrix.function }}: $(numfmt --to=iec-i --suffix=B $BUNDLE_SIZE)"
+            
+            # Clean up
+            rm "$FUNC_PATH/bundle.js"
+          fi
+
+  deploy-staging:
+    needs: build-functions
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/Dev') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_VERSION }}
+
+      - name: Deploy functions to staging
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.STAGING_SUPABASE_PROJECT_ID }}
+        run: |
+          supabase link --project-ref $SUPABASE_PROJECT_ID
+          
+          if [ -n "${{ github.event.inputs.function }}" ]; then
+            # Deploy specific function
+            echo "Deploying ${{ github.event.inputs.function }} to staging..."
+            supabase functions deploy ${{ github.event.inputs.function }}
+          else
+            # Deploy all functions
+            echo "Deploying all functions to staging..."
+            supabase functions deploy
+          fi
+          
+          echo "### Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Project: $SUPABASE_PROJECT_ID" >> $GITHUB_STEP_SUMMARY
+
+      - name: Test deployed functions
+        env:
+          SUPABASE_PROJECT_ID: ${{ secrets.STAGING_SUPABASE_PROJECT_ID }}
+          SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+        run: |
+          # Test health endpoints
+          BASE_URL="https://$SUPABASE_PROJECT_ID.supabase.co/functions/v1"
+          
+          # Test submit-feedback function
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X OPTIONS "$BASE_URL/submit-feedback")
+          
+          if [ "$response" = "200" ] || [ "$response" = "204" ]; then
+            echo "✅ submit-feedback CORS check passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ submit-feedback CORS check failed (HTTP $response)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  deploy-production:
+    needs: build-functions
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_VERSION }}
+
+      - name: Deploy functions to production
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+        run: |
+          supabase link --project-ref $SUPABASE_PROJECT_ID
+          
+          if [ -n "${{ github.event.inputs.function }}" ]; then
+            # Deploy specific function
+            echo "Deploying ${{ github.event.inputs.function }} to production..."
+            supabase functions deploy ${{ github.event.inputs.function }} --no-verify-jwt
+          else
+            # Deploy all functions
+            echo "Deploying all functions to production..."
+            
+            # Deploy each function with its specific configuration
+            supabase functions deploy submit-feedback --no-verify-jwt
+            supabase functions deploy send-invitation-email
+            supabase functions deploy stripe-webhook
+            supabase functions deploy create-checkout-session
+            supabase functions deploy create-portal-session
+          fi
+          
+          echo "### Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Project: $SUPABASE_PROJECT_ID" >> $GITHUB_STEP_SUMMARY
+          echo "Timestamp: $(date)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Monitor function health
+        env:
+          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+        run: |
+          echo "Monitoring deployed functions..."
+          
+          # Add production monitoring checks here
+          # This could include:
+          # - Checking function response times
+          # - Verifying expected responses
+          # - Checking error rates
+
+  rollback:
+    if: failure()
+    needs: [deploy-production]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Checkout previous commit
+        run: git checkout HEAD^
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: ${{ env.SUPABASE_VERSION }}
+
+      - name: Rollback functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+        run: |
+          echo "⚠️ Rolling back to previous version..."
+          
+          supabase link --project-ref $SUPABASE_PROJECT_ID
+          supabase functions deploy
+          
+          echo "### Rollback Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Rolled back to commit: $(git rev-parse HEAD)" >> $GITHUB_STEP_SUMMARY

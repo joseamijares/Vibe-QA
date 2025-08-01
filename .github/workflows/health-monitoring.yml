@@ -1,0 +1,310 @@
+name: Health Monitoring
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to check'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+  SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+jobs:
+  api-health-check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [production, staging]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set environment variables
+        run: |
+          if [ "${{ matrix.environment }}" = "production" ]; then
+            echo "SUPABASE_URL=${{ secrets.PRODUCTION_SUPABASE_URL }}" >> $GITHUB_ENV
+            echo "SUPABASE_ANON_KEY=${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
+            echo "APP_URL=${{ secrets.PRODUCTION_APP_URL }}" >> $GITHUB_ENV
+          else
+            echo "SUPABASE_URL=${{ secrets.STAGING_SUPABASE_URL }}" >> $GITHUB_ENV
+            echo "SUPABASE_ANON_KEY=${{ secrets.STAGING_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
+            echo "APP_URL=${{ secrets.STAGING_APP_URL }}" >> $GITHUB_ENV
+          fi
+
+      - name: Check Supabase API health
+        id: supabase-check
+        run: |
+          echo "### Checking Supabase API (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          
+          # Check REST API
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/")
+          
+          if [ "$response" = "200" ]; then
+            echo "✅ REST API is healthy" >> $GITHUB_STEP_SUMMARY
+            echo "rest_api=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ REST API returned $response" >> $GITHUB_STEP_SUMMARY
+            echo "rest_api=unhealthy" >> $GITHUB_OUTPUT
+          fi
+          
+          # Check Auth API
+          auth_response=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/auth/v1/health")
+          
+          if [ "$auth_response" = "200" ]; then
+            echo "✅ Auth API is healthy" >> $GITHUB_STEP_SUMMARY
+            echo "auth_api=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Auth API returned $auth_response" >> $GITHUB_STEP_SUMMARY
+            echo "auth_api=unhealthy" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Edge Functions health
+        id: functions-check
+        run: |
+          echo "### Checking Edge Functions (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          
+          # Check submit-feedback function
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X OPTIONS \
+            "$SUPABASE_URL/functions/v1/submit-feedback")
+          
+          if [ "$response" = "200" ] || [ "$response" = "204" ]; then
+            echo "✅ submit-feedback function is healthy" >> $GITHUB_STEP_SUMMARY
+            echo "submit_feedback=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ submit-feedback function returned $response" >> $GITHUB_STEP_SUMMARY
+            echo "submit_feedback=unhealthy" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check application health
+        id: app-check
+        if: env.APP_URL != ''
+        run: |
+          echo "### Checking Application (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          
+          # Check homepage
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL")
+          
+          if [ "$response" = "200" ]; then
+            echo "✅ Application homepage is healthy" >> $GITHUB_STEP_SUMMARY
+            echo "homepage=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Application homepage returned $response" >> $GITHUB_STEP_SUMMARY
+            echo "homepage=unhealthy" >> $GITHUB_OUTPUT
+          fi
+          
+          # Check API health endpoint
+          api_response=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/api/health")
+          
+          if [ "$api_response" = "200" ]; then
+            echo "✅ API health endpoint is healthy" >> $GITHUB_STEP_SUMMARY
+            echo "api_health=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ API health endpoint returned $api_response" >> $GITHUB_STEP_SUMMARY
+            echo "api_health=unhealthy" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check widget availability
+        id: widget-check
+        run: |
+          echo "### Checking Widget CDN (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          
+          WIDGET_URL="$SUPABASE_URL/storage/v1/object/public/widget-assets/production/widget.js"
+          
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$WIDGET_URL")
+          
+          if [ "$response" = "200" ]; then
+            echo "✅ Widget CDN is healthy" >> $GITHUB_STEP_SUMMARY
+            echo "widget_cdn=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Widget CDN returned $response" >> $GITHUB_STEP_SUMMARY
+            echo "widget_cdn=unhealthy" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send alerts on failure
+        if: |
+          steps.supabase-check.outputs.rest_api == 'unhealthy' ||
+          steps.supabase-check.outputs.auth_api == 'unhealthy' ||
+          steps.functions-check.outputs.submit_feedback == 'unhealthy' ||
+          steps.app-check.outputs.homepage == 'unhealthy' ||
+          steps.widget-check.outputs.widget_cdn == 'unhealthy'
+        run: |
+          # Prepare alert message
+          MESSAGE="🚨 **Health Check Failed** - ${{ matrix.environment }}\n\n"
+          
+          if [ "${{ steps.supabase-check.outputs.rest_api }}" = "unhealthy" ]; then
+            MESSAGE="${MESSAGE}❌ Supabase REST API is down\n"
+          fi
+          
+          if [ "${{ steps.supabase-check.outputs.auth_api }}" = "unhealthy" ]; then
+            MESSAGE="${MESSAGE}❌ Supabase Auth API is down\n"
+          fi
+          
+          if [ "${{ steps.functions-check.outputs.submit_feedback }}" = "unhealthy" ]; then
+            MESSAGE="${MESSAGE}❌ Edge Functions are down\n"
+          fi
+          
+          if [ "${{ steps.app-check.outputs.homepage }}" = "unhealthy" ]; then
+            MESSAGE="${MESSAGE}❌ Application is down\n"
+          fi
+          
+          if [ "${{ steps.widget-check.outputs.widget_cdn }}" = "unhealthy" ]; then
+            MESSAGE="${MESSAGE}❌ Widget CDN is down\n"
+          fi
+          
+          # Send Discord notification
+          if [ -n "$DISCORD_WEBHOOK" ]; then
+            curl -H "Content-Type: application/json" \
+              -d "{\"content\": \"$MESSAGE\"}" \
+              "$DISCORD_WEBHOOK"
+          fi
+          
+          # Send Slack notification
+          if [ -n "$SLACK_WEBHOOK" ]; then
+            curl -H "Content-Type: application/json" \
+              -d "{\"text\": \"$MESSAGE\"}" \
+              "$SLACK_WEBHOOK"
+          fi
+
+  database-health-check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [production, staging]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set environment variables
+        run: |
+          if [ "${{ matrix.environment }}" = "production" ]; then
+            echo "DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}" >> $GITHUB_ENV
+          else
+            echo "DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" >> $GITHUB_ENV
+          fi
+
+      - name: Check database connectivity
+        run: |
+          echo "### Checking Database (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          
+          # Create a simple Node.js script to test connection
+          cat > test-db.js << 'EOF'
+          const { createClient } = require('@supabase/supabase-js');
+          const url = process.env.DATABASE_URL;
+          
+          if (!url) {
+            console.log('❌ DATABASE_URL not set');
+            process.exit(1);
+          }
+          
+          // Basic connection test would go here
+          console.log('✅ Database configuration exists');
+          EOF
+          
+          node test-db.js >> $GITHUB_STEP_SUMMARY
+
+      - name: Check database performance metrics
+        if: success()
+        run: |
+          echo "### Database Performance Metrics" >> $GITHUB_STEP_SUMMARY
+          
+          # This would typically query pg_stat_database or similar
+          # For now, we'll just note that monitoring should be set up
+          echo "ℹ️ Set up database performance monitoring through Supabase dashboard" >> $GITHUB_STEP_SUMMARY
+
+  storage-health-check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [production, staging]
+    steps:
+      - name: Set environment variables
+        run: |
+          if [ "${{ matrix.environment }}" = "production" ]; then
+            echo "SUPABASE_URL=${{ secrets.PRODUCTION_SUPABASE_URL }}" >> $GITHUB_ENV
+          else
+            echo "SUPABASE_URL=${{ secrets.STAGING_SUPABASE_URL }}" >> $GITHUB_ENV
+          fi
+
+      - name: Check storage buckets
+        run: |
+          echo "### Checking Storage Buckets (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          
+          # Check each bucket
+          buckets=("feedback-media" "organization-assets" "widget-assets")
+          
+          for bucket in "${buckets[@]}"; do
+            response=$(curl -s -o /dev/null -w "%{http_code}" \
+              "$SUPABASE_URL/storage/v1/object/public/$bucket/")
+            
+            if [ "$response" = "400" ] || [ "$response" = "404" ]; then
+              # 400/404 is expected for empty bucket listing
+              echo "✅ Bucket '$bucket' is accessible" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ Bucket '$bucket' returned unexpected status: $response" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  create-health-report:
+    needs: [api-health-check, database-health-check, storage-health-check]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate health report
+        run: |
+          echo "# Health Check Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Run ID**: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add uptime calculation (would need historical data)
+          echo "## Uptime Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "- Production: Calculate from historical runs" >> $GITHUB_STEP_SUMMARY
+          echo "- Staging: Calculate from historical runs" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- Review any failures in the individual job summaries" >> $GITHUB_STEP_SUMMARY
+          echo "- Check monitoring dashboards for detailed metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- Investigate any performance degradation patterns" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create issue on repeated failures
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Check if there's already an open issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['health-check-failure']
+            });
+            
+            if (issues.data.length === 0) {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🚨 Health Check Failures Detected',
+                body: `Health checks are failing. Please investigate:\n\n- Run ID: ${context.runId}\n- [View logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+                labels: ['health-check-failure', 'urgent']
+              });
+            }

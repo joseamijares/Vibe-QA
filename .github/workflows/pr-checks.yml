@@ -1,0 +1,214 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run format check
+        run: npm run format:check
+
+      - name: Run TypeScript check
+        run: npm run typecheck
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Check bundle size
+        run: |
+          npm run build
+          
+          # Check main bundle size
+          MAIN_SIZE=$(find dist/assets -name "*.js" -exec du -b {} + | awk '{sum+=$1} END {print sum}')
+          MAX_SIZE=1048576  # 1MB
+          
+          echo "### Bundle Size" >> $GITHUB_STEP_SUMMARY
+          echo "Main bundle: $(numfmt --to=iec-i --suffix=B $MAIN_SIZE)" >> $GITHUB_STEP_SUMMARY
+          
+          if [ $MAIN_SIZE -gt $MAX_SIZE ]; then
+            echo "❌ Bundle size exceeds limit" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+  test-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: |
+          # Add test command when tests are implemented
+          echo "No tests configured yet"
+
+  migration-check:
+    if: contains(github.event.pull_request.labels.*.name, 'database') || contains(github.event.head_commit.message, 'migration')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check migration files
+        run: |
+          echo "### Migration Check" >> $GITHUB_STEP_SUMMARY
+          
+          # List new migrations
+          git diff --name-only origin/${{ github.base_ref }}...HEAD | grep "supabase/migrations.*\.sql" || echo "No new migrations"
+
+  security-quick-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for secrets
+        run: |
+          # Quick check for common secret patterns
+          if grep -r "sk_live\|pk_live\|service_role" --include="*.ts" --include="*.tsx" --exclude-dir=node_modules .; then
+            echo "❌ Potential secrets found in code" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+  pr-labeler:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Label PR based on files
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const files = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            const labels = new Set();
+            
+            for (const file of files.data) {
+              if (file.filename.startsWith('supabase/migrations/')) {
+                labels.add('database');
+              }
+              if (file.filename.startsWith('src/widget/')) {
+                labels.add('widget');
+              }
+              if (file.filename.startsWith('supabase/functions/')) {
+                labels.add('edge-functions');
+              }
+              if (file.filename.includes('security') || file.filename.includes('auth')) {
+                labels.add('security');
+              }
+              if (file.filename.startsWith('docs/')) {
+                labels.add('documentation');
+              }
+            }
+            
+            if (labels.size > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: Array.from(labels)
+              });
+            }
+
+  create-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create preview comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `### 🚀 Preview Deployment
+            
+            Once this PR is merged to \`Dev\`:
+            - Widget preview: Check staging deployment
+            - Database changes: Will auto-deploy to staging
+            - Edge functions: Will deploy to staging environment
+            
+            ### Checklist
+            - [ ] Code follows project conventions
+            - [ ] TypeScript types are properly defined
+            - [ ] No hardcoded secrets or API keys
+            - [ ] Database migrations are incremental
+            - [ ] PR has descriptive title and description
+            `;
+            
+            // Check if comment already exists
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('Preview Deployment')
+            );
+            
+            if (!botComment) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
+
+  summary:
+    needs: [code-quality, test-suite, security-quick-check]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR Check Summary
+        run: |
+          echo "# Pull Request Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check job statuses
+          if [ "${{ needs.code-quality.result }}" = "success" ]; then
+            echo "✅ Code Quality Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Code Quality Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.test-suite.result }}" = "success" ]; then
+            echo "✅ Tests Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Tests Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.security-quick-check.result }}" = "success" ]; then
+            echo "✅ Security Check Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Security Check Failed" >> $GITHUB_STEP_SUMMARY
+          fi

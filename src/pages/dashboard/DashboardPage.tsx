@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useOrganization } from '@/hooks/useOrganization';
 import { supabase } from '@/lib/supabase';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   MessageSquare,
@@ -122,48 +121,54 @@ export function DashboardPage() {
       title: 'Total Feedback',
       value: metrics.totalFeedback,
       icon: MessageSquare,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      gradient: 'from-blue-500 to-cyan-600',
+      iconBg: 'from-blue-100 to-cyan-100',
+      iconColor: 'text-blue-600',
       link: '/dashboard/feedback',
     },
     {
       title: 'New Today',
       value: metrics.newFeedback,
       icon: AlertCircle,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
+      gradient: 'from-orange-500 to-amber-600',
+      iconBg: 'from-orange-100 to-amber-100',
+      iconColor: 'text-orange-600',
       link: '/dashboard/feedback?status=new',
     },
     {
       title: 'Resolved',
       value: metrics.resolvedFeedback,
       icon: CheckCircle,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
+      gradient: 'from-green-500 to-emerald-600',
+      iconBg: 'from-green-100 to-emerald-100',
+      iconColor: 'text-green-600',
       link: '/dashboard/feedback?status=resolved',
     },
     {
       title: 'Active Projects',
       value: metrics.activeProjects,
       icon: Folder,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
+      gradient: 'from-purple-500 to-pink-600',
+      iconBg: 'from-purple-100 to-pink-100',
+      iconColor: 'text-purple-600',
       link: '/dashboard/projects',
     },
     {
       title: 'Team Members',
       value: metrics.teamMembers,
       icon: Users,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-100',
+      gradient: 'from-indigo-500 to-blue-600',
+      iconBg: 'from-indigo-100 to-blue-100',
+      iconColor: 'text-indigo-600',
       link: '/dashboard/team',
     },
     {
       title: 'Avg Resolution',
       value: metrics.avgResolutionTime,
       icon: Clock,
-      color: 'text-gray-600',
-      bgColor: 'bg-gray-100',
+      gradient: 'from-gray-500 to-slate-600',
+      iconBg: 'from-gray-100 to-slate-100',
+      iconColor: 'text-gray-600',
     },
   ];
 
@@ -197,7 +202,7 @@ export function DashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-3xl font-bold gradient-text-modern">Dashboard</h1>
         <p className="text-gray-600 mt-1">
           Welcome back! Here's what's happening with your projects.
         </p>
@@ -207,17 +212,23 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {metricCards.map((metric) => (
           <Link key={metric.title} href={metric.link || '#'}>
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="metric-card rounded-2xl p-6 cursor-pointer group">
               <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-lg ${metric.bgColor}`}>
-                  <metric.icon className={`h-6 w-6 ${metric.color}`} />
+                <div
+                  className={`p-3 rounded-xl bg-gradient-to-br ${metric.iconBg} group-hover:scale-110 transition-transform`}
+                >
+                  <metric.icon className={`h-6 w-6 ${metric.iconColor}`} />
                 </div>
               </div>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{metric.value}</p>
-                <p className="text-sm text-gray-600">{metric.title}</p>
+                <p
+                  className={`text-3xl font-bold bg-gradient-to-br ${metric.gradient} bg-clip-text text-transparent`}
+                >
+                  {metric.value}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">{metric.title}</p>
               </div>
-            </Card>
+            </div>
           </Link>
         ))}
       </div>
@@ -225,11 +236,11 @@ export function DashboardPage() {
       {/* Recent Feedback and Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Feedback */}
-        <Card className="p-6">
+        <div className="glass-card-dashboard rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Recent Feedback</h2>
             <Link href="/dashboard/feedback">
-              <span className="text-sm text-[#094765] hover:text-[#156c8b] font-medium cursor-pointer">
+              <span className="text-sm bg-gradient-to-r from-[#094765] to-[#3387a7] bg-clip-text text-transparent hover:from-[#3387a7] hover:to-[#094765] font-medium cursor-pointer transition-all">
                 View all →
               </span>
             </Link>
@@ -244,42 +255,46 @@ export function DashboardPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-8">
               {recentFeedback.slice(0, 5).map((feedback) => (
                 <Link key={feedback.id} href={`/dashboard/feedback/${feedback.id}`}>
-                  <div className="p-4 rounded-lg border hover:bg-gray-50 transition-colors cursor-pointer">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                  <div className="p-5 rounded-xl glass-dashboard-dark hover:bg-white/50 transition-all cursor-pointer group">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-3">
                           <span
-                            className={`text-xs font-medium px-2 py-1 rounded-full ${
+                            className={`text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm ${
                               feedback.type === 'bug'
-                                ? 'bg-red-100 text-red-700'
+                                ? 'bg-red-500/10 text-red-600 border border-red-200/50'
                                 : feedback.type === 'suggestion'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-green-100 text-green-700'
+                                  ? 'bg-blue-500/10 text-blue-600 border border-blue-200/50'
+                                  : 'bg-green-500/10 text-green-600 border border-green-200/50'
                             }`}
                           >
                             {feedback.type}
                           </span>
-                          <span className="text-xs text-gray-500">{feedback.project.name}</span>
+                          <span className="text-xs text-gray-500 font-medium">
+                            {feedback.project.name}
+                          </span>
                         </div>
-                        <p className="text-sm text-gray-900 line-clamp-2">{feedback.description}</p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-sm text-gray-900 line-clamp-2 group-hover:text-gray-700 leading-relaxed">
+                          {feedback.description}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
                           {feedback.created_at
                             ? formatRelativeTime(feedback.created_at)
                             : 'Unknown'}
                         </p>
                       </div>
                       <span
-                        className={`text-xs px-2 py-1 rounded-full ${
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm flex-shrink-0 ${
                           feedback.status === 'new'
-                            ? 'bg-yellow-100 text-yellow-700'
+                            ? 'bg-yellow-500/10 text-yellow-600 border border-yellow-200/50'
                             : feedback.status === 'in_progress'
-                              ? 'bg-blue-100 text-blue-700'
+                              ? 'bg-blue-500/10 text-blue-600 border border-blue-200/50'
                               : feedback.status === 'resolved'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-700'
+                                ? 'bg-green-500/10 text-green-600 border border-green-200/50'
+                                : 'bg-gray-500/10 text-gray-600 border border-gray-200/50'
                         }`}
                       >
                         {feedback.status.replace('_', ' ')}
@@ -290,13 +305,15 @@ export function DashboardPage() {
               ))}
             </div>
           )}
-        </Card>
+        </div>
 
         {/* Quick Stats */}
-        <Card className="p-6">
+        <div className="glass-card-dashboard rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Feedback Trends</h2>
-            <BarChart3 className="h-5 w-5 text-gray-400" />
+            <div className="p-2 rounded-xl bg-gradient-to-br from-gray-100 to-slate-100">
+              <BarChart3 className="h-5 w-5 bg-gradient-to-br from-gray-500 to-slate-600 bg-clip-text text-transparent" />
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -309,9 +326,9 @@ export function DashboardPage() {
                     : '0%'}
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-gray-200/50 rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-500 shadow-sm"
                   style={{
                     width:
                       metrics.totalFeedback > 0
@@ -323,62 +340,70 @@ export function DashboardPage() {
             </div>
 
             <div className="pt-4 space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50/50 transition-colors">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-gradient-to-br from-red-500 to-rose-600 rounded-full shadow-sm"></div>
                   <span className="text-sm text-gray-600">Bugs</span>
                 </div>
-                <span className="text-sm font-medium">
+                <span className="text-sm font-semibold bg-gradient-to-br from-red-500 to-rose-600 bg-clip-text text-transparent">
                   {recentFeedback.filter((f) => f.type === 'bug').length}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50/50 transition-colors">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full shadow-sm"></div>
                   <span className="text-sm text-gray-600">Suggestions</span>
                 </div>
-                <span className="text-sm font-medium">
+                <span className="text-sm font-semibold bg-gradient-to-br from-blue-500 to-cyan-600 bg-clip-text text-transparent">
                   {recentFeedback.filter((f) => f.type === 'suggestion').length}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50/50 transition-colors">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full shadow-sm"></div>
                   <span className="text-sm text-gray-600">Praise</span>
                 </div>
-                <span className="text-sm font-medium">
+                <span className="text-sm font-semibold bg-gradient-to-br from-green-500 to-emerald-600 bg-clip-text text-transparent">
                   {recentFeedback.filter((f) => f.type === 'praise').length}
                 </span>
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Quick Actions */}
-      <Card className="p-6 bg-gradient-to-r from-[#094765] to-[#3387a7] text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Ready to collect more feedback?</h3>
-            <p className="text-white/80">
-              Create a new project or share your widget to get started.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/dashboard/projects/new">
-              <Button className="bg-white text-[#094765] hover:bg-gray-100">Create Project</Button>
-            </Link>
-            <Link href="/dashboard/projects">
-              <Button
-                variant="outline"
-                className="border-white text-white bg-transparent hover:bg-white hover:text-[#094765]"
-              >
-                View Projects
-              </Button>
-            </Link>
+      <div className="relative overflow-hidden rounded-2xl">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#094765] to-[#3387a7] opacity-95" />
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent" />
+        <div className="relative p-8">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h3 className="text-xl font-semibold mb-2 text-white">
+                Ready to collect more feedback?
+              </h3>
+              <p className="text-white/80">
+                Create a new project or share your widget to get started.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Link href="/dashboard/projects/new">
+                <Button className="bg-white/90 backdrop-blur-sm text-[#094765] hover:bg-white font-semibold shadow-lg transition-all hover:scale-105">
+                  Create Project
+                </Button>
+              </Link>
+              <Link href="/dashboard/projects">
+                <Button
+                  variant="outline"
+                  className="border-white/50 text-white bg-white/10 backdrop-blur-sm hover:bg-white/20 hover:border-white font-semibold transition-all"
+                >
+                  View Projects
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

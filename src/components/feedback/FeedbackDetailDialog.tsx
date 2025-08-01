@@ -414,23 +414,23 @@ export function FeedbackDetailDialog({
                 {/* Main Content */}
                 <div className="lg:col-span-2 space-y-6">
                   {/* Description Card */}
-                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                      <Circle className="h-5 w-5 text-[#3f90b3]" />
+                  <div className="glass-card-dashboard rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <Circle className="h-5 w-5 text-[#094765]" />
                       Description
                     </h3>
-                    <p className="text-gray-200 whitespace-pre-wrap leading-relaxed">
+                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
                       {feedback.description}
                     </p>
                   </div>
 
                   {/* Media Attachments - Enhanced Display */}
                   {feedback.media.length > 0 && (
-                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                      <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <div className="glass-card-dashboard rounded-xl p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         {feedback.media[0].type === 'screenshot' ? (
                           <>
-                            <ImageIcon className="h-5 w-5 text-blue-400" />
+                            <ImageIcon className="h-5 w-5 text-[#094765]" />
                             Screenshots
                           </>
                         ) : (
@@ -492,21 +492,21 @@ export function FeedbackDetailDialog({
                   )}
 
                   {/* Comments & Activity - Modern Tabs */}
-                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                  <div className="glass-card-dashboard rounded-xl p-6">
                     <Tabs
                       value={activeTab}
                       onValueChange={(v) => setActiveTab(v as 'comments' | 'activity')}
                     >
-                      <TabsList className="grid w-full grid-cols-2 bg-white/10 p-1 rounded-xl">
+                      <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-xl">
                         <TabsTrigger
                           value="comments"
-                          className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-gray-300 rounded-lg transition-all"
+                          className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm text-gray-600 rounded-lg transition-all"
                         >
                           Comments ({comments.length})
                         </TabsTrigger>
                         <TabsTrigger
                           value="activity"
-                          className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-gray-300 rounded-lg transition-all"
+                          className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm text-gray-600 rounded-lg transition-all"
                         >
                           Activity ({activities.length})
                         </TabsTrigger>
@@ -515,13 +515,13 @@ export function FeedbackDetailDialog({
                       <TabsContent value="comments" className="mt-6">
                         <div className="space-y-3 mb-4 max-h-96 overflow-y-auto pr-2">
                           {comments.length === 0 ? (
-                            <p className="text-gray-400 text-center py-8">
+                            <p className="text-gray-500 text-center py-8">
                               No comments yet. Be the first to comment!
                             </p>
                           ) : (
                             comments.map((comment) => (
                               <div key={comment.id} className="flex gap-3">
-                                <Avatar className="h-10 w-10 ring-2 ring-white/20">
+                                <Avatar className="h-10 w-10 ring-2 ring-gray-200">
                                   <AvatarImage
                                     src={comment.user.rawUserMetaData?.avatar_url}
                                     alt={
@@ -536,14 +536,14 @@ export function FeedbackDetailDialog({
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1">
-                                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                                  <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-gray-200">
                                     <div className="flex items-center justify-between mb-2">
-                                      <span className="text-white font-medium">
+                                      <span className="text-gray-900 font-medium">
                                         {comment.user.rawUserMetaData?.full_name ||
                                           comment.user.email}
                                       </span>
                                       <div className="flex items-center gap-2">
-                                        <span className="text-xs text-gray-400">
+                                        <span className="text-xs text-gray-500">
                                           {comment.created_at
                                             ? formatDistanceToNow(new Date(comment.created_at), {
                                                 addSuffix: true,
@@ -556,7 +556,7 @@ export function FeedbackDetailDialog({
                                               <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="h-6 w-6 p-0 text-gray-400 hover:text-white hover:bg-white/10"
+                                                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                                               >
                                                 <MoreVertical className="h-3 w-3" />
                                               </Button>
@@ -592,7 +592,7 @@ export function FeedbackDetailDialog({
                                         <Textarea
                                           value={editingCommentContent}
                                           onChange={(e) => setEditingCommentContent(e.target.value)}
-                                          className="resize-none text-sm bg-white/10 border-white/20 text-white"
+                                          className="resize-none text-sm bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
                                           rows={2}
                                         />
                                         <div className="flex gap-2">
@@ -600,7 +600,7 @@ export function FeedbackDetailDialog({
                                             size="sm"
                                             onClick={() => updateComment(comment.id)}
                                             disabled={!editingCommentContent.trim()}
-                                            className="bg-white/20 hover:bg-white/30 text-white"
+                                            className="bg-[#094765] hover:bg-[#156c8b] text-white"
                                           >
                                             Save
                                           </Button>
@@ -611,14 +611,14 @@ export function FeedbackDetailDialog({
                                               setEditingCommentId(null);
                                               setEditingCommentContent('');
                                             }}
-                                            className="border-white/20 text-white hover:bg-white/10"
+                                            className="border-gray-300 text-gray-700 hover:bg-gray-100"
                                           >
                                             Cancel
                                           </Button>
                                         </div>
                                       </div>
                                     ) : (
-                                      <p className="text-gray-200 whitespace-pre-wrap">
+                                      <p className="text-gray-700 whitespace-pre-wrap">
                                         {comment.content}
                                       </p>
                                     )}
@@ -633,7 +633,7 @@ export function FeedbackDetailDialog({
                             placeholder="Add a comment..."
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
-                            className="resize-none bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/15 rounded-xl"
+                            className="resize-none bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#3f90b3] focus:ring-2 focus:ring-[#3f90b3]/20 rounded-xl"
                             rows={3}
                           />
                           <Button
@@ -656,14 +656,14 @@ export function FeedbackDetailDialog({
                 {/* Sidebar */}
                 <div className="space-y-6">
                   {/* Metadata Card */}
-                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                    <h3 className="text-lg font-semibold text-white mb-4">Details</h3>
+                  <div className="glass-card-dashboard rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Details</h3>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">
+                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
                           Project
                         </p>
-                        <p className="text-white font-medium">{feedback.project.name}</p>
+                        <p className="text-gray-900 font-medium">{feedback.project.name}</p>
                       </div>
 
                       <div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useSearch } from 'wouter';
 import { toast } from 'sonner';
 import { loadStripe } from '@stripe/stripe-js';
-import { CreditCard, Loader2, AlertCircle } from 'lucide-react';
+import { CreditCard, Loader2, AlertCircle, Info } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -25,9 +25,10 @@ export function BillingPage() {
   const { session } = useAuth();
   const { organization } = useOrganization();
   const { subscription, plan, loading: subLoading } = useSubscription();
-  const { canManageBilling } = usePermissions();
+  const { role } = usePermissions();
   const { isInTrial, daysRemaining } = useTrialStatus();
   const [isLoading, setIsLoading] = useState(false);
+  const isOwner = role === 'owner' || role === 'superadmin';
 
   // Handle success/cancel from Stripe and plan selection
   useEffect(() => {
@@ -51,16 +52,18 @@ export function BillingPage() {
     }
   }, [searchParams, navigate, subLoading, organization]);
 
-  // Check permissions
-  useEffect(() => {
-    if (!subLoading && !canManageBilling) {
-      toast.error('You do not have permission to manage billing');
-      navigate('/dashboard');
-    }
-  }, [canManageBilling, navigate, subLoading]);
+  // Remove the permission check since we now allow all authenticated users to view billing
 
   const handlePlanSelect = async (planId: string) => {
     if (!organization || !session?.user) return;
+
+    // Check if user is owner before allowing plan selection
+    if (!isOwner) {
+      toast.error(
+        'Only organization owners can manage billing. Please contact your organization owner.'
+      );
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -115,6 +118,14 @@ export function BillingPage() {
   const handleManageSubscription = async () => {
     if (!organization || !session?.access_token) return;
 
+    // Check if user is owner before allowing subscription management
+    if (!isOwner) {
+      toast.error(
+        'Only organization owners can manage billing. Please contact your organization owner.'
+      );
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Call Edge Function to create portal session
@@ -166,6 +177,22 @@ export function BillingPage() {
           Manage your subscription and billing information
         </p>
       </div>
+
+      {/* Non-owner notice */}
+      {!isOwner && (
+        <Card className="p-4 bg-amber-50 border-amber-200">
+          <div className="flex items-start gap-2">
+            <Info className="h-5 w-5 text-amber-600 mt-0.5" />
+            <div className="text-sm text-amber-900">
+              <p className="font-semibold mb-1">Billing Management Restricted</p>
+              <p>
+                Only organization owners can manage billing and subscriptions. Contact your
+                organization owner to upgrade or make changes to your subscription.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Current Plan */}
       {subscription && plan && (
