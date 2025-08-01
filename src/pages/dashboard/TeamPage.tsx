@@ -6,8 +6,21 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Users, UserPlus, Mail, Trash2, Crown, User, Send, X, Copy } from 'lucide-react';
-import { OrganizationMember, Invitation, UserRole } from '@/types/database.types';
+import {
+  Users,
+  UserPlus,
+  Mail,
+  Trash2,
+  Crown,
+  User,
+  Send,
+  X,
+  Copy,
+  FolderOpen,
+  CheckSquare,
+  Square,
+} from 'lucide-react';
+import { OrganizationMember, Invitation, UserRole, Project } from '@/types/database.types';
 import { toast } from 'sonner';
 import { EmailService } from '@/lib/email';
 
@@ -27,16 +40,24 @@ export function TeamPage() {
   const { organization, membership } = useOrganization();
   const [members, setMembers] = useState<MemberWithUser[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<UserRole>('member'); // Always 'member' for MVP
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
+  const [selectAllProjects, setSelectAllProjects] = useState(true);
   const [sending, setSending] = useState(false);
+  const [manageProjectsModalOpen, setManageProjectsModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<MemberWithUser | null>(null);
+  const [memberProjectIds, setMemberProjectIds] = useState<string[]>([]);
+  const [savingProjects, setSavingProjects] = useState(false);
 
   useEffect(() => {
     if (!organization?.id) return;
     fetchTeamMembers();
     fetchInvitations();
+    fetchProjects();
   }, [organization?.id]);
 
   const fetchTeamMembers = async () => {
@@ -108,6 +129,23 @@ export function TeamPage() {
     }
   };
 
+  const fetchProjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('organization_id', organization!.id)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setProjects(data || []);
+      // Default to all projects selected
+      setSelectedProjectIds((data || []).map((p) => p.id));
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
+
   const handleInviteMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail || !organization) return;
@@ -140,6 +178,7 @@ export function TeamPage() {
           role: inviteRole,
           invited_by: session!.user.id,
           expires_at: expiresAt.toISOString(),
+          project_ids: selectAllProjects ? [] : selectedProjectIds, // Empty array means all projects
         })
         .select()
         .single();
@@ -172,6 +211,8 @@ export function TeamPage() {
       // Reset form
       setInviteEmail('');
       setInviteRole('member');
+      setSelectedProjectIds(projects.map((p) => p.id));
+      setSelectAllProjects(true);
       setInviteModalOpen(false);
     } catch (error) {
       console.error('Error sending invitation:', error);
@@ -201,6 +242,27 @@ export function TeamPage() {
     toast.success('Invitation link copied to clipboard');
   };
 
+  const toggleProjectSelection = (projectId: string) => {
+    setSelectedProjectIds((prev) => {
+      if (prev.includes(projectId)) {
+        return prev.filter((id) => id !== projectId);
+      } else {
+        return [...prev, projectId];
+      }
+    });
+    setSelectAllProjects(false);
+  };
+
+  const handleSelectAllProjects = () => {
+    if (selectAllProjects) {
+      setSelectedProjectIds([]);
+      setSelectAllProjects(false);
+    } else {
+      setSelectedProjectIds(projects.map((p) => p.id));
+      setSelectAllProjects(true);
+    }
+  };
+
   // Role updates removed for MVP - only owners and members exist
 
   const handleRemoveMember = async (memberId: string) => {
@@ -222,6 +284,82 @@ export function TeamPage() {
     } catch (error) {
       console.error('Error removing member:', error);
       toast.error('Failed to remove team member');
+    }
+  };
+
+  const openManageProjects = async (member: MemberWithUser) => {
+    setSelectedMember(member);
+    setManageProjectsModalOpen(true);
+
+    // Fetch current project access for this member
+    try {
+      const { data, error } = await supabase
+        .from('project_members')
+        .select('project_id')
+        .eq('user_id', member.user_id);
+
+      if (error) throw error;
+
+      setMemberProjectIds((data || []).map((pm) => pm.project_id));
+    } catch (error) {
+      console.error('Error fetching member projects:', error);
+      toast.error('Failed to load member project access');
+    }
+  };
+
+  const handleUpdateMemberProjects = async () => {
+    if (!selectedMember) return;
+
+    setSavingProjects(true);
+    try {
+      // Get current project memberships
+      const { data: currentMemberships, error: fetchError } = await supabase
+        .from('project_members')
+        .select('project_id')
+        .eq('user_id', selectedMember.user_id);
+
+      if (fetchError) throw fetchError;
+
+      const currentProjectIds = (currentMemberships || []).map((pm) => pm.project_id);
+
+      // Determine which projects to add and remove
+      const projectsToAdd = memberProjectIds.filter((id) => !currentProjectIds.includes(id));
+      const projectsToRemove = currentProjectIds.filter((id) => !memberProjectIds.includes(id));
+
+      // Remove member from projects
+      if (projectsToRemove.length > 0) {
+        const { error: removeError } = await supabase
+          .from('project_members')
+          .delete()
+          .eq('user_id', selectedMember.user_id)
+          .in('project_id', projectsToRemove);
+
+        if (removeError) throw removeError;
+      }
+
+      // Add member to new projects
+      if (projectsToAdd.length > 0) {
+        const newMemberships = projectsToAdd.map((projectId) => ({
+          project_id: projectId,
+          user_id: selectedMember.user_id,
+          role: 'viewer' as const,
+          invited_by: session!.user.id,
+        }));
+
+        const { error: addError } = await supabase.from('project_members').insert(newMemberships);
+
+        if (addError) throw addError;
+      }
+
+      toast.success('Member project access updated successfully');
+      setManageProjectsModalOpen(false);
+      setSelectedMember(null);
+      setMemberProjectIds([]);
+    } catch (error) {
+      console.error('Error updating member projects:', error);
+      toast.error('Failed to update member project access');
+    } finally {
+      setSavingProjects(false);
     }
   };
 
@@ -340,6 +478,13 @@ export function TeamPage() {
               {canManageTeam && member.role !== 'owner' && (
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => openManageProjects(member)}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Manage project access"
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                  </button>
+                  <button
                     onClick={() => handleRemoveMember(member.id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title="Remove member"
@@ -409,7 +554,7 @@ export function TeamPage() {
             onClick={() => setInviteModalOpen(false)}
           />
           <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-md p-6">
+            <Card className="w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Invite Team Member</h3>
                 <button
@@ -436,6 +581,60 @@ export function TeamPage() {
                 {/* Role is always 'member' for MVP - field hidden */}
                 <input type="hidden" value="member" />
 
+                {/* Project Selection */}
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <FolderOpen className="h-4 w-4" />
+                    Project Access
+                  </Label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+                    {/* Select All Option */}
+                    <label className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                      <button type="button" onClick={handleSelectAllProjects} className="text-left">
+                        {selectAllProjects ? (
+                          <CheckSquare className="h-5 w-5 text-[#094765]" />
+                        ) : (
+                          <Square className="h-5 w-5 text-gray-400" />
+                        )}
+                      </button>
+                      <span className="font-medium">All Projects</span>
+                      <span className="text-sm text-gray-500 ml-auto">
+                        Grant access to all current and future projects
+                      </span>
+                    </label>
+
+                    {!selectAllProjects && (
+                      <>
+                        <div className="border-t my-2"></div>
+                        {projects.map((project) => (
+                          <label
+                            key={project.id}
+                            className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => toggleProjectSelection(project.id)}
+                              className="text-left"
+                            >
+                              {selectedProjectIds.includes(project.id) ? (
+                                <CheckSquare className="h-5 w-5 text-[#094765]" />
+                              ) : (
+                                <Square className="h-5 w-5 text-gray-400" />
+                              )}
+                            </button>
+                            <span>{project.name}</span>
+                          </label>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                  {!selectAllProjects && selectedProjectIds.length === 0 && (
+                    <p className="text-sm text-red-600">
+                      Please select at least one project or choose "All Projects"
+                    </p>
+                  )}
+                </div>
+
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <p className="text-sm text-blue-800">
                     <span className="font-medium">Note:</span> An invitation link will be generated
@@ -447,7 +646,7 @@ export function TeamPage() {
                 <div className="flex gap-3 pt-2">
                   <Button
                     type="submit"
-                    disabled={sending}
+                    disabled={sending || (!selectAllProjects && selectedProjectIds.length === 0)}
                     className="flex-1 flex items-center justify-center gap-2"
                   >
                     {sending ? (
@@ -467,6 +666,121 @@ export function TeamPage() {
                   </Button>
                 </div>
               </form>
+            </Card>
+          </div>
+        </>
+      )}
+
+      {/* Manage Projects Modal */}
+      {manageProjectsModalOpen && selectedMember && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => setManageProjectsModalOpen(false)}
+          />
+          <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Manage Project Access</h3>
+                <button
+                  onClick={() => setManageProjectsModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">Managing project access for:</p>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#094765] to-[#3387a7] rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                      {selectedMember.user.email[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {selectedMember.user.user_metadata?.full_name || selectedMember.user.email}
+                      </p>
+                      <p className="text-sm text-gray-500">{selectedMember.user.email}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">
+                    <FolderOpen className="h-4 w-4" />
+                    Project Access
+                  </Label>
+                  <div className="space-y-2 max-h-64 overflow-y-auto border rounded-lg p-3">
+                    {projects.length === 0 ? (
+                      <p className="text-center text-gray-500 py-4">No projects available</p>
+                    ) : (
+                      projects.map((project) => (
+                        <label
+                          key={project.id}
+                          className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMemberProjectIds((prev) => {
+                                if (prev.includes(project.id)) {
+                                  return prev.filter((id) => id !== project.id);
+                                } else {
+                                  return [...prev, project.id];
+                                }
+                              });
+                            }}
+                            className="text-left"
+                          >
+                            {memberProjectIds.includes(project.id) ? (
+                              <CheckSquare className="h-5 w-5 text-[#094765]" />
+                            ) : (
+                              <Square className="h-5 w-5 text-gray-400" />
+                            )}
+                          </button>
+                          <span>{project.name}</span>
+                          {!project.is_active && (
+                            <span className="text-xs text-gray-500 ml-auto">(Inactive)</span>
+                          )}
+                        </label>
+                      ))
+                    )}
+                  </div>
+                  {memberProjectIds.length === 0 && (
+                    <p className="text-sm text-amber-600">
+                      This member will not have access to any projects
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    onClick={handleUpdateMemberProjects}
+                    disabled={savingProjects}
+                    className="flex-1 flex items-center justify-center gap-2"
+                  >
+                    {savingProjects ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <CheckSquare className="h-4 w-4" />
+                        Update Access
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setManageProjectsModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
             </Card>
           </div>
         </>

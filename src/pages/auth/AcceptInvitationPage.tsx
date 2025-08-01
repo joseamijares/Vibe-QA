@@ -114,6 +114,25 @@ export function AcceptInvitationPage() {
 
       if (updateError) throw updateError;
 
+      // Add user to projects if specified
+      if (invitation.project_ids && invitation.project_ids.length > 0) {
+        const projectMemberships = invitation.project_ids.map((projectId) => ({
+          project_id: projectId,
+          user_id: session.user.id,
+          role: 'viewer' as const,
+          invited_by: invitation.invited_by,
+        }));
+
+        const { error: projectError } = await supabase
+          .from('project_members')
+          .insert(projectMemberships);
+
+        if (projectError && projectError.code !== '23505') {
+          // Ignore duplicate key errors
+          console.error('Error adding user to projects:', projectError);
+        }
+      }
+
       // Log activity
       await supabase.from('activity_logs').insert({
         organization_id: invitation.organization_id,

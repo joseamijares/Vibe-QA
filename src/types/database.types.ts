@@ -407,6 +407,7 @@ export type Database = {
           id: string;
           invited_by: string | null;
           organization_id: string | null;
+          project_ids: string[] | null;
           role: Database['public']['Enums']['user_role'];
         };
         Insert: {
@@ -417,6 +418,7 @@ export type Database = {
           id?: string;
           invited_by?: string | null;
           organization_id?: string | null;
+          project_ids?: string[] | null;
           role?: Database['public']['Enums']['user_role'];
         };
         Update: {
@@ -427,6 +429,7 @@ export type Database = {
           id?: string;
           invited_by?: string | null;
           organization_id?: string | null;
+          project_ids?: string[] | null;
           role?: Database['public']['Enums']['user_role'];
         };
         Relationships: [
@@ -749,6 +752,55 @@ export type Database = {
         };
         Relationships: [];
       };
+      project_members: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          invited_by: string | null;
+          project_id: string;
+          role: Database['public']['Enums']['project_role'];
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          invited_by?: string | null;
+          project_id: string;
+          role?: Database['public']['Enums']['project_role'];
+          user_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          invited_by?: string | null;
+          project_id?: string;
+          role?: Database['public']['Enums']['project_role'];
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'project_members_project_id_fkey';
+            columns: ['project_id'];
+            isOneToOne: false;
+            referencedRelation: 'projects';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'project_members_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'project_members_invited_by_fkey';
+            columns: ['invited_by'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       projects: {
         Row: {
           allowed_domains: string[] | null;
@@ -1043,6 +1095,7 @@ export type Database = {
       feedback_priority: 'low' | 'medium' | 'high' | 'critical';
       feedback_status: 'new' | 'in_progress' | 'resolved' | 'archived';
       feedback_type: 'bug' | 'suggestion' | 'praise' | 'other';
+      project_role: 'viewer' | 'editor' | 'admin';
       user_role: 'owner' | 'superadmin' | 'admin' | 'member' | 'viewer';
     };
     CompositeTypes: {
@@ -1174,6 +1227,7 @@ export const Constants = {
       feedback_priority: ['low', 'medium', 'high', 'critical'],
       feedback_status: ['new', 'in_progress', 'resolved', 'archived'],
       feedback_type: ['bug', 'suggestion', 'praise', 'other'],
+      project_role: ['viewer', 'editor', 'admin'],
       user_role: ['owner', 'superadmin', 'admin', 'member', 'viewer'],
     },
   },
@@ -1183,6 +1237,7 @@ export const Constants = {
 export type Project = Tables<'projects'>;
 export type Organization = Tables<'organizations'>;
 export type OrganizationMember = Tables<'organization_members'>;
+export type ProjectMember = Tables<'project_members'>;
 export type Feedback = Tables<'feedback'>;
 export type FeedbackMedia = Tables<'feedback_media'>;
 export type Comment = Tables<'comments'>;
@@ -1190,6 +1245,7 @@ export type Invitation = Tables<'invitations'>;
 
 // Export enums
 export type UserRole = Enums<'user_role'>;
+export type ProjectRole = Enums<'project_role'>;
 export type FeedbackType = Enums<'feedback_type'>;
 export type FeedbackStatus = Enums<'feedback_status'>;
 export type FeedbackPriority = Enums<'feedback_priority'>;

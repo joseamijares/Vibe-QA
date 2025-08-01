@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Select,
   SelectContent,
@@ -28,8 +29,6 @@ import {
   Search,
   MoreVertical,
   ChevronRight,
-  ChevronLeft,
-  Calendar,
   User,
   Link as LinkIcon,
   AlertCircle,
@@ -40,10 +39,13 @@ import {
   Video,
   Mic,
   Download,
-  Filter,
   CheckSquare,
   Square,
-  CalendarDays,
+  ArrowUpDown,
+  Users,
+  AlertTriangle,
+  Flame,
+  Hash,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -54,9 +56,9 @@ import {
   Project,
   FeedbackMedia,
 } from '@/types/database.types';
-import { formatDistanceToNow, format } from 'date-fns';
-import { Label } from '@/components/ui/label';
+import { formatDistanceToNow } from 'date-fns';
 import { FeedbackDetailDialog } from '@/components/feedback/FeedbackDetailDialog';
+import { cn } from '@/lib/utils';
 
 interface FeedbackWithDetails extends Feedback {
   project: Project;
@@ -64,6 +66,10 @@ interface FeedbackWithDetails extends Feedback {
   assigned_user?: {
     id: string;
     email: string;
+    rawUserMetaData?: {
+      full_name?: string;
+      avatar_url?: string;
+    };
   };
 }
 
@@ -73,29 +79,88 @@ interface TeamMember {
   user: {
     id: string;
     email: string;
+    rawUserMetaData?: {
+      full_name?: string;
+      avatar_url?: string;
+    };
   };
 }
 
 const feedbackTypeConfig = {
-  bug: { icon: Bug, color: 'text-red-500', bgColor: 'bg-red-100' },
-  suggestion: { icon: Lightbulb, color: 'text-blue-500', bgColor: 'bg-blue-100' },
-  praise: { icon: Heart, color: 'text-green-500', bgColor: 'bg-green-100' },
-  other: { icon: Circle, color: 'text-gray-500', bgColor: 'bg-gray-100' },
+  bug: { icon: Bug, color: 'text-red-500', bgColor: 'bg-red-50', label: 'Bug' },
+  suggestion: {
+    icon: Lightbulb,
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-50',
+    label: 'Suggestion',
+  },
+  praise: { icon: Heart, color: 'text-green-500', bgColor: 'bg-green-50', label: 'Praise' },
+  other: { icon: Circle, color: 'text-gray-500', bgColor: 'bg-gray-50', label: 'Other' },
 };
 
 const feedbackStatusConfig = {
-  new: { icon: AlertCircle, color: 'text-yellow-500', label: 'New' },
-  in_progress: { icon: Clock, color: 'text-blue-500', label: 'In Progress' },
-  resolved: { icon: CheckCircle2, color: 'text-green-500', label: 'Resolved' },
-  archived: { icon: Archive, color: 'text-gray-500', label: 'Archived' },
+  new: {
+    icon: AlertCircle,
+    color: 'text-[#ff6b35]',
+    bgColor: 'bg-[#ff6b35]/10',
+    borderColor: 'border-[#ff6b35]/20',
+    label: 'New',
+  },
+  in_progress: {
+    icon: Clock,
+    color: 'text-[#3387a7]',
+    bgColor: 'bg-[#3387a7]/10',
+    borderColor: 'border-[#3387a7]/20',
+    label: 'In Progress',
+  },
+  resolved: {
+    icon: CheckCircle2,
+    color: 'text-[#20e3b2]',
+    bgColor: 'bg-[#20e3b2]/10',
+    borderColor: 'border-[#20e3b2]/20',
+    label: 'Resolved',
+  },
+  archived: {
+    icon: Archive,
+    color: 'text-gray-500',
+    bgColor: 'bg-gray-100',
+    borderColor: 'border-gray-200',
+    label: 'Archived',
+  },
 };
 
 const feedbackPriorityConfig = {
-  low: { color: 'text-gray-500', bgColor: 'bg-gray-100' },
-  medium: { color: 'text-yellow-600', bgColor: 'bg-yellow-100' },
-  high: { color: 'text-orange-600', bgColor: 'bg-orange-100' },
-  critical: { color: 'text-red-600', bgColor: 'bg-red-100' },
+  low: {
+    color: 'text-gray-500',
+    bgColor: 'bg-gray-100',
+    borderColor: 'border-l-4 border-gray-300',
+    icon: Hash,
+    label: 'Low',
+  },
+  medium: {
+    color: 'text-yellow-600',
+    bgColor: 'bg-yellow-50',
+    borderColor: 'border-l-4 border-yellow-400',
+    icon: AlertTriangle,
+    label: 'Medium',
+  },
+  high: {
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-50',
+    borderColor: 'border-l-4 border-orange-400',
+    icon: AlertCircle,
+    label: 'High',
+  },
+  critical: {
+    color: 'text-red-600',
+    bgColor: 'bg-red-50',
+    borderColor: 'border-l-4 border-red-500',
+    icon: Flame,
+    label: 'Critical',
+  },
 };
+
+type SortOption = 'date_desc' | 'date_asc' | 'priority_desc' | 'priority_asc' | 'status';
 
 const ITEMS_PER_PAGE = 25;
 
@@ -111,7 +176,6 @@ export function FeedbackPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
-  const [showFilters, setShowFilters] = useState(true);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,10 +183,7 @@ export function FeedbackPage() {
   const [filterType, setFilterType] = useState<FeedbackType | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<FeedbackStatus | 'all'>('all');
   const [filterPriority, setFilterPriority] = useState<FeedbackPriority | 'all'>('all');
-  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({
-    start: null,
-    end: null,
-  });
+  const [sortBy, setSortBy] = useState<SortOption>('date_desc');
 
   useEffect(() => {
     if (!organization) return;
@@ -133,9 +194,9 @@ export function FeedbackPage() {
 
   useEffect(() => {
     if (!organization) return;
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
     fetchFeedback();
-  }, [filterProject, filterType, filterStatus, filterPriority, dateRange]);
+  }, [filterProject, filterType, filterStatus, filterPriority, sortBy]);
 
   useEffect(() => {
     if (!organization) return;
@@ -167,16 +228,14 @@ export function FeedbackPage() {
 
       if (membersError) throw membersError;
 
-      // Get user details for each member
       const userIds = members?.map((m) => m.user_id) || [];
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, email')
+        .select('id, email, rawUserMetaData')
         .in('id', userIds);
 
       if (profilesError) throw profilesError;
 
-      // Combine member data with user profiles
       const teamMembersData =
         members?.map((member) => ({
           user_id: member.user_id,
@@ -197,6 +256,33 @@ export function FeedbackPage() {
     try {
       setLoading(true);
 
+      // Determine order based on sort option
+      let orderColumn = 'created_at';
+      let orderAscending = false;
+
+      switch (sortBy) {
+        case 'date_desc':
+          orderColumn = 'created_at';
+          orderAscending = false;
+          break;
+        case 'date_asc':
+          orderColumn = 'created_at';
+          orderAscending = true;
+          break;
+        case 'priority_desc':
+          orderColumn = 'priority';
+          orderAscending = false;
+          break;
+        case 'priority_asc':
+          orderColumn = 'priority';
+          orderAscending = true;
+          break;
+        case 'status':
+          orderColumn = 'status';
+          orderAscending = true;
+          break;
+      }
+
       // First get total count for pagination
       let countQuery = supabase
         .from('feedback')
@@ -216,12 +302,6 @@ export function FeedbackPage() {
       if (filterPriority !== 'all') {
         countQuery = countQuery.eq('priority', filterPriority);
       }
-      if (dateRange.start) {
-        countQuery = countQuery.gte('created_at', dateRange.start.toISOString());
-      }
-      if (dateRange.end) {
-        countQuery = countQuery.lte('created_at', dateRange.end.toISOString());
-      }
 
       const { count } = await countQuery;
       setTotalCount(count || 0);
@@ -237,7 +317,7 @@ export function FeedbackPage() {
         `
         )
         .eq('project.organization_id', organization!.id)
-        .order('created_at', { ascending: false })
+        .order(orderColumn, { ascending: orderAscending })
         .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
 
       // Apply filters
@@ -253,18 +333,32 @@ export function FeedbackPage() {
       if (filterPriority !== 'all') {
         query = query.eq('priority', filterPriority);
       }
-      if (dateRange.start) {
-        query = query.gte('created_at', dateRange.start.toISOString());
-      }
-      if (dateRange.end) {
-        query = query.lte('created_at', dateRange.end.toISOString());
-      }
 
       const { data, error } = await query;
 
       if (error) throw error;
-      setFeedbackList(data || []);
-      setSelectedItems(new Set()); // Clear selections on page change
+
+      // Fetch assigned user details
+      const feedbackWithAssignees = await Promise.all(
+        (data || []).map(async (feedback) => {
+          if (feedback.assigned_to) {
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('id, email, rawUserMetaData')
+              .eq('id', feedback.assigned_to)
+              .single();
+
+            return {
+              ...feedback,
+              assigned_user: userData,
+            };
+          }
+          return feedback;
+        })
+      );
+
+      setFeedbackList(feedbackWithAssignees);
+      setSelectedItems(new Set());
     } catch (error: any) {
       console.error('Error fetching feedback:', error);
       toast.error('Failed to load feedback');
@@ -278,8 +372,6 @@ export function FeedbackPage() {
       const updates: any = { status };
       if (status === 'resolved') {
         updates.resolved_at = new Date().toISOString();
-        // TODO: Get current user ID from auth context
-        // updates.resolved_by = user.id;
       }
 
       const { error } = await supabase.from('feedback').update(updates).eq('id', feedbackId);
@@ -388,7 +480,7 @@ export function FeedbackPage() {
       f.priority,
       f.project.name,
       f.reporter_name || f.reporter_email || 'Anonymous',
-      f.description.replace(/,/g, ';'), // Replace commas to avoid CSV issues
+      f.description.replace(/,/g, ';'),
       f.page_url || '',
     ]);
 
@@ -422,6 +514,19 @@ export function FeedbackPage() {
     return true;
   });
 
+  // Group feedback by status
+  const groupedFeedback = filteredFeedback.reduce(
+    (acc, feedback) => {
+      const status = feedback.status;
+      if (!acc[status]) {
+        acc[status] = [];
+      }
+      acc[status].push(feedback);
+      return acc;
+    },
+    {} as Record<FeedbackStatus, FeedbackWithDetails[]>
+  );
+
   const openFeedbackDetail = (feedback: FeedbackWithDetails) => {
     setSelectedFeedback(feedback);
     setDetailOpen(true);
@@ -439,175 +544,413 @@ export function FeedbackPage() {
     );
   }
 
+  const renderFeedbackCard = (feedback: FeedbackWithDetails) => {
+    const TypeIcon = feedbackTypeConfig[feedback.type].icon;
+    const StatusIcon = feedbackStatusConfig[feedback.status].icon;
+    const PriorityIcon = feedbackPriorityConfig[feedback.priority].icon;
+
+    return (
+      <Card
+        key={feedback.id}
+        className={cn(
+          'group hover:shadow-md transition-all duration-200 cursor-pointer',
+          feedbackPriorityConfig[feedback.priority].borderColor
+        )}
+        onClick={() => openFeedbackDetail(feedback)}
+      >
+        <div className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => handleSelectItem(feedback.id)}
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+              >
+                {selectedItems.has(feedback.id) ? (
+                  <CheckSquare className="h-4 w-4 text-[#3387a7]" />
+                ) : (
+                  <Square className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-3">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={cn('p-2 rounded-lg', feedbackTypeConfig[feedback.type].bgColor)}>
+                    <TypeIcon className={cn('h-5 w-5', feedbackTypeConfig[feedback.type].color)} />
+                  </div>
+
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-sm">
+                        {feedback.title || `${feedback.type} feedback`}
+                      </h3>
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          'text-xs',
+                          feedbackStatusConfig[feedback.status].bgColor,
+                          feedbackStatusConfig[feedback.status].color,
+                          feedbackStatusConfig[feedback.status].borderColor,
+                          'border'
+                        )}
+                      >
+                        <StatusIcon className="h-3 w-3 mr-1" />
+                        {feedbackStatusConfig[feedback.status].label}
+                      </Badge>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                      <span>{feedback.project.name}</span>
+                      <span>•</span>
+                      <span>
+                        {feedback.created_at
+                          ? formatDistanceToNow(new Date(feedback.created_at), { addSuffix: true })
+                          : 'Unknown'}
+                      </span>
+                      {feedback.reporter_name ||
+                        (feedback.reporter_email && (
+                          <>
+                            <span>•</span>
+                            <span>{feedback.reporter_name || feedback.reporter_email}</span>
+                          </>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {feedback.assigned_to ? (
+                    <Avatar className="h-8 w-8 border-2 border-white shadow-sm">
+                      {feedback.assigned_user?.rawUserMetaData?.avatar_url ? (
+                        <AvatarImage
+                          src={feedback.assigned_user.rawUserMetaData.avatar_url}
+                          alt={feedback.assigned_user.email}
+                        />
+                      ) : null}
+                      <AvatarFallback className="bg-[#3387a7] text-white text-xs">
+                        {feedback.assigned_user?.email?.charAt(0).toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground bg-gray-100 px-2 py-1 rounded-full">
+                      <Users className="h-3 w-3" />
+                      <span>Unassigned</span>
+                    </div>
+                  )}
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateFeedbackStatus(feedback.id, 'in_progress');
+                        }}
+                      >
+                        Mark as In Progress
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateFeedbackStatus(feedback.id, 'resolved');
+                        }}
+                      >
+                        Mark as Resolved
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateFeedbackStatus(feedback.id, 'archived');
+                        }}
+                      >
+                        Archive
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="text-xs">Assign to</DropdownMenuLabel>
+                      {feedback.assigned_to && (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            assignFeedback(feedback.id, null);
+                          }}
+                        >
+                          <User className="h-3 w-3 mr-2" />
+                          Unassign
+                        </DropdownMenuItem>
+                      )}
+                      {teamMembers.map((member) => (
+                        <DropdownMenuItem
+                          key={member.user_id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            assignFeedback(feedback.id, member.user_id);
+                          }}
+                          disabled={feedback.assigned_to === member.user_id}
+                        >
+                          <User className="h-3 w-3 mr-2" />
+                          {member.user.email}
+                          {member.role === 'owner' && (
+                            <Badge variant="secondary" className="ml-2 text-xs">
+                              Owner
+                            </Badge>
+                          )}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground line-clamp-2">{feedback.description}</p>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className={cn('text-xs', feedbackPriorityConfig[feedback.priority].color)}
+                  >
+                    <PriorityIcon className="h-3 w-3 mr-1" />
+                    {feedbackPriorityConfig[feedback.priority].label}
+                  </Badge>
+
+                  {feedback.media.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      {feedback.media.map((media, index) => {
+                        const MediaIcon = getMediaIcon(media.type);
+                        return <MediaIcon key={index} className="h-4 w-4 text-muted-foreground" />;
+                      })}
+                    </div>
+                  )}
+
+                  {feedback.page_url && <LinkIcon className="h-4 w-4 text-muted-foreground" />}
+                </div>
+
+                <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Feedback</h2>
+          <h2 className="text-2xl font-bold text-[#094765]">Feedback</h2>
           <p className="text-muted-foreground">
             Manage and respond to user feedback across all projects
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
-            <Filter className="h-4 w-4 mr-2" />
-            {showFilters ? 'Hide' : 'Show'} Filters
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={exportToCSV}
-            disabled={filteredFeedback.length === 0}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={exportToCSV}
+          disabled={filteredFeedback.length === 0}
+          className="text-[#094765] border-[#094765] hover:bg-[#094765] hover:text-white"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
       </div>
 
-      {/* Filters */}
-      {showFilters && (
-        <Card className="p-4">
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div className="md:col-span-1">
-                <Select value={filterProject} onValueChange={setFilterProject}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Projects" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Projects</SelectItem>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+      {/* Project Selector */}
+      <div className="w-full md:w-auto">
+        <Select value={filterProject} onValueChange={setFilterProject}>
+          <SelectTrigger className="w-full md:w-[300px] h-12 text-base border-2 border-[#094765]/20 focus:border-[#3387a7]">
+            <SelectValue placeholder="All Projects" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Projects</SelectItem>
+            {projects.map((project) => (
+              <SelectItem key={project.id} value={project.id}>
+                {project.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-              <div>
-                <Select value={filterType} onValueChange={(value) => setFilterType(value as any)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="bug">Bug</SelectItem>
-                    <SelectItem value="suggestion">Suggestion</SelectItem>
-                    <SelectItem value="praise">Praise</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Select
-                  value={filterStatus}
-                  onValueChange={(value) => setFilterStatus(value as any)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Select
-                  value={filterPriority}
-                  onValueChange={(value) => setFilterPriority(value as any)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Priorities" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Priorities</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search feedback..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm">Date Range:</Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="date"
-                  value={dateRange.start ? format(dateRange.start, 'yyyy-MM-dd') : ''}
-                  onChange={(e) =>
-                    setDateRange((prev) => ({
-                      ...prev,
-                      start: e.target.value ? new Date(e.target.value) : null,
-                    }))
-                  }
-                  className="w-40"
-                />
-                <span className="text-muted-foreground">to</span>
-                <Input
-                  type="date"
-                  value={dateRange.end ? format(dateRange.end, 'yyyy-MM-dd') : ''}
-                  onChange={(e) =>
-                    setDateRange((prev) => ({
-                      ...prev,
-                      end: e.target.value ? new Date(e.target.value) : null,
-                    }))
-                  }
-                  className="w-40"
-                />
-                {(dateRange.start || dateRange.end) && (
+      {/* Filters Bar */}
+      <Card className="p-4 bg-gradient-to-r from-[#094765]/5 to-[#3387a7]/5 border-[#094765]/10">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Type Filter */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-white rounded-lg p-1 border border-[#094765]/10">
+              {Object.entries(feedbackTypeConfig).map(([type, config]) => {
+                const Icon = config.icon;
+                return (
                   <Button
-                    variant="ghost"
+                    key={type}
+                    variant={filterType === type ? 'default' : 'ghost'}
                     size="sm"
-                    onClick={() => setDateRange({ start: null, end: null })}
+                    onClick={() =>
+                      setFilterType(filterType === type ? 'all' : (type as FeedbackType))
+                    }
+                    className={cn(
+                      'p-2',
+                      filterType === type
+                        ? 'bg-[#094765] hover:bg-[#094765]/90'
+                        : 'hover:bg-gray-100'
+                    )}
                   >
-                    Clear
+                    <Icon
+                      className={cn('h-4 w-4', filterType === type ? 'text-white' : config.color)}
+                    />
                   </Button>
-                )}
-              </div>
+                );
+              })}
             </div>
           </div>
-        </Card>
-      )}
+
+          {/* Status Filter */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-white rounded-lg p-1 border border-[#094765]/10">
+              {Object.entries(feedbackStatusConfig).map(([status, config]) => {
+                const Icon = config.icon;
+                return (
+                  <Button
+                    key={status}
+                    variant={filterStatus === status ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() =>
+                      setFilterStatus(filterStatus === status ? 'all' : (status as FeedbackStatus))
+                    }
+                    className={cn(
+                      'px-3 py-2',
+                      filterStatus === status
+                        ? 'bg-[#094765] hover:bg-[#094765]/90'
+                        : 'hover:bg-gray-100'
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        'h-4 w-4 mr-1',
+                        filterStatus === status ? 'text-white' : config.color
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'text-xs',
+                        filterStatus === status ? 'text-white' : 'text-gray-700'
+                      )}
+                    >
+                      {config.label}
+                    </span>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Priority Filter */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-white rounded-lg p-1 border border-[#094765]/10">
+              {Object.entries(feedbackPriorityConfig).map(([priority, config]) => {
+                const Icon = config.icon;
+                return (
+                  <Button
+                    key={priority}
+                    variant={filterPriority === priority ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() =>
+                      setFilterPriority(
+                        filterPriority === priority ? 'all' : (priority as FeedbackPriority)
+                      )
+                    }
+                    className={cn(
+                      'px-3 py-2',
+                      filterPriority === priority
+                        ? 'bg-[#094765] hover:bg-[#094765]/90'
+                        : 'hover:bg-gray-100'
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        'h-4 w-4 mr-1',
+                        filterPriority === priority ? 'text-white' : config.color
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        'text-xs',
+                        filterPriority === priority ? 'text-white' : 'text-gray-700'
+                      )}
+                    >
+                      {config.label}
+                    </span>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Sort Dropdown */}
+          <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+            <SelectTrigger className="w-[180px] bg-white">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4 text-[#094765]" />
+                <SelectValue />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date_desc">Newest First</SelectItem>
+              <SelectItem value="date_asc">Oldest First</SelectItem>
+              <SelectItem value="priority_desc">Highest Priority</SelectItem>
+              <SelectItem value="priority_asc">Lowest Priority</SelectItem>
+              <SelectItem value="status">By Status</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Search */}
+          <div className="flex-1 min-w-[200px]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search feedback..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-white border-[#094765]/20 focus:border-[#3387a7]"
+              />
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Bulk Actions Bar */}
       {selectedItems.size > 0 && (
-        <Card className="p-4 bg-blue-50 border-blue-200">
+        <Card className="p-4 bg-[#3387a7]/10 border-[#3387a7]/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium text-[#094765]">
                 {selectedItems.size} item{selectedItems.size > 1 ? 's' : ''} selected
               </span>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedItems(new Set())}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedItems(new Set())}
+                className="text-[#094765] hover:text-[#094765]/80"
+              >
                 Clear selection
               </Button>
             </div>
             <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" disabled={bulkActionLoading}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={bulkActionLoading}
+                    className="text-[#094765] border-[#094765] hover:bg-[#094765] hover:text-white"
+                  >
                     Change Status
                   </Button>
                 </DropdownMenuTrigger>
@@ -633,7 +976,7 @@ export function FeedbackPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleSelectAll}
-            className="flex items-center gap-1 hover:text-foreground transition-colors"
+            className="flex items-center gap-1 hover:text-[#094765] transition-colors"
           >
             {selectedItems.size === feedbackList.length && feedbackList.length > 0 ? (
               <CheckSquare className="h-4 w-4" />
@@ -650,191 +993,46 @@ export function FeedbackPage() {
         </div>
       </div>
 
-      {/* Feedback List */}
-      <div className="space-y-4">
+      {/* Feedback List by Status */}
+      <div className="space-y-8">
         {filteredFeedback.length === 0 ? (
           <Card className="p-8 text-center">
             <p className="text-muted-foreground">No feedback found matching your filters.</p>
           </Card>
-        ) : (
-          filteredFeedback.map((feedback) => {
-            const TypeIcon = feedbackTypeConfig[feedback.type].icon;
-            const StatusIcon = feedbackStatusConfig[feedback.status].icon;
+        ) : sortBy === 'status' ? (
+          // Group by status when sorting by status
+          ['new', 'in_progress', 'resolved', 'archived'].map((status) => {
+            const statusFeedback = groupedFeedback[status as FeedbackStatus] || [];
+            if (statusFeedback.length === 0) return null;
+
+            const StatusIcon = feedbackStatusConfig[status as FeedbackStatus].icon;
+            const statusConfig = feedbackStatusConfig[status as FeedbackStatus];
 
             return (
-              <Card key={feedback.id} className="p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start gap-3">
-                  <div className="pt-1" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => handleSelectItem(feedback.id)}
-                      className="p-1 hover:bg-gray-100 rounded transition-colors"
-                    >
-                      {selectedItems.has(feedback.id) ? (
-                        <CheckSquare className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Square className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </button>
-                  </div>
+              <div key={status} className="space-y-4">
+                <div className="flex items-center gap-3 sticky top-0 bg-background z-10 py-2">
                   <div
-                    className="flex-1 space-y-3 cursor-pointer"
-                    onClick={() => openFeedbackDetail(feedback)}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-lg',
+                      statusConfig.bgColor
+                    )}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`p-2 rounded-lg ${feedbackTypeConfig[feedback.type].bgColor}`}
-                        >
-                          <TypeIcon
-                            className={`h-5 w-5 ${feedbackTypeConfig[feedback.type].color}`}
-                          />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">
-                            {feedback.title || `${feedback.type} feedback`}
-                          </h3>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {feedback.created_at
-                                ? formatDistanceToNow(new Date(feedback.created_at), {
-                                    addSuffix: true,
-                                  })
-                                : 'Unknown'}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <User className="h-3 w-3" />
-                              {feedback.reporter_name || feedback.reporter_email || 'Anonymous'}
-                            </span>
-                            {feedback.assigned_to && (
-                              <span className="flex items-center gap-1 text-primary">
-                                <User className="h-3 w-3" />
-                                Assigned:{' '}
-                                {teamMembers.find((m) => m.user_id === feedback.assigned_to)?.user
-                                  .email || 'Unknown'}
-                              </span>
-                            )}
-                            {feedback.page_url && (
-                              <span className="flex items-center gap-1">
-                                <LinkIcon className="h-3 w-3" />
-                                <span className="truncate max-w-xs">{feedback.page_url}</span>
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateFeedbackStatus(feedback.id, 'in_progress');
-                            }}
-                          >
-                            Mark as In Progress
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateFeedbackStatus(feedback.id, 'resolved');
-                            }}
-                          >
-                            Mark as Resolved
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              updateFeedbackStatus(feedback.id, 'archived');
-                            }}
-                          >
-                            Archive
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuLabel className="text-xs">Assign to</DropdownMenuLabel>
-                          {feedback.assigned_to && (
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                assignFeedback(feedback.id, null);
-                              }}
-                            >
-                              <User className="h-3 w-3 mr-2" />
-                              Unassign
-                            </DropdownMenuItem>
-                          )}
-                          {teamMembers.map((member) => (
-                            <DropdownMenuItem
-                              key={member.user_id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                assignFeedback(feedback.id, member.user_id);
-                              }}
-                              disabled={feedback.assigned_to === member.user_id}
-                            >
-                              <User className="h-3 w-3 mr-2" />
-                              {member.user.email}
-                              {member.role === 'owner' && (
-                                <Badge variant="secondary" className="ml-2 text-xs">
-                                  Owner
-                                </Badge>
-                              )}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {feedback.description}
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {feedback.project.name}
-                        </Badge>
-                        <Badge
-                          variant="secondary"
-                          className={`text-xs ${feedbackStatusConfig[feedback.status].color}`}
-                        >
-                          <StatusIcon className="h-3 w-3 mr-1" />
-                          {feedbackStatusConfig[feedback.status].label}
-                        </Badge>
-                        <Badge
-                          variant="secondary"
-                          className={`text-xs ${
-                            feedbackPriorityConfig[feedback.priority].color
-                          } ${feedbackPriorityConfig[feedback.priority].bgColor}`}
-                        >
-                          {feedback.priority}
-                        </Badge>
-                        {feedback.media.length > 0 && (
-                          <div className="flex items-center gap-1">
-                            {feedback.media.map((media, index) => {
-                              const MediaIcon = getMediaIcon(media.type);
-                              return (
-                                <MediaIcon key={index} className="h-4 w-4 text-muted-foreground" />
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <StatusIcon className={cn('h-5 w-5', statusConfig.color)} />
+                    <h3 className={cn('font-semibold', statusConfig.color)}>
+                      {statusConfig.label}
+                    </h3>
+                    <Badge variant="secondary" className="ml-2">
+                      {statusFeedback.length}
+                    </Badge>
                   </div>
                 </div>
-              </Card>
+                <div className="space-y-3">{statusFeedback.map(renderFeedbackCard)}</div>
+              </div>
             );
           })
+        ) : (
+          // Regular list when not sorting by status
+          <div className="space-y-3">{filteredFeedback.map(renderFeedbackCard)}</div>
         )}
       </div>
 
@@ -850,8 +1048,8 @@ export function FeedbackPage() {
               size="sm"
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={!hasPrevPage}
+              className="text-[#094765] border-[#094765] hover:bg-[#094765] hover:text-white disabled:opacity-50"
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
               Previous
             </Button>
 
@@ -874,7 +1072,12 @@ export function FeedbackPage() {
                     key={pageNum}
                     variant={currentPage === pageNum ? 'default' : 'outline'}
                     size="sm"
-                    className="w-10"
+                    className={cn(
+                      'w-10',
+                      currentPage === pageNum
+                        ? 'bg-[#094765] hover:bg-[#094765]/90'
+                        : 'text-[#094765] border-[#094765] hover:bg-[#094765] hover:text-white'
+                    )}
                     onClick={() => setCurrentPage(pageNum)}
                   >
                     {pageNum}
@@ -888,9 +1091,9 @@ export function FeedbackPage() {
               size="sm"
               onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={!hasNextPage}
+              className="text-[#094765] border-[#094765] hover:bg-[#094765] hover:text-white disabled:opacity-50"
             >
               Next
-              <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
         </div>

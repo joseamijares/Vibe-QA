@@ -21,6 +21,7 @@ import {
   X,
   Shield,
   BarChart3,
+  Plug,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import logoSvg from '@/assets/vibe-code-logo.svg';
@@ -78,6 +79,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'Projects', href: '/dashboard/projects', icon: Folder, show: true },
     { name: 'Feedback', href: '/dashboard/feedback', icon: MessageSquare, show: true },
     { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, show: true },
+    { name: 'Integrations', href: '/dashboard/integrations', icon: Plug, show: true },
     { name: 'Team', href: '/dashboard/team', icon: Users, show: true },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings, show: true },
     {

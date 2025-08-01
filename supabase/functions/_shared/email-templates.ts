@@ -11,11 +11,24 @@ interface TemplateParams {
 export class EmailTemplateEngine {
   /**
    * Replace template variables with actual values
-   * Supports {{variable}} syntax
+   * Supports {{variable}} syntax with HTML escaping for security
    */
   static render(template: string, params: TemplateParams): string {
     return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-      return String(params[key] || match);
+      const value = params[key];
+      if (value === undefined) return match;
+      
+      // HTML escape user-provided content for security
+      return String(value).replace(/[&<>"']/g, (char) => {
+        const escapeMap: Record<string, string> = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#x27;'
+        };
+        return escapeMap[char];
+      });
     });
   }
 

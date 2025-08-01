@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useActivityLogs } from '@/hooks/useActivityLogs';
 import { supabase } from '@/lib/supabase';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,7 +21,6 @@ import {
   Lightbulb,
   Heart,
   Circle,
-  Link as LinkIcon,
   Send,
   Globe,
   Monitor,
@@ -30,6 +29,14 @@ import {
   Edit2,
   Trash2,
   MoreVertical,
+  CheckCircle2,
+  X,
+  Maximize2,
+  Calendar,
+  MapPin,
+  Smartphone,
+  Image as ImageIcon,
+  Volume2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -137,29 +144,42 @@ export function FeedbackDetailDialog({
 
   const fetchComments = async () => {
     try {
-      // Fetch comments with user profiles in a single query
+      // First fetch comments
       const { data: commentsData, error } = await supabase
         .from('comments')
-        .select(
-          `
-          *,
-          user:profiles!user_id(
-            id,
-            email,
-            full_name,
-            avatar_url
-          )
-        `
-        )
+        .select('*')
         .eq('feedback_id', feedback.id)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
 
+      if (!commentsData || commentsData.length === 0) {
+        setComments([]);
+        return;
+      }
+
+      // Get unique user IDs
+      const userIds = [...new Set(commentsData.map((c) => c.user_id))];
+
+      // Fetch user profiles
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, avatar_url')
+        .in('id', userIds);
+
+      const profileMap =
+        profileData?.reduce(
+          (acc, profile) => {
+            acc[profile.id] = profile;
+            return acc;
+          },
+          {} as Record<string, any>
+        ) || {};
+
       // Map comments with user data
-      const commentsWithUsers = (commentsData || []).map((comment) => ({
+      const commentsWithUsers = commentsData.map((comment) => ({
         ...comment,
-        user: comment.user || {
+        user: profileMap[comment.user_id] || {
           id: comment.user_id,
           email: `User ${comment.user_id.substring(0, 8)}...`,
           rawUserMetaData: {},
@@ -174,11 +194,16 @@ export function FeedbackDetailDialog({
   };
 
   const fetchTeamMembers = async () => {
+    if (!organization) {
+      console.log('No organization available');
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('organization_members')
         .select('*')
-        .eq('organization_id', organization!.id);
+        .eq('organization_id', organization.id);
 
       if (error) throw error;
       setTeamMembers(data || []);
@@ -297,381 +322,632 @@ export function FeedbackDetailDialog({
     return 'U';
   };
 
-  const getMediaPreview = (media: FeedbackMedia) => {
-    if (media.type === 'screenshot') {
-      return (
-        <img
-          src={media.thumbnail_url || media.url}
-          alt="Screenshot"
-          className="w-full h-32 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => setSelectedMedia(media)}
-        />
-      );
-    }
-
-    return (
-      <div
-        className="w-full h-32 bg-gray-100 rounded flex flex-col items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
-        onClick={() => setSelectedMedia(media)}
-      >
-        <Mic className="h-8 w-8 text-gray-500 mb-2" />
-        <span className="text-sm text-gray-600">Audio Recording</span>
-        {media.duration && <span className="text-xs text-gray-500">{media.duration}s</span>}
-      </div>
-    );
-  };
-
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${feedbackTypeConfig[feedback.type].bgColor}`}>
-                <TypeIcon className={`h-5 w-5 ${feedbackTypeConfig[feedback.type].color}`} />
-              </div>
-              <span>{feedback.title || `${feedbackTypeConfig[feedback.type].label} Feedback`}</span>
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden p-0 border-0">
+          {/* Modern gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#094765] via-[#156c8b] to-[#094765] opacity-95" />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Main Content */}
-            <div className="md:col-span-2 space-y-6">
-              {/* Description */}
-              <div>
-                <Label className="text-base font-semibold mb-2">Description</Label>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {feedback.description}
-                </p>
-              </div>
-
-              {/* Media Attachments */}
-              {feedback.media.length > 0 && (
-                <div>
-                  <Label className="text-base font-semibold mb-2">Attachments</Label>
-                  <div className="grid grid-cols-2 gap-4">
-                    {feedback.media.map((media) => (
-                      <div key={media.id} className="relative">
-                        {getMediaPreview(media)}
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="absolute top-2 right-2"
-                          onClick={() => downloadMedia(media)}
-                        >
-                          <Download className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
+          {/* Content wrapper */}
+          <div className="relative flex flex-col h-full">
+            {/* Modern header with glassmorphism */}
+            <div className="relative px-8 py-6 border-b border-white/10 bg-white/5 backdrop-blur-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`p-3 rounded-2xl ${feedbackTypeConfig[feedback.type].bgColor} bg-opacity-20 backdrop-blur-sm`}
+                  >
+                    <TypeIcon className={`h-6 w-6 ${feedbackTypeConfig[feedback.type].color}`} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">
+                      {feedback.title || `${feedbackTypeConfig[feedback.type].label} Feedback`}
+                    </h2>
+                    <p className="text-sm text-gray-300 mt-1">
+                      Submitted{' '}
+                      {feedback.created_at
+                        ? formatDistanceToNow(new Date(feedback.created_at), { addSuffix: true })
+                        : 'Unknown'}
+                    </p>
                   </div>
                 </div>
-              )}
 
-              {/* Comments & Activity */}
-              <div>
-                <Tabs
-                  value={activeTab}
-                  onValueChange={(v) => setActiveTab(v as 'comments' | 'activity')}
-                >
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="comments">Comments ({comments.length})</TabsTrigger>
-                    <TabsTrigger value="activity">Activity ({activities.length})</TabsTrigger>
-                  </TabsList>
+                {/* Quick actions */}
+                <div className="flex items-center gap-3">
+                  {feedback.status !== 'resolved' && (
+                    <Button
+                      onClick={async () => {
+                        // Update state and then trigger the update
+                        const oldStatus = status;
+                        setStatus('resolved');
 
-                  <TabsContent value="comments" className="mt-4">
-                    <div className="space-y-3 mb-4 max-h-96 overflow-y-auto">
-                      {comments.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-8">
-                          No comments yet
-                        </p>
-                      ) : (
-                        comments.map((comment) => (
-                          <div key={comment.id} className="flex gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage
-                                src={comment.user.rawUserMetaData?.avatar_url}
-                                alt={comment.user.rawUserMetaData?.full_name || comment.user.email}
-                              />
-                              <AvatarFallback>
-                                {getInitials(
-                                  comment.user.rawUserMetaData?.full_name,
-                                  comment.user.email
-                                )}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="bg-gray-50 rounded-lg p-3">
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-sm font-medium">
-                                    {comment.user.rawUserMetaData?.full_name || comment.user.email}
-                                  </span>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs text-muted-foreground">
-                                      {comment.created_at
-                                        ? formatDistanceToNow(new Date(comment.created_at), {
-                                            addSuffix: true,
-                                          })
-                                        : 'Unknown'}
-                                    </span>
-                                    {comment.user_id === session?.user?.id && (
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                            <MoreVertical className="h-3 w-3" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                          <DropdownMenuItem
-                                            onClick={() => {
-                                              setEditingCommentId(comment.id);
-                                              setEditingCommentContent(comment.content);
-                                            }}
-                                          >
-                                            <Edit2 className="h-3 w-3 mr-2" />
-                                            Edit
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onClick={() => setDeletingCommentId(comment.id)}
-                                            className="text-destructive"
-                                          >
-                                            <Trash2 className="h-3 w-3 mr-2" />
-                                            Delete
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
-                                    )}
-                                  </div>
-                                </div>
-                                {editingCommentId === comment.id ? (
-                                  <div className="space-y-2">
-                                    <Textarea
-                                      value={editingCommentContent}
-                                      onChange={(e) => setEditingCommentContent(e.target.value)}
-                                      className="resize-none text-sm"
-                                      rows={2}
-                                    />
-                                    <div className="flex gap-2">
-                                      <Button
-                                        size="sm"
-                                        onClick={() => updateComment(comment.id)}
-                                        disabled={!editingCommentContent.trim()}
-                                      >
-                                        Save
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          setEditingCommentId(null);
-                                          setEditingCommentContent('');
-                                        }}
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <Textarea
-                        placeholder="Add a comment..."
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        className="resize-none"
-                        rows={2}
-                      />
-                      <Button onClick={addComment} disabled={!newComment.trim()}>
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TabsContent>
+                        try {
+                          setLoading(true);
+                          const updates = {
+                            status: 'resolved',
+                            priority,
+                            assigned_to: assignedTo === 'unassigned' ? null : assignedTo,
+                            resolved_at: new Date().toISOString(),
+                            resolved_by: session?.user?.id,
+                          };
 
-                  <TabsContent value="activity" className="mt-4">
-                    <ActivityTimeline activities={activities} loading={activitiesLoading} />
-                  </TabsContent>
-                </Tabs>
+                          const { error } = await supabase
+                            .from('feedback')
+                            .update(updates)
+                            .eq('id', feedback.id);
+
+                          if (error) throw error;
+
+                          toast.success('Feedback marked as resolved');
+                          onUpdate();
+                        } catch (error: any) {
+                          console.error('Error resolving feedback:', error);
+                          toast.error('Failed to resolve feedback');
+                          setStatus(oldStatus); // Revert on error
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      disabled={loading}
+                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-2 rounded-full flex items-center gap-2 shadow-lg"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      Mark as Resolved
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onOpenChange(false)}
+                    className="text-gray-300 hover:text-white hover:bg-white/10 rounded-full"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-4">
-              {/* Metadata */}
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-xs text-muted-foreground">Project</Label>
-                  <p className="text-sm font-medium">{feedback.project.name}</p>
-                </div>
+            {/* Main content area with scrolling */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-8">
+                {/* Main Content */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* Description Card */}
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                      <Circle className="h-5 w-5 text-[#3f90b3]" />
+                      Description
+                    </h3>
+                    <p className="text-gray-200 whitespace-pre-wrap leading-relaxed">
+                      {feedback.description}
+                    </p>
+                  </div>
 
-                <div>
-                  <Label className="text-xs text-muted-foreground">Reporter</Label>
-                  <p className="text-sm font-medium">
-                    {feedback.reporter_name || feedback.reporter_email || 'Anonymous'}
-                  </p>
-                </div>
+                  {/* Media Attachments - Enhanced Display */}
+                  {feedback.media.length > 0 && (
+                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                      <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        {feedback.media[0].type === 'screenshot' ? (
+                          <>
+                            <ImageIcon className="h-5 w-5 text-blue-400" />
+                            Screenshots
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className="h-5 w-5 text-green-400" />
+                            Audio Recordings
+                          </>
+                        )}
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {feedback.media.map((media) => (
+                          <div key={media.id} className="relative group">
+                            {media.type === 'screenshot' ? (
+                              <div className="relative overflow-hidden rounded-xl">
+                                <img
+                                  src={media.thumbnail_url || media.url}
+                                  alt="Screenshot"
+                                  className="w-full h-48 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                                  onClick={() => setSelectedMedia(media)}
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => setSelectedMedia(media)}
+                                    className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-full"
+                                  >
+                                    <Maximize2 className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => downloadMedia(media)}
+                                    className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-full"
+                                  >
+                                    <Download className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                className="bg-gradient-to-br from-green-500/20 to-emerald-600/20 rounded-xl p-6 cursor-pointer hover:from-green-500/30 hover:to-emerald-600/30 transition-all duration-300"
+                                onClick={() => setSelectedMedia(media)}
+                              >
+                                <div className="flex flex-col items-center">
+                                  <Mic className="h-12 w-12 text-green-400 mb-3" />
+                                  <span className="text-white font-medium">Audio Recording</span>
+                                  {media.duration && (
+                                    <span className="text-gray-300 text-sm mt-1">
+                                      {media.duration} seconds
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                <div>
-                  <Label className="text-xs text-muted-foreground">Submitted</Label>
-                  <p className="text-sm font-medium">
-                    {feedback.created_at
-                      ? format(new Date(feedback.created_at), 'MMM d, yyyy h:mm a')
-                      : 'Unknown'}
-                  </p>
-                </div>
-
-                {feedback.page_url && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Page URL</Label>
-                    <a
-                      href={feedback.page_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-medium text-blue-600 hover:underline flex items-center gap-1"
+                  {/* Comments & Activity - Modern Tabs */}
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                    <Tabs
+                      value={activeTab}
+                      onValueChange={(v) => setActiveTab(v as 'comments' | 'activity')}
                     >
-                      <LinkIcon className="h-3 w-3" />
-                      {new URL(feedback.page_url).pathname}
-                    </a>
-                  </div>
-                )}
-
-                {feedback.browser_info && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Browser</Label>
-                    <p className="text-sm font-medium flex items-center gap-1">
-                      <Globe className="h-3 w-3" />
-                      {(feedback.browser_info as any).browser}{' '}
-                      {(feedback.browser_info as any).version}
-                    </p>
-                  </div>
-                )}
-
-                {feedback.device_info && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Device</Label>
-                    <p className="text-sm font-medium flex items-center gap-1">
-                      <Monitor className="h-3 w-3" />
-                      {(feedback.device_info as any).type} - {(feedback.device_info as any).os}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="space-y-3 pt-4 border-t">
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={status}
-                    onValueChange={(value) => setStatus(value as FeedbackStatus)}
-                  >
-                    <SelectTrigger id="status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {feedbackStatusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="priority">Priority</Label>
-                  <Select
-                    value={priority}
-                    onValueChange={(value) => setPriority(value as FeedbackPriority)}
-                  >
-                    <SelectTrigger id="priority">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {feedbackPriorityOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="assignee">Assign To</Label>
-                  <Select value={assignedTo} onValueChange={setAssignedTo}>
-                    <SelectTrigger id="assignee">
-                      <SelectValue placeholder="Unassigned" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {teamMembers.map((member) => (
-                        <SelectItem
-                          key={member.user_id || member.id}
-                          value={member.user_id || `member_${member.id}`}
+                      <TabsList className="grid w-full grid-cols-2 bg-white/10 p-1 rounded-xl">
+                        <TabsTrigger
+                          value="comments"
+                          className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-gray-300 rounded-lg transition-all"
                         >
-                          User {member.user_id ? member.user_id.substring(0, 8) : 'Unknown'}...
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                          Comments ({comments.length})
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="activity"
+                          className="data-[state=active]:bg-white/20 data-[state=active]:text-white text-gray-300 rounded-lg transition-all"
+                        >
+                          Activity ({activities.length})
+                        </TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="comments" className="mt-6">
+                        <div className="space-y-3 mb-4 max-h-96 overflow-y-auto pr-2">
+                          {comments.length === 0 ? (
+                            <p className="text-gray-400 text-center py-8">
+                              No comments yet. Be the first to comment!
+                            </p>
+                          ) : (
+                            comments.map((comment) => (
+                              <div key={comment.id} className="flex gap-3">
+                                <Avatar className="h-10 w-10 ring-2 ring-white/20">
+                                  <AvatarImage
+                                    src={comment.user.rawUserMetaData?.avatar_url}
+                                    alt={
+                                      comment.user.rawUserMetaData?.full_name || comment.user.email
+                                    }
+                                  />
+                                  <AvatarFallback className="bg-gradient-to-br from-[#156c8b] to-[#3f90b3] text-white">
+                                    {getInitials(
+                                      comment.user.rawUserMetaData?.full_name,
+                                      comment.user.email
+                                    )}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-white font-medium">
+                                        {comment.user.rawUserMetaData?.full_name ||
+                                          comment.user.email}
+                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs text-gray-400">
+                                          {comment.created_at
+                                            ? formatDistanceToNow(new Date(comment.created_at), {
+                                                addSuffix: true,
+                                              })
+                                            : 'Unknown'}
+                                        </span>
+                                        {comment.user_id === session?.user?.id && (
+                                          <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-6 w-6 p-0 text-gray-400 hover:text-white hover:bg-white/10"
+                                              >
+                                                <MoreVertical className="h-3 w-3" />
+                                              </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent
+                                              align="end"
+                                              className="bg-slate-800 border-slate-700"
+                                            >
+                                              <DropdownMenuItem
+                                                onClick={() => {
+                                                  setEditingCommentId(comment.id);
+                                                  setEditingCommentContent(comment.content);
+                                                }}
+                                                className="text-white hover:bg-slate-700"
+                                              >
+                                                <Edit2 className="h-3 w-3 mr-2" />
+                                                Edit
+                                              </DropdownMenuItem>
+                                              <DropdownMenuItem
+                                                onClick={() => setDeletingCommentId(comment.id)}
+                                                className="text-red-400 hover:bg-slate-700"
+                                              >
+                                                <Trash2 className="h-3 w-3 mr-2" />
+                                                Delete
+                                              </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                          </DropdownMenu>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {editingCommentId === comment.id ? (
+                                      <div className="space-y-2">
+                                        <Textarea
+                                          value={editingCommentContent}
+                                          onChange={(e) => setEditingCommentContent(e.target.value)}
+                                          className="resize-none text-sm bg-white/10 border-white/20 text-white"
+                                          rows={2}
+                                        />
+                                        <div className="flex gap-2">
+                                          <Button
+                                            size="sm"
+                                            onClick={() => updateComment(comment.id)}
+                                            disabled={!editingCommentContent.trim()}
+                                            className="bg-white/20 hover:bg-white/30 text-white"
+                                          >
+                                            Save
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => {
+                                              setEditingCommentId(null);
+                                              setEditingCommentContent('');
+                                            }}
+                                            className="border-white/20 text-white hover:bg-white/10"
+                                          >
+                                            Cancel
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <p className="text-gray-200 whitespace-pre-wrap">
+                                        {comment.content}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <Textarea
+                            placeholder="Add a comment..."
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            className="resize-none bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/15 rounded-xl"
+                            rows={3}
+                          />
+                          <Button
+                            onClick={addComment}
+                            disabled={!newComment.trim()}
+                            className="bg-gradient-to-r from-[#ff6b35] to-[#e85d2f] hover:from-[#e85d2f] hover:to-[#d14d29] text-white rounded-xl px-4"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="activity" className="mt-6">
+                        <ActivityTimeline activities={activities} loading={activitiesLoading} />
+                      </TabsContent>
+                    </Tabs>
+                  </div>
                 </div>
 
-                <Button className="w-full" onClick={updateFeedback} disabled={loading}>
-                  Save Changes
-                </Button>
+                {/* Sidebar */}
+                <div className="space-y-6">
+                  {/* Metadata Card */}
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                    <h3 className="text-lg font-semibold text-white mb-4">Details</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">
+                          Project
+                        </p>
+                        <p className="text-white font-medium">{feedback.project.name}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">
+                          Reporter
+                        </p>
+                        <p className="text-white font-medium">
+                          {feedback.reporter_name || feedback.reporter_email || 'Anonymous'}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">
+                          Submitted
+                        </p>
+                        <p className="text-white font-medium flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          {feedback.created_at
+                            ? format(new Date(feedback.created_at), 'MMM d, yyyy h:mm a')
+                            : 'Unknown'}
+                        </p>
+                      </div>
+
+                      {feedback.page_url && (
+                        <div>
+                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">
+                            Page URL
+                          </p>
+                          <a
+                            href={feedback.page_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#3f90b3] hover:text-[#66a5bd] flex items-center gap-2 transition-colors"
+                          >
+                            <MapPin className="h-4 w-4" />
+                            <span className="truncate">{feedback.page_url}</span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Device & Browser Info Card */}
+                  {(feedback.browser_info || feedback.device_info) && (
+                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                      <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <Smartphone className="h-5 w-5 text-blue-400" />
+                        Device Information
+                      </h3>
+                      <div className="space-y-4">
+                        {feedback.browser_info && (
+                          <div>
+                            <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">
+                              Browser
+                            </p>
+                            <div className="bg-white/5 rounded-lg p-3 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Globe className="h-4 w-4 text-blue-400" />
+                                <span className="text-white font-medium">
+                                  {(feedback.browser_info as any).browser}{' '}
+                                  {(feedback.browser_info as any).version}
+                                </span>
+                              </div>
+                              {(feedback.browser_info as any).engine && (
+                                <p className="text-sm text-gray-300 pl-6">
+                                  Engine: {(feedback.browser_info as any).engine}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {feedback.device_info && (
+                          <div>
+                            <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">
+                              System
+                            </p>
+                            <div className="bg-white/5 rounded-lg p-3 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Monitor className="h-4 w-4 text-green-400" />
+                                <span className="text-white font-medium">
+                                  {(feedback.device_info as any).os}{' '}
+                                  {(feedback.device_info as any).osVersion || ''}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-300 pl-6">
+                                Device: {(feedback.device_info as any).type}
+                              </p>
+                              {(feedback.device_info as any).screenWidth && (
+                                <p className="text-sm text-gray-300 pl-6">
+                                  Screen: {(feedback.device_info as any).screenWidth} ×{' '}
+                                  {(feedback.device_info as any).screenHeight}
+                                </p>
+                              )}
+                              {(feedback.device_info as any).viewport && (
+                                <p className="text-sm text-gray-300 pl-6">
+                                  Viewport: {(feedback.device_info as any).viewport.width} ×{' '}
+                                  {(feedback.device_info as any).viewport.height}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions Card */}
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                    <h3 className="text-lg font-semibold text-white mb-4">Actions</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="status" className="text-gray-300 text-sm">
+                          Status
+                        </Label>
+                        <Select
+                          value={status}
+                          onValueChange={(value) => setStatus(value as FeedbackStatus)}
+                        >
+                          <SelectTrigger
+                            id="status"
+                            className="bg-white/10 border-white/20 text-white mt-1"
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-slate-700">
+                            {feedbackStatusOptions.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                                className="text-white hover:bg-slate-700"
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="priority" className="text-gray-300 text-sm">
+                          Priority
+                        </Label>
+                        <Select
+                          value={priority}
+                          onValueChange={(value) => setPriority(value as FeedbackPriority)}
+                        >
+                          <SelectTrigger
+                            id="priority"
+                            className="bg-white/10 border-white/20 text-white mt-1"
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-slate-700">
+                            {feedbackPriorityOptions.map((option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                                className="text-white hover:bg-slate-700"
+                              >
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="assignee" className="text-gray-300 text-sm">
+                          Assign To
+                        </Label>
+                        <Select value={assignedTo} onValueChange={setAssignedTo}>
+                          <SelectTrigger
+                            id="assignee"
+                            className="bg-white/10 border-white/20 text-white mt-1"
+                          >
+                            <SelectValue placeholder="Unassigned" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-slate-800 border-slate-700">
+                            <SelectItem
+                              value="unassigned"
+                              className="text-white hover:bg-slate-700"
+                            >
+                              Unassigned
+                            </SelectItem>
+                            {teamMembers.map((member) => (
+                              <SelectItem
+                                key={member.user_id || member.id}
+                                value={member.user_id || `member_${member.id}`}
+                                className="text-white hover:bg-slate-700"
+                              >
+                                User {member.user_id ? member.user_id.substring(0, 8) : 'Unknown'}
+                                ...
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <Button
+                        className="w-full bg-gradient-to-r from-[#ff6b35] to-[#e85d2f] hover:from-[#e85d2f] hover:to-[#d14d29] text-white rounded-xl mt-4"
+                        onClick={updateFeedback}
+                        disabled={loading}
+                      >
+                        Save Changes
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Media Preview Modal */}
+      {/* Media Preview Modal - Modern Design */}
       {selectedMedia && (
         <Dialog open={!!selectedMedia} onOpenChange={() => setSelectedMedia(null)}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Media Preview</DialogTitle>
-            </DialogHeader>
-            <div className="flex justify-center">
-              {selectedMedia.type === 'screenshot' ? (
-                <img
-                  src={selectedMedia.url}
-                  alt="Screenshot"
-                  className="max-w-full max-h-[70vh] object-contain"
-                />
-              ) : (
-                <audio src={selectedMedia.url} controls className="w-full" />
-              )}
+          <DialogContent className="max-w-5xl p-0 border-0 bg-black/90 backdrop-blur-xl">
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSelectedMedia(null)}
+                className="absolute top-4 right-4 z-10 text-white hover:bg-white/20 rounded-full"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+              <div className="p-8">
+                {selectedMedia.type === 'screenshot' ? (
+                  <img
+                    src={selectedMedia.url}
+                    alt="Screenshot"
+                    className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl mx-auto"
+                  />
+                ) : (
+                  <div className="bg-gradient-to-br from-green-500/20 to-emerald-600/20 rounded-2xl p-12 max-w-md mx-auto">
+                    <div className="flex flex-col items-center space-y-6">
+                      <Volume2 className="h-16 w-16 text-green-400" />
+                      <audio src={selectedMedia.url} controls className="w-full" />
+                      {selectedMedia.duration && (
+                        <p className="text-white text-lg">
+                          Duration: {selectedMedia.duration} seconds
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </DialogContent>
         </Dialog>
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation Dialog - Modern Design */}
       <Dialog open={!!deletingCommentId} onOpenChange={() => setDeletingCommentId(null)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Delete Comment</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete this comment? This action cannot be undone.
-          </p>
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setDeletingCommentId(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => deletingCommentId && deleteComment(deletingCommentId)}
-            >
-              Delete
-            </Button>
+        <DialogContent className="sm:max-w-[425px] bg-slate-900 border-slate-800">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-full bg-red-500/20">
+                <Trash2 className="h-6 w-6 text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Delete Comment</h3>
+                <p className="text-sm text-gray-400 mt-1">
+                  Are you sure you want to delete this comment? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setDeletingCommentId(null)}
+                className="border-slate-700 text-gray-300 hover:bg-slate-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => deletingCommentId && deleteComment(deletingCommentId)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Delete Comment
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

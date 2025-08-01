@@ -1,5 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useOrganization } from './useOrganization';
-import { UserRole } from '@/types/database.types';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserRole, ProjectRole } from '@/types/database.types';
+import { supabase } from '@/lib/supabase';
 
 interface Permissions {
   canManageTeam: boolean;
@@ -100,4 +103,54 @@ export function isOwnerRole(userRole: UserRole | null): boolean {
 // Check if user is a member (anyone who isn't owner or superadmin)
 export function isMemberRole(userRole: UserRole | null): boolean {
   return userRole !== null && userRole !== 'owner' && userRole !== 'superadmin';
+}
+
+// Project-specific permission checks
+export function useProjectPermissions(projectId?: string) {
+  const { session } = useAuth();
+  const { membership } = useOrganization();
+  const [projectRole, setProjectRole] = useState<ProjectRole | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!projectId || !session?.user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    fetchProjectRole();
+  }, [projectId, session?.user?.id]);
+
+  const fetchProjectRole = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('project_members')
+        .select('role')
+        .eq('project_id', projectId!)
+        .eq('user_id', session!.user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      setProjectRole(data?.role || null);
+    } catch (error) {
+      console.error('Error fetching project role:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Organization owners always have full project access
+  const isOrgOwner = membership?.role === 'owner' || membership?.role === 'superadmin';
+
+  return {
+    loading,
+    projectRole,
+    canViewProject: isOrgOwner || projectRole !== null,
+    canEditProject: isOrgOwner || projectRole === 'admin' || projectRole === 'editor',
+    canManageProjectTeam: isOrgOwner || projectRole === 'admin',
+    canDeleteProject: isOrgOwner,
+    canManageFeedback: isOrgOwner || projectRole === 'admin' || projectRole === 'editor',
+    canViewFeedback: isOrgOwner || projectRole !== null,
+  };
 }

@@ -68,7 +68,7 @@ export function TrialExpiredPage() {
             <Button
               variant="ghost"
               onClick={handleSignOut}
-              className="text-white hover:text-gray-200 hover:bg-white/10"
+              className="text-gray-700 hover:text-gray-900 hover:bg-gray-900/10 font-medium"
             >
               Sign Out
             </Button>

@@ -57,6 +57,9 @@ const EditProjectPage = lazy(() =>
 const TrialExpiredPage = lazy(() =>
   import('@/pages/TrialExpiredPage').then((m) => ({ default: m.TrialExpiredPage }))
 );
+const IntegrationsPage = lazy(() =>
+  import('@/pages/dashboard/IntegrationsPage').then((m) => ({ default: m.IntegrationsPage }))
+);
 
 // Superadmin pages
 const SuperadminDashboard = lazy(() =>
@@ -208,6 +211,16 @@ const ProtectedEditProject = () => (
   </ProtectedRoute>
 );
 
+const ProtectedIntegrations = () => (
+  <ProtectedRoute>
+    <Suspense fallback={<PageLoader />}>
+      <DashboardLayout>
+        <IntegrationsPage />
+      </DashboardLayout>
+    </Suspense>
+  </ProtectedRoute>
+);
+
 // Superadmin protected routes
 const ProtectedSuperadminDashboard = () => (
   <ProtectedRoute requiredRole={['superadmin']}>
@@ -290,6 +303,7 @@ export function Routes() {
         <Route path="/dashboard/projects/:id/widget" component={ProtectedWidgetConfig} />
         <Route path="/dashboard/feedback" component={ProtectedFeedback} />
         <Route path="/dashboard/analytics" component={ProtectedAnalytics} />
+        <Route path="/dashboard/integrations" component={ProtectedIntegrations} />
         <Route path="/dashboard/team" component={ProtectedTeam} />
         <Route path="/dashboard/settings" component={ProtectedSettings} />
         <Route path="/dashboard/settings/billing" component={ProtectedBilling} />
