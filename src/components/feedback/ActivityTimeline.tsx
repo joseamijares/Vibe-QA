@@ -10,7 +10,7 @@ import {
   ArrowDownRight,
 } from 'lucide-react';
 import { ActivityLog } from '@/hooks/useActivityLogs';
-import { ACTIVITY_ACTIONS, FEEDBACK_PRIORITY, FEEDBACK_STATUS } from '@/constants/activity';
+import { ACTIVITY_ACTIONS, FEEDBACK_PRIORITY } from '@/constants/activity';
 
 interface ActivityTimelineProps {
   activities: ActivityLog[];

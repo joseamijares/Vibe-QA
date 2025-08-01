@@ -124,7 +124,7 @@ export function useActivityLogs(feedbackId: string) {
           table: 'activity_logs',
           filter: `feedback_id=eq.${feedbackId}`,
         },
-        (payload) => {
+        () => {
           // Only fetch if we're showing recent activities
           if (!hasMore) {
             fetchActivities();

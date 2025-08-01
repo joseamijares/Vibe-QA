@@ -611,7 +611,10 @@ export function FeedbackDetailDialog({
                     <SelectContent>
                       <SelectItem value="unassigned">Unassigned</SelectItem>
                       {teamMembers.map((member) => (
-                        <SelectItem key={member.user_id || member.id} value={member.user_id || ''}>
+                        <SelectItem
+                          key={member.user_id || member.id}
+                          value={member.user_id || `member_${member.id}`}
+                        >
                           User {member.user_id ? member.user_id.substring(0, 8) : 'Unknown'}...
                         </SelectItem>
                       ))}
