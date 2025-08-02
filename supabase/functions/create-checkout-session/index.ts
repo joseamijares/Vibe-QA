@@ -187,8 +187,8 @@ serve(async (req) => {
 // Helper to get Stripe price ID from plan ID
 function getPriceId(planId: string): string | null {
   const priceIds: Record<string, string> = {
-    basic: 'price_1RqOW0PPLO371ouZKnwpduMZ', // VibeQA Basic - $5/month
-    full: 'price_1RqOWHPPLO371ouZyEUGXuuT', // VibeQA Full - $14/month
+    basic: Deno.env.get('STRIPE_PRICE_BASIC') || 'price_1RqOW0PPLO371ouZKnwpduMZ', // VibeQA Basic - $5/month
+    full: Deno.env.get('STRIPE_PRICE_FULL') || 'price_1RqOWHPPLO371ouZyEUGXuuT', // VibeQA Full - $14/month
   };
   return priceIds[planId] || null;
 }

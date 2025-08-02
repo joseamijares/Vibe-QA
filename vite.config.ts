@@ -15,9 +15,12 @@ export default defineConfig({
     port: 5173,
     allowedHosts: ['all'],
     cors: {
-      origin: '*',
+      origin: process.env.NODE_ENV === 'production' 
+        ? ['https://vibeqa.app', 'https://*.vibeqa.app', 'https://*.replit.app']
+        : '*',
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Project-Key'],
+      credentials: true,
     },
   },
   preview: {
@@ -26,9 +29,12 @@ export default defineConfig({
     strictPort: true,
     allowedHosts: ['all', 'vibeqa.app'],
     cors: {
-      origin: '*',
+      origin: process.env.NODE_ENV === 'production' 
+        ? ['https://vibeqa.app', 'https://*.vibeqa.app', 'https://*.replit.app']
+        : '*',
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Project-Key'],
+      credentials: true,
     },
   },
   publicDir: 'public',

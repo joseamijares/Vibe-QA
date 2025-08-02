@@ -153,20 +153,21 @@ function createDetailsForm(config: Required<VibeQAWidgetConfig>, state: WidgetSt
   const backButton = document.createElement('button');
   backButton.className = 'vibeqa-button-secondary';
   backButton.setAttribute('data-vibeqa-back', 'true');
-  backButton.style.marginBottom = '16px';
-  backButton.innerHTML = `<span style="margin-right: 4px">←</span> Back`;
+  backButton.style.marginBottom = '20px';
+  backButton.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 6px; display: inline-block; vertical-align: middle;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg> Back`;
   container.appendChild(backButton);
 
   // Add feedback type indicator
   const typeIndicator = document.createElement('div');
-  typeIndicator.style.marginBottom = '16px';
+  typeIndicator.style.marginBottom = '20px';
   typeIndicator.style.display = 'flex';
   typeIndicator.style.alignItems = 'center';
   typeIndicator.style.gap = '8px';
   typeIndicator.style.color = 'var(--vibeqa-text-secondary)';
+  typeIndicator.style.fontSize = '14px';
   typeIndicator.innerHTML = `
     <span style="font-weight: 600">Type:</span>
-    <span style="text-transform: capitalize; color: var(--vibeqa-primary)">${state.feedbackType}</span>
+    <span style="text-transform: capitalize; color: var(--vibeqa-primary); font-weight: 600;">${state.feedbackType}</span>
   `;
   container.appendChild(typeIndicator);
 
@@ -290,12 +291,6 @@ function createDetailsForm(config: Required<VibeQAWidgetConfig>, state: WidgetSt
       title: 'Select Area',
       desc: 'Draw a selection box',
     },
-    {
-      mode: 'element',
-      icon: getElementIcon(),
-      title: 'Select Element',
-      desc: 'Click to select element',
-    },
   ];
 
   screenshotModes.forEach((modeInfo) => {
@@ -335,7 +330,8 @@ function createDetailsForm(config: Required<VibeQAWidgetConfig>, state: WidgetSt
   submitBtn.className = 'vibeqa-button';
   submitBtn.type = 'submit';
   submitBtn.textContent = 'Send Feedback';
-  submitBtn.style.marginTop = '20px';
+  submitBtn.style.marginTop = '24px';
+  submitBtn.style.width = '100%';
   form.appendChild(submitBtn);
 
   container.appendChild(form);
@@ -429,12 +425,6 @@ function getFullPageIcon(): string {
 function getAreaIcon(): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-  </svg>`;
-}
-
-function getElementIcon(): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
   </svg>`;
 }
 

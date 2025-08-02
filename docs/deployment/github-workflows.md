@@ -5,12 +5,15 @@ This document describes the GitHub Actions workflows configured for VibeQA to au
 ## Overview
 
 VibeQA uses GitHub Actions for:
-- Automated database migrations
+- Automated database migrations to production
 - TypeScript type generation and validation
-- Widget deployment pipeline
+- Widget deployment to Supabase storage
 - Edge functions CI/CD
 - Security scanning
 - Health monitoring
+- Database backups
+
+**Note**: This setup uses a single production environment without staging.
 
 ## Workflows
 
@@ -19,21 +22,19 @@ VibeQA uses GitHub Actions for:
 **Purpose**: Automatically deploy and validate database migrations to staging and production environments.
 
 **Triggers**:
-- Push to `main` or `Dev` branches (when SQL files change)
+- Push to `main` branch (when SQL files change)
 - Pull requests (validation only)
 - Manual workflow dispatch
 
 **Key Features**:
 - SQL syntax validation
 - Migration naming convention enforcement
-- Automatic deployment to staging on Dev branch push
 - Production deployment with backup on main branch push
 - Migration diff generation
-- Rollback capability
 
 **Required Secrets**:
 - `SUPABASE_ACCESS_TOKEN`
-- `STAGING_SUPABASE_PROJECT_ID`
+- `SUPABASE_PROJECT_ID`
 - `STAGING_SUPABASE_DB_PASSWORD`
 - `PRODUCTION_SUPABASE_PROJECT_ID`
 - `PRODUCTION_SUPABASE_DB_PASSWORD`
@@ -43,7 +44,7 @@ VibeQA uses GitHub Actions for:
 **Purpose**: Generate TypeScript types from database schema and validate type safety across the codebase.
 
 **Triggers**:
-- Push to `main` or `Dev` branches
+- Push to `main` branch
 - Pull requests
 - Daily schedule (9 AM UTC)
 - Manual workflow dispatch
@@ -58,40 +59,35 @@ VibeQA uses GitHub Actions for:
 
 **Required Secrets**:
 - `SUPABASE_ACCESS_TOKEN`
-- `STAGING_SUPABASE_PROJECT_ID`
+- `SUPABASE_PROJECT_ID`
 
 ### 3. Widget Deployment (`deploy-widget.yml`)
 
-**Purpose**: Build, test, and deploy the feedback widget to CDN with versioning support.
+**Purpose**: Build, test, and deploy the feedback widget to Supabase storage.
 
 **Triggers**:
-- Push to `main` or `Dev` branches (widget changes)
-- Pull requests (preview deployments)
+- Push to `main` branch (widget changes)
+- Pull requests (build verification)
 - Release publication
 - Manual workflow dispatch
 
 **Key Features**:
 - Widget size optimization and limits (500KB max)
-- Multi-channel deployment (production, staging, beta)
+- Deployment to Supabase storage buckets
 - Version management with immutable URLs
-- PR preview comments
-- CDN cache invalidation
+- PR build verification
 - Rollback support
 
 **Required Secrets**:
-- `STAGING_SUPABASE_PROJECT_ID`
-- `STAGING_SUPABASE_SERVICE_ROLE_KEY`
-- `PRODUCTION_SUPABASE_PROJECT_ID`
-- `PRODUCTION_SUPABASE_SERVICE_ROLE_KEY`
-- `CLOUDFLARE_ZONE_ID` (optional)
-- `CLOUDFLARE_API_TOKEN` (optional)
+- `SUPABASE_PROJECT_ID`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
 ### 4. Edge Functions CI/CD (`edge-functions.yml`)
 
 **Purpose**: Lint, test, and deploy Supabase Edge Functions with proper validation.
 
 **Triggers**:
-- Push to `main` or `Dev` branches (function changes)
+- Push to `main` branch (function changes)
 - Pull requests
 - Manual workflow dispatch (with specific function selection)
 
@@ -106,7 +102,7 @@ VibeQA uses GitHub Actions for:
 
 **Required Secrets**:
 - `SUPABASE_ACCESS_TOKEN`
-- `STAGING_SUPABASE_PROJECT_ID`
+- `SUPABASE_PROJECT_ID`
 - `STAGING_SUPABASE_ANON_KEY`
 - `PRODUCTION_SUPABASE_PROJECT_ID`
 
@@ -115,7 +111,7 @@ VibeQA uses GitHub Actions for:
 **Purpose**: Comprehensive security scanning for secrets, vulnerabilities, and misconfigurations.
 
 **Triggers**:
-- Push to `main` or `Dev` branches
+- Push to `main` branch
 - Pull requests
 - Daily schedule (2 AM UTC)
 - Manual workflow dispatch
@@ -147,13 +143,13 @@ VibeQA uses GitHub Actions for:
 - Manual workflow dispatch
 
 **Key Features**:
-- Multi-environment health checks (production & staging)
+- Production environment health checks
 - Component-specific monitoring:
   - Supabase REST API
   - Supabase Auth API
   - Edge Functions
   - Application endpoints
-  - Widget CDN availability
+  - Widget availability in storage
   - Database connectivity
   - Storage bucket accessibility
 - Alert notifications (Discord/Slack webhooks)
@@ -161,40 +157,30 @@ VibeQA uses GitHub Actions for:
 - Health report generation
 
 **Required Secrets**:
-- `PRODUCTION_SUPABASE_URL`
-- `PRODUCTION_SUPABASE_ANON_KEY`
-- `PRODUCTION_APP_URL`
-- `STAGING_SUPABASE_URL`
-- `STAGING_SUPABASE_ANON_KEY`
-- `STAGING_APP_URL`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `APP_URL`
+- `DATABASE_URL`
 - `DISCORD_WEBHOOK_URL` (optional)
 - `SLACK_WEBHOOK_URL` (optional)
 
 ## Environment Configuration
 
-### Staging Environment
-
-Used for:
-- Testing migrations before production
-- Widget preview deployments
-- Edge function testing
-- Integration testing
-
 ### Production Environment
 
-Used for:
+Your single production environment is used for:
 - Live application deployments
-- Customer-facing widget CDN
+- Customer-facing widget hosting
 - Production edge functions
 - Real user traffic
 
 ### Environment Protection Rules
 
-Production environment should have:
-- Required reviewers
+Consider adding these GitHub environment protections:
+- Required reviewers for production deployments
 - Deployment branch restrictions (main only)
-- Environment secrets
-- Deployment history
+- Environment-specific secrets
+- Deployment history tracking
 
 ## Best Practices
 
@@ -205,8 +191,8 @@ Production environment should have:
 - Never commit secrets to code
 
 ### 2. Deployment Safety
-- Always test in staging first
-- Use deployment environments for protection
+- Test locally before pushing to main
+- Use pull requests for code review
 - Implement rollback procedures
 - Monitor after deployment
 
@@ -232,19 +218,20 @@ Production environment should have:
    - Ensure migrations are incremental
 
 2. **Type Generation Mismatch**
-   - Regenerate types locally
+   - Regenerate types locally with `supabase gen types`
    - Check for schema drift
    - Verify Supabase project connection
 
 3. **Widget Deployment Issues**
    - Check file size limits
    - Verify storage bucket permissions
-   - Clear CDN cache
+   - Check Supabase storage policies
 
 4. **Edge Function Failures**
    - Check Deno compatibility
-   - Verify environment variables
+   - Verify environment variables are set in GitHub Secrets
    - Test CORS configuration
+   - Check function logs in Supabase dashboard
 
 5. **Security Scan Alerts**
    - Review flagged vulnerabilities
@@ -274,3 +261,21 @@ Production environment should have:
    - Audit access permissions
    - Update workflow versions
    - Review and optimize workflows
+
+### 7. Database Backup (`backup-database.yml`)
+
+**Purpose**: Automated daily database backups.
+
+**Triggers**:
+- Daily schedule (3 AM UTC)
+- Manual workflow dispatch
+
+**Key Features**:
+- Automated daily backups
+- Compressed backup files
+- Optional external storage upload
+- Retention policy support
+
+**Required Secrets**:
+- `DATABASE_URL`
+- `BACKUP_BUCKET` (optional)

@@ -151,10 +151,10 @@ jobs:
           script: |
             const body = `### 🚀 Preview Deployment
             
-            Once this PR is merged to \`Dev\`:
-            - Widget preview: Check staging deployment
-            - Database changes: Will auto-deploy to staging
-            - Edge functions: Will deploy to staging environment
+            Once this PR is merged to \`main\`:
+            - Widget will be deployed to production
+            - Database changes will be applied to production
+            - Edge functions will deploy to production
             
             ### Checklist
             - [ ] Code follows project conventions
@@ -162,6 +162,7 @@ jobs:
             - [ ] No hardcoded secrets or API keys
             - [ ] Database migrations are incremental
             - [ ] PR has descriptive title and description
+            - [ ] Changes have been tested locally
             `;
             
             // Check if comment already exists

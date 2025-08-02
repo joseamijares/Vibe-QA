@@ -113,7 +113,7 @@ export class VibeQAWidget implements WidgetAPI {
     this.ui.on('toggle', () => this.toggle());
     this.ui.on('close', () => this.close());
     this.ui.on('submit', (submission: Partial<FeedbackSubmission>) => this.submit(submission));
-    this.ui.on('screenshot', (options?: { mode?: 'fullpage' | 'area' | 'element' }) =>
+    this.ui.on('screenshot', (options?: { mode?: 'fullpage' | 'area' }) =>
       this.captureScreenshot(options?.mode)
     );
     this.ui.on('record', () => this.startRecording());
@@ -307,17 +307,15 @@ export class VibeQAWidget implements WidgetAPI {
     }
   }
 
-  private async captureScreenshot(
-    mode: 'fullpage' | 'area' | 'element' = 'fullpage'
-  ): Promise<void> {
+  private async captureScreenshot(mode: 'fullpage' | 'area' = 'fullpage'): Promise<void> {
     this.log(`Screenshot capture requested - mode: ${mode}`);
 
     try {
       // Hide widget during screenshot for all modes
       const wasOpen = this.state.isOpen;
       if (wasOpen) {
-        // For area/element selection, temporarily close the widget
-        if (mode === 'area' || mode === 'element') {
+        // For area selection, temporarily close the widget
+        if (mode === 'area') {
           this.state.isOpen = false;
           this.ui?.setState({ isOpen: false });
         } else {
@@ -333,9 +331,11 @@ export class VibeQAWidget implements WidgetAPI {
       // Capture screenshot with the selected mode
       const blob = await screenshotCapture.capture({
         mode,
-        quality: 0.9,
+        quality: 1, // Canvas render quality
         maxWidth: 1920,
         maxHeight: 1080,
+        format: 'webp', // Use WebP for better compression
+        compressionQuality: 0.85, // 85% quality for WebP
       });
 
       if (blob) {
@@ -349,7 +349,7 @@ export class VibeQAWidget implements WidgetAPI {
         this.ui?.showNotification(
           'success',
           'Screenshot captured!',
-          `${mode === 'fullpage' ? 'Full page' : mode === 'area' ? 'Selected area' : 'Element'} captured successfully`
+          `${mode === 'fullpage' ? 'Full page' : 'Selected area'} captured successfully`
         );
 
         this.log('Screenshot captured successfully', attachment);

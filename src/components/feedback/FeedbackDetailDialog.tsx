@@ -32,11 +32,15 @@ import {
   CheckCircle2,
   X,
   Maximize2,
-  Calendar,
-  MapPin,
   Smartphone,
   Image as ImageIcon,
   Volume2,
+  FileText,
+  User,
+  Clock,
+  Link2,
+  Settings,
+  Save,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -325,26 +329,28 @@ export function FeedbackDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden p-0 border-0">
-          {/* Modern gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#094765] via-[#156c8b] to-[#094765] opacity-95" />
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden p-0 border-0 bg-gray-50/95">
+          {/* Aurora Background Effects */}
+          <div className="absolute inset-0 overflow-hidden rounded-xl">
+            <div className="aurora-light-layer aurora-light-1" />
+            <div className="aurora-light-layer aurora-light-2" />
+            <div className="aurora-light-layer aurora-light-3" />
+          </div>
 
           {/* Content wrapper */}
-          <div className="relative flex flex-col h-full">
-            {/* Modern header with glassmorphism */}
-            <div className="relative px-8 py-6 border-b border-white/10 bg-white/5 backdrop-blur-xl">
+          <div className="relative glass-modern-light rounded-xl flex flex-col h-full bg-white/60 backdrop-blur-xl">
+            {/* Clean header */}
+            <div className="px-8 py-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div
-                    className={`p-3 rounded-2xl ${feedbackTypeConfig[feedback.type].bgColor} bg-opacity-20 backdrop-blur-sm`}
-                  >
+                  <div className={`p-3 rounded-xl ${feedbackTypeConfig[feedback.type].bgColor}`}>
                     <TypeIcon className={`h-6 w-6 ${feedbackTypeConfig[feedback.type].color}`} />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-white">
+                    <h2 className="text-2xl font-bold gradient-text-modern">
                       {feedback.title || `${feedbackTypeConfig[feedback.type].label} Feedback`}
                     </h2>
-                    <p className="text-sm text-gray-300 mt-1">
+                    <p className="text-sm text-gray-600 mt-1">
                       Submitted{' '}
                       {feedback.created_at
                         ? formatDistanceToNow(new Date(feedback.created_at), { addSuffix: true })
@@ -400,7 +406,7 @@ export function FeedbackDetailDialog({
                     variant="ghost"
                     size="icon"
                     onClick={() => onOpenChange(false)}
-                    className="text-gray-300 hover:text-white hover:bg-white/10 rounded-full"
+                    className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
                   >
                     <X className="h-5 w-5" />
                   </Button>
@@ -416,7 +422,7 @@ export function FeedbackDetailDialog({
                   {/* Description Card */}
                   <div className="glass-card-dashboard rounded-xl p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <Circle className="h-5 w-5 text-[#094765]" />
+                      <FileText className="h-5 w-5 text-[#094765]" />
                       Description
                     </h3>
                     <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
@@ -536,7 +542,7 @@ export function FeedbackDetailDialog({
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1">
-                                  <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-gray-200">
+                                  <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                                     <div className="flex items-center justify-between mb-2">
                                       <span className="text-gray-900 font-medium">
                                         {comment.user.rawUserMetaData?.full_name ||
@@ -556,7 +562,7 @@ export function FeedbackDetailDialog({
                                               <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                                                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                                               >
                                                 <MoreVertical className="h-3 w-3" />
                                               </Button>
@@ -657,30 +663,36 @@ export function FeedbackDetailDialog({
                 <div className="space-y-6">
                   {/* Metadata Card */}
                   <div className="glass-card-dashboard rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Details</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                          Project
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-[#094765]" />
+                      Details
+                    </h3>
+                    <div className="space-y-5">
+                      <div className="pb-3 border-b border-gray-100">
+                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-medium">
+                          PROJECT
                         </p>
-                        <p className="text-gray-900 font-medium">{feedback.project.name}</p>
+                        <p className="text-gray-900 font-semibold text-sm">
+                          {feedback.project.name}
+                        </p>
                       </div>
 
-                      <div>
-                        <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">
-                          Reporter
+                      <div className="pb-3 border-b border-gray-100">
+                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-medium">
+                          REPORTER
                         </p>
-                        <p className="text-white font-medium">
+                        <p className="text-gray-900 font-medium flex items-center gap-2 text-sm">
+                          <User className="h-4 w-4 text-gray-400" />
                           {feedback.reporter_name || feedback.reporter_email || 'Anonymous'}
                         </p>
                       </div>
 
-                      <div>
-                        <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">
-                          Submitted
+                      <div className="pb-3 border-b border-gray-100">
+                        <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-medium">
+                          SUBMITTED
                         </p>
-                        <p className="text-white font-medium flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-gray-400" />
+                        <p className="text-gray-900 font-medium flex items-center gap-2 text-sm">
+                          <Clock className="h-4 w-4 text-gray-400" />
                           {feedback.created_at
                             ? format(new Date(feedback.created_at), 'MMM d, yyyy h:mm a')
                             : 'Unknown'}
@@ -689,16 +701,16 @@ export function FeedbackDetailDialog({
 
                       {feedback.page_url && (
                         <div>
-                          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">
-                            Page URL
+                          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-medium">
+                            PAGE URL
                           </p>
                           <a
                             href={feedback.page_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[#3f90b3] hover:text-[#66a5bd] flex items-center gap-2 transition-colors"
+                            className="text-[#094765] hover:text-[#156c8b] flex items-center gap-2 transition-colors text-sm font-medium"
                           >
-                            <MapPin className="h-4 w-4" />
+                            <Link2 className="h-4 w-4" />
                             <span className="truncate">{feedback.page_url}</span>
                           </a>
                         </div>
@@ -708,27 +720,27 @@ export function FeedbackDetailDialog({
 
                   {/* Device & Browser Info Card */}
                   {(feedback.browser_info || feedback.device_info) && (
-                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                      <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <Smartphone className="h-5 w-5 text-blue-400" />
+                    <div className="glass-card-dashboard rounded-xl p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <Smartphone className="h-5 w-5 text-[#094765]" />
                         Device Information
                       </h3>
                       <div className="space-y-4">
                         {feedback.browser_info && (
                           <div>
-                            <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">
-                              Browser
+                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-medium">
+                              BROWSER
                             </p>
-                            <div className="bg-white/5 rounded-lg p-3 space-y-2">
+                            <div className="bg-gray-50 rounded-lg p-3 space-y-2 border border-gray-100">
                               <div className="flex items-center gap-2">
-                                <Globe className="h-4 w-4 text-blue-400" />
-                                <span className="text-white font-medium">
+                                <Globe className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-900 font-medium">
                                   {(feedback.browser_info as any).browser}{' '}
                                   {(feedback.browser_info as any).version}
                                 </span>
                               </div>
                               {(feedback.browser_info as any).engine && (
-                                <p className="text-sm text-gray-300 pl-6">
+                                <p className="text-sm text-gray-600 pl-6">
                                   Engine: {(feedback.browser_info as any).engine}
                                 </p>
                               )}
@@ -738,28 +750,28 @@ export function FeedbackDetailDialog({
 
                         {feedback.device_info && (
                           <div>
-                            <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">
-                              System
+                            <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-medium">
+                              SYSTEM
                             </p>
-                            <div className="bg-white/5 rounded-lg p-3 space-y-2">
+                            <div className="bg-gray-50 rounded-lg p-3 space-y-2 border border-gray-100">
                               <div className="flex items-center gap-2">
-                                <Monitor className="h-4 w-4 text-green-400" />
-                                <span className="text-white font-medium">
+                                <Monitor className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-900 font-medium">
                                   {(feedback.device_info as any).os}{' '}
                                   {(feedback.device_info as any).osVersion || ''}
                                 </span>
                               </div>
-                              <p className="text-sm text-gray-300 pl-6">
+                              <p className="text-sm text-gray-600 pl-6">
                                 Device: {(feedback.device_info as any).type}
                               </p>
                               {(feedback.device_info as any).screenWidth && (
-                                <p className="text-sm text-gray-300 pl-6">
+                                <p className="text-sm text-gray-600 pl-6">
                                   Screen: {(feedback.device_info as any).screenWidth} ×{' '}
                                   {(feedback.device_info as any).screenHeight}
                                 </p>
                               )}
                               {(feedback.device_info as any).viewport && (
-                                <p className="text-sm text-gray-300 pl-6">
+                                <p className="text-sm text-gray-600 pl-6">
                                   Viewport: {(feedback.device_info as any).viewport.width} ×{' '}
                                   {(feedback.device_info as any).viewport.height}
                                 </p>
@@ -772,11 +784,14 @@ export function FeedbackDetailDialog({
                   )}
 
                   {/* Actions Card */}
-                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                    <h3 className="text-lg font-semibold text-white mb-4">Actions</h3>
-                    <div className="space-y-4">
+                  <div className="glass-card-dashboard rounded-xl p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                      <Settings className="h-5 w-5 text-[#094765]" />
+                      Actions
+                    </h3>
+                    <div className="space-y-5">
                       <div>
-                        <Label htmlFor="status" className="text-gray-300 text-sm">
+                        <Label htmlFor="status" className="text-gray-600 text-sm font-medium">
                           Status
                         </Label>
                         <Select
@@ -785,16 +800,16 @@ export function FeedbackDetailDialog({
                         >
                           <SelectTrigger
                             id="status"
-                            className="bg-white/10 border-white/20 text-white mt-1"
+                            className="bg-white border-gray-200 text-gray-900 mt-1.5 hover:border-gray-300"
                           >
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-slate-800 border-slate-700">
+                          <SelectContent className="bg-white border-gray-200">
                             {feedbackStatusOptions.map((option) => (
                               <SelectItem
                                 key={option.value}
                                 value={option.value}
-                                className="text-white hover:bg-slate-700"
+                                className="text-gray-900 hover:bg-gray-50 focus:bg-gray-50"
                               >
                                 {option.label}
                               </SelectItem>
@@ -804,7 +819,7 @@ export function FeedbackDetailDialog({
                       </div>
 
                       <div>
-                        <Label htmlFor="priority" className="text-gray-300 text-sm">
+                        <Label htmlFor="priority" className="text-gray-600 text-sm font-medium">
                           Priority
                         </Label>
                         <Select
@@ -813,16 +828,16 @@ export function FeedbackDetailDialog({
                         >
                           <SelectTrigger
                             id="priority"
-                            className="bg-white/10 border-white/20 text-white mt-1"
+                            className="bg-white border-gray-200 text-gray-900 mt-1.5 hover:border-gray-300"
                           >
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="bg-slate-800 border-slate-700">
+                          <SelectContent className="bg-white border-gray-200">
                             {feedbackPriorityOptions.map((option) => (
                               <SelectItem
                                 key={option.value}
                                 value={option.value}
-                                className="text-white hover:bg-slate-700"
+                                className="text-gray-900 hover:bg-gray-50 focus:bg-gray-50"
                               >
                                 {option.label}
                               </SelectItem>
@@ -832,20 +847,20 @@ export function FeedbackDetailDialog({
                       </div>
 
                       <div>
-                        <Label htmlFor="assignee" className="text-gray-300 text-sm">
+                        <Label htmlFor="assignee" className="text-gray-600 text-sm font-medium">
                           Assign To
                         </Label>
                         <Select value={assignedTo} onValueChange={setAssignedTo}>
                           <SelectTrigger
                             id="assignee"
-                            className="bg-white/10 border-white/20 text-white mt-1"
+                            className="bg-white border-gray-200 text-gray-900 mt-1.5 hover:border-gray-300"
                           >
                             <SelectValue placeholder="Unassigned" />
                           </SelectTrigger>
-                          <SelectContent className="bg-slate-800 border-slate-700">
+                          <SelectContent className="bg-white border-gray-200">
                             <SelectItem
                               value="unassigned"
-                              className="text-white hover:bg-slate-700"
+                              className="text-gray-900 hover:bg-gray-50 focus:bg-gray-50"
                             >
                               Unassigned
                             </SelectItem>
@@ -853,7 +868,7 @@ export function FeedbackDetailDialog({
                               <SelectItem
                                 key={member.user_id || member.id}
                                 value={member.user_id || `member_${member.id}`}
-                                className="text-white hover:bg-slate-700"
+                                className="text-gray-900 hover:bg-gray-50 focus:bg-gray-50"
                               >
                                 User {member.user_id ? member.user_id.substring(0, 8) : 'Unknown'}
                                 ...
@@ -864,10 +879,11 @@ export function FeedbackDetailDialog({
                       </div>
 
                       <Button
-                        className="w-full bg-gradient-to-r from-[#ff6b35] to-[#e85d2f] hover:from-[#e85d2f] hover:to-[#d14d29] text-white rounded-xl mt-4"
+                        className="w-full bg-gradient-to-r from-[#ff6b35] to-[#e85d2f] hover:from-[#e85d2f] hover:to-[#d14d29] text-white rounded-xl mt-6 flex items-center justify-center gap-2"
                         onClick={updateFeedback}
                         disabled={loading}
                       >
+                        <Save className="h-4 w-4" />
                         Save Changes
                       </Button>
                     </div>

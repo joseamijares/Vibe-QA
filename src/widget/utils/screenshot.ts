@@ -5,7 +5,9 @@ export interface ScreenshotOptions {
   maxWidth?: number;
   maxHeight?: number;
   ignoreElements?: string[];
-  mode?: 'fullpage' | 'area' | 'element';
+  mode?: 'fullpage' | 'area';
+  format?: 'png' | 'webp' | 'jpeg';
+  compressionQuality?: number; // 0-1 for JPEG/WebP compression
 }
 
 export interface ScreenshotResult {
@@ -24,8 +26,6 @@ export class ScreenshotCapture {
     switch (mode) {
       case 'area':
         return this.captureArea(options);
-      case 'element':
-        return this.captureElement(options);
       case 'fullpage':
       default:
         return this.captureFullPage(options);
@@ -82,16 +82,8 @@ export class ScreenshotCapture {
         finalCanvas = this.resizeCanvas(canvas, options.maxWidth, options.maxHeight);
       }
 
-      // Convert to blob
-      return new Promise((resolve) => {
-        finalCanvas.toBlob(
-          (blob) => {
-            resolve(blob);
-          },
-          'image/png',
-          options.quality || 0.9
-        );
-      });
+      // Convert to blob with format support
+      return this.canvasToBlob(finalCanvas, options);
     } catch (error) {
       console.error('[VibeQA] Screenshot capture failed:', error);
       throw error;
@@ -162,69 +154,10 @@ export class ScreenshotCapture {
         widgetContainer.style.display = '';
       }
 
-      // Convert to blob
-      return new Promise((resolve) => {
-        croppedCanvas.toBlob((blob) => resolve(blob), 'image/png', options.quality || 0.9);
-      });
+      // Convert to blob with format support
+      return this.canvasToBlob(croppedCanvas, options);
     } catch (error) {
       console.error('[VibeQA] Area screenshot capture failed:', error);
-      throw error;
-    } finally {
-      this.isCapturing = false;
-      const widgetContainer = document.getElementById('vibeqa-widget-container');
-      if (widgetContainer) {
-        widgetContainer.style.display = '';
-      }
-    }
-  }
-
-  private async captureElement(options: ScreenshotOptions = {}): Promise<Blob | null> {
-    if (this.isCapturing) {
-      throw new Error('Screenshot capture already in progress');
-    }
-
-    this.isCapturing = true;
-    const element = await this.getUserElementSelection();
-
-    if (!element) {
-      this.isCapturing = false;
-      return null;
-    }
-
-    try {
-      // Hide the widget before capturing
-      const widgetContainer = document.getElementById('vibeqa-widget-container');
-      if (widgetContainer) {
-        widgetContainer.style.display = 'none';
-      }
-
-      // Capture the specific element
-      const canvas = await html2canvas(element, {
-        backgroundColor: null,
-        scale: options.quality || 2,
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        removeContainer: true,
-      });
-
-      // Restore widget visibility
-      if (widgetContainer) {
-        widgetContainer.style.display = '';
-      }
-
-      // Resize if needed
-      let finalCanvas = canvas;
-      if (options.maxWidth || options.maxHeight) {
-        finalCanvas = this.resizeCanvas(canvas, options.maxWidth, options.maxHeight);
-      }
-
-      // Convert to blob
-      return new Promise((resolve) => {
-        finalCanvas.toBlob((blob) => resolve(blob), 'image/png', options.quality || 0.9);
-      });
-    } catch (error) {
-      console.error('[VibeQA] Element screenshot capture failed:', error);
       throw error;
     } finally {
       this.isCapturing = false;
@@ -455,107 +388,6 @@ export class ScreenshotCapture {
     });
   }
 
-  private async getUserElementSelection(): Promise<HTMLElement | null> {
-    return new Promise((resolve) => {
-      // Create overlay
-      this.overlay = document.createElement('div');
-      this.overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 999998;
-        cursor: pointer;
-      `;
-
-      // Add instructions
-      const instructions = document.createElement('div');
-      instructions.style.cssText = `
-        position: absolute;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(135deg, #094765 0%, #156c8b 100%);
-        color: white;
-        padding: 16px 32px;
-        border-radius: 12px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        font-size: 14px;
-        font-weight: 600;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-        z-index: 999999;
-        pointer-events: none;
-      `;
-      instructions.textContent = 'Click on an element to capture it. Press ESC to cancel.';
-      this.overlay.appendChild(instructions);
-
-      document.body.appendChild(this.overlay);
-
-      let highlightedElement: HTMLElement | null = null;
-      let highlightBox: HTMLElement | null = null;
-
-      const handleMouseMove = (e: MouseEvent) => {
-        const element = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement;
-
-        if (element && element !== highlightedElement && !this.overlay?.contains(element)) {
-          // Remove previous highlight
-          if (highlightBox) {
-            highlightBox.remove();
-          }
-
-          highlightedElement = element;
-          const rect = element.getBoundingClientRect();
-
-          highlightBox = document.createElement('div');
-          highlightBox.style.cssText = `
-            position: fixed;
-            top: ${rect.top}px;
-            left: ${rect.left}px;
-            width: ${rect.width}px;
-            height: ${rect.height}px;
-            border: 2px solid #ff6b35;
-            background: rgba(255, 107, 53, 0.1);
-            pointer-events: none;
-            z-index: 999997;
-          `;
-          document.body.appendChild(highlightBox);
-        }
-      };
-
-      const handleClick = (e: MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const element = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement;
-        if (element && !this.overlay?.contains(element)) {
-          cleanup();
-          resolve(element);
-        }
-      };
-
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          cleanup();
-          resolve(null);
-        }
-      };
-
-      const cleanup = () => {
-        this.overlay?.removeEventListener('mousemove', handleMouseMove);
-        this.overlay?.removeEventListener('click', handleClick);
-        document.removeEventListener('keydown', handleKeyDown);
-        highlightBox?.remove();
-        this.overlay?.remove();
-        this.overlay = null;
-      };
-
-      this.overlay.addEventListener('mousemove', handleMouseMove);
-      this.overlay.addEventListener('click', handleClick);
-      document.addEventListener('keydown', handleKeyDown);
-    });
-  }
-
   private showHighlightOverlay(onHighlight: (areas: HighlightArea[]) => void): void {
     // Create overlay
     this.overlay = document.createElement('div');
@@ -657,6 +489,55 @@ export class ScreenshotCapture {
       this.overlay.remove();
       this.overlay = null;
     }
+  }
+
+  private async canvasToBlob(
+    canvas: HTMLCanvasElement,
+    options: ScreenshotOptions
+  ): Promise<Blob | null> {
+    const format = options.format || 'webp'; // Default to WebP for better compression
+    const quality = options.compressionQuality || 0.85; // Default 85% quality
+
+    // Check WebP support
+    const supportsWebP = await this.checkWebPSupport();
+    const finalFormat = format === 'webp' && !supportsWebP ? 'png' : format;
+
+    // Map format to MIME type
+    const mimeTypes: Record<string, string> = {
+      png: 'image/png',
+      webp: 'image/webp',
+      jpeg: 'image/jpeg',
+    };
+
+    return new Promise((resolve) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob && finalFormat === 'webp' && blob.size > 1024 * 1024) {
+            // If WebP is still too large (>1MB), try with lower quality
+            canvas.toBlob(
+              (compressedBlob) => resolve(compressedBlob),
+              mimeTypes[finalFormat],
+              quality * 0.7 // 70% of original quality
+            );
+          } else {
+            resolve(blob);
+          }
+        },
+        mimeTypes[finalFormat],
+        finalFormat === 'png' ? undefined : quality // PNG doesn't support quality parameter
+      );
+    });
+  }
+
+  private checkWebPSupport(): Promise<boolean> {
+    return new Promise((resolve) => {
+      const webP = new Image();
+      webP.onload = webP.onerror = () => {
+        resolve(webP.height === 2);
+      };
+      webP.src =
+        'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
+    });
   }
 }
 

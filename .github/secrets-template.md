@@ -6,40 +6,23 @@ This file lists all the GitHub secrets required for the workflows to function pr
 
 ### Supabase Secrets
 
-#### General
 - `SUPABASE_ACCESS_TOKEN` - Your Supabase access token for CLI operations
+- `SUPABASE_PROJECT_ID` - Your Supabase project reference ID
+- `SUPABASE_URL` - Your Supabase project URL (https://[project-id].supabase.co)
+- `SUPABASE_ANON_KEY` - Supabase anonymous/public key
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (keep this very secure!)
+- `SUPABASE_DB_PASSWORD` - Database password for migrations
+- `DATABASE_URL` - Full database connection string
 
-#### Staging Environment
-- `STAGING_SUPABASE_PROJECT_ID` - Staging project reference ID
-- `STAGING_SUPABASE_URL` - Staging project URL (https://[project-id].supabase.co)
-- `STAGING_SUPABASE_ANON_KEY` - Staging anonymous/public key
-- `STAGING_SUPABASE_SERVICE_ROLE_KEY` - Staging service role key
-- `STAGING_SUPABASE_DB_PASSWORD` - Staging database password
-- `STAGING_DATABASE_URL` - Full staging database connection string
-
-#### Production Environment
-- `PRODUCTION_SUPABASE_PROJECT_ID` - Production project reference ID
-- `PRODUCTION_SUPABASE_URL` - Production project URL
-- `PRODUCTION_SUPABASE_ANON_KEY` - Production anonymous/public key
-- `PRODUCTION_SUPABASE_SERVICE_ROLE_KEY` - Production service role key
-- `PRODUCTION_SUPABASE_DB_PASSWORD` - Production database password
-- `PRODUCTION_DATABASE_URL` - Full production database connection string
-
-### Application URLs
-- `STAGING_APP_URL` - Staging application URL (e.g., https://staging.vibeqa.com)
-- `PRODUCTION_APP_URL` - Production application URL (e.g., https://vibeqa.com)
+### Application URL
+- `APP_URL` - Your application URL (e.g., https://vibeqa.com or http://localhost:5173 for dev)
 
 ### Monitoring & Alerts (Optional)
 - `DISCORD_WEBHOOK_URL` - Discord webhook for notifications
 - `SLACK_WEBHOOK_URL` - Slack webhook for notifications
 
-### CDN & Storage (Optional)
-- `CLOUDFLARE_ZONE_ID` - Cloudflare zone ID for cache purging
-- `CLOUDFLARE_API_TOKEN` - Cloudflare API token with cache purge permissions
-
 ### Backup Storage (Optional)
-- `PRODUCTION_BACKUP_BUCKET` - S3/Storage bucket for production backups
-- `STAGING_BACKUP_BUCKET` - S3/Storage bucket for staging backups
+- `BACKUP_BUCKET` - Storage bucket name for database backups (if using external storage)
 
 ## How to Generate Secrets
 
@@ -75,6 +58,6 @@ This file lists all the GitHub secrets required for the workflows to function pr
 
 - Service role keys have full database access - guard them carefully
 - Rotate secrets regularly (quarterly recommended)
-- Use different secrets for staging and production
 - Limit secret access to only necessary team members
 - Enable secret scanning in your repository settings
+- Use GitHub environments for additional protection on production secrets

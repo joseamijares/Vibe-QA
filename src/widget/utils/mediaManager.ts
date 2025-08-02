@@ -28,10 +28,17 @@ export class MediaManager {
         );
       }
 
+      // Detect file format from blob type
+      const format = blob.type.includes('webp')
+        ? 'webp'
+        : blob.type.includes('jpeg')
+          ? 'jpeg'
+          : 'png';
+
       const attachment: MediaAttachment = {
         type: 'screenshot',
         blob,
-        filename: `screenshot-${options?.mode || 'fullpage'}-${Date.now()}.png`,
+        filename: `screenshot-${options?.mode || 'fullpage'}-${Date.now()}.${format}`,
         size: blob.size,
         thumbnail: await this.generateThumbnail(blob),
       };
@@ -146,16 +153,23 @@ export class MediaManager {
 
   async addScreenshot(
     blob: Blob,
-    mode: 'fullpage' | 'area' | 'element' = 'fullpage'
+    mode: 'fullpage' | 'area' = 'fullpage'
   ): Promise<MediaAttachment> {
     if (blob.size > this.maxFileSize) {
       throw new Error(`Screenshot too large. Maximum size is ${this.maxFileSize / 1024 / 1024}MB`);
     }
 
+    // Detect file format from blob type
+    const format = blob.type.includes('webp')
+      ? 'webp'
+      : blob.type.includes('jpeg')
+        ? 'jpeg'
+        : 'png';
+
     const attachment: MediaAttachment = {
       type: 'screenshot',
       blob,
-      filename: `screenshot-${mode}-${Date.now()}.png`,
+      filename: `screenshot-${mode}-${Date.now()}.${format}`,
       size: blob.size,
       thumbnail: await this.generateThumbnail(blob),
     };

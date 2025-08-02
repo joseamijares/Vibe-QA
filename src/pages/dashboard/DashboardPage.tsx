@@ -255,10 +255,14 @@ export function DashboardPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-8">
-              {recentFeedback.slice(0, 5).map((feedback) => (
+            <div className="space-y-0">
+              {recentFeedback.slice(0, 5).map((feedback, index) => (
                 <Link key={feedback.id} href={`/dashboard/feedback/${feedback.id}`}>
-                  <div className="p-5 rounded-xl glass-dashboard-dark hover:bg-white/50 transition-all cursor-pointer group">
+                  <div
+                    className={`p-5 rounded-xl glass-dashboard-dark hover:bg-white/50 transition-all cursor-pointer group ${
+                      index < recentFeedback.slice(0, 5).length - 1 ? 'mb-6' : ''
+                    }`}
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-3">

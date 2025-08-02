@@ -4,22 +4,12 @@ on:
   push:
     branches:
       - main
-      - Dev
     paths:
       - 'supabase/migrations/*.sql'
   pull_request:
     paths:
       - 'supabase/migrations/*.sql'
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
 
 env:
   SUPABASE_VERSION: 1.142.2
@@ -64,46 +54,11 @@ jobs:
             fi
           done
 
-  deploy-staging:
-    needs: validate-migrations
-    if: github.event_name == 'push' && github.ref == 'refs/heads/Dev'
-    runs-on: ubuntu-latest
-    environment: staging
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: ${{ env.SUPABASE_VERSION }}
-
-      - name: Deploy migrations to staging
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_ID: ${{ secrets.STAGING_SUPABASE_PROJECT_ID }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_SUPABASE_DB_PASSWORD }}
-        run: |
-          supabase link --project-ref $SUPABASE_PROJECT_ID
-          supabase db push --password $SUPABASE_DB_PASSWORD
-
-      - name: Generate migration diff
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_ID: ${{ secrets.STAGING_SUPABASE_PROJECT_ID }}
-        run: |
-          supabase db diff --use-migra -f migration_diff.sql
-          if [ -s migration_diff.sql ]; then
-            echo "### Migration Diff" >> $GITHUB_STEP_SUMMARY
-            echo '```sql' >> $GITHUB_STEP_SUMMARY
-            cat migration_diff.sql >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          fi
-
   deploy-production:
     needs: validate-migrations
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -114,21 +69,57 @@ jobs:
         with:
           version: ${{ env.SUPABASE_VERSION }}
 
+      - name: Setup PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
       - name: Backup production database
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           BACKUP_NAME="pre-migration-$(date +%Y%m%d-%H%M%S)"
           echo "Creating backup: $BACKUP_NAME"
-          # Note: Actual backup command depends on your Supabase plan
-          echo "Backup name: $BACKUP_NAME" >> $GITHUB_STEP_SUMMARY
+          
+          # Create a database dump using pg_dump
+          # Note: This requires DATABASE_URL to be set
+          if [ -n "$DATABASE_URL" ]; then
+            echo "Creating database backup..."
+            
+            # Create backup directory
+            mkdir -p backups
+            
+            # Create the backup
+            pg_dump "$DATABASE_URL" --no-owner --no-privileges --clean > "backups/${BACKUP_NAME}.sql"
+            
+            # Compress the backup
+            gzip "backups/${BACKUP_NAME}.sql"
+            
+            # Upload to artifacts for retention
+            echo "backup_file=backups/${BACKUP_NAME}.sql.gz" >> $GITHUB_OUTPUT
+            
+            echo "✅ Backup created: ${BACKUP_NAME}.sql.gz" >> $GITHUB_STEP_SUMMARY
+            echo "Size: $(ls -lh backups/${BACKUP_NAME}.sql.gz | awk '{print $5}')" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ DATABASE_URL not set, skipping backup" >> $GITHUB_STEP_SUMMARY
+            echo "Note: For production deployments, always set DATABASE_URL for backups" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload backup artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup-${{ github.run_id }}
+          path: backups/*.sql.gz
+          retention-days: 7
 
       - name: Deploy migrations to production
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           supabase link --project-ref $SUPABASE_PROJECT_ID
           supabase db push --password $SUPABASE_DB_PASSWORD
@@ -136,29 +127,8 @@ jobs:
       - name: Verify deployment
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
           echo "### Production Migration Complete" >> $GITHUB_STEP_SUMMARY
           echo "Timestamp: $(date)" >> $GITHUB_STEP_SUMMARY
           echo "Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-
-  rollback:
-    if: failure() && github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: ${{ env.SUPABASE_VERSION }}
-
-      - name: Rollback migrations
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_ID: ${{ secrets[format('{0}_SUPABASE_PROJECT_ID', github.event.inputs.environment == 'production' && 'PRODUCTION' || 'STAGING')] }}
-        run: |
-          echo "Rolling back migrations..."
-          # Implement rollback strategy based on your needs
-          echo "⚠️ Manual intervention may be required" >> $GITHUB_STEP_SUMMARY

@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - Dev
     paths:
       - 'supabase/functions/**'
       - '.github/workflows/edge-functions.yml'
@@ -16,14 +15,6 @@ on:
       function:
         description: 'Specific function to deploy (leave empty for all)'
         required: false
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
 
 env:
   SUPABASE_VERSION: 1.142.2
@@ -170,66 +161,12 @@ jobs:
             rm "$FUNC_PATH/bundle.js"
           fi
 
-  deploy-staging:
-    needs: build-functions
-    if: |
-      (github.event_name == 'push' && github.ref == 'refs/heads/Dev') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
-    runs-on: ubuntu-latest
-    environment: staging
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: ${{ env.SUPABASE_VERSION }}
-
-      - name: Deploy functions to staging
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_ID: ${{ secrets.STAGING_SUPABASE_PROJECT_ID }}
-        run: |
-          supabase link --project-ref $SUPABASE_PROJECT_ID
-          
-          if [ -n "${{ github.event.inputs.function }}" ]; then
-            # Deploy specific function
-            echo "Deploying ${{ github.event.inputs.function }} to staging..."
-            supabase functions deploy ${{ github.event.inputs.function }}
-          else
-            # Deploy all functions
-            echo "Deploying all functions to staging..."
-            supabase functions deploy
-          fi
-          
-          echo "### Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
-          echo "Project: $SUPABASE_PROJECT_ID" >> $GITHUB_STEP_SUMMARY
-
-      - name: Test deployed functions
-        env:
-          SUPABASE_PROJECT_ID: ${{ secrets.STAGING_SUPABASE_PROJECT_ID }}
-          SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
-        run: |
-          # Test health endpoints
-          BASE_URL="https://$SUPABASE_PROJECT_ID.supabase.co/functions/v1"
-          
-          # Test submit-feedback function
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X OPTIONS "$BASE_URL/submit-feedback")
-          
-          if [ "$response" = "200" ] || [ "$response" = "204" ]; then
-            echo "✅ submit-feedback CORS check passed" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ submit-feedback CORS check failed (HTTP $response)" >> $GITHUB_STEP_SUMMARY
-          fi
-
   deploy-production:
     needs: build-functions
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -241,7 +178,7 @@ jobs:
       - name: Deploy functions to production
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
           supabase link --project-ref $SUPABASE_PROJECT_ID
           
@@ -267,21 +204,28 @@ jobs:
 
       - name: Monitor function health
         env:
-          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           echo "Monitoring deployed functions..."
           
-          # Add production monitoring checks here
-          # This could include:
-          # - Checking function response times
-          # - Verifying expected responses
-          # - Checking error rates
+          # Test health endpoints
+          BASE_URL="https://$SUPABASE_PROJECT_ID.supabase.co/functions/v1"
+          
+          # Test submit-feedback function
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X OPTIONS "$BASE_URL/submit-feedback")
+          
+          if [ "$response" = "200" ] || [ "$response" = "204" ]; then
+            echo "✅ submit-feedback CORS check passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ submit-feedback CORS check failed (HTTP $response)" >> $GITHUB_STEP_SUMMARY
+          fi
 
   rollback:
     if: failure()
     needs: [deploy-production]
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - uses: actions/checkout@v4
         with:
@@ -298,7 +242,7 @@ jobs:
       - name: Rollback functions
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
           echo "⚠️ Rolling back to previous version..."
           

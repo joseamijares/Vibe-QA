@@ -5,15 +5,6 @@ on:
     # Run every 15 minutes
     - cron: '*/15 * * * *'
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to check'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - staging
 
 env:
   DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -22,28 +13,19 @@ env:
 jobs:
   api-health-check:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        environment: [production, staging]
     steps:
       - uses: actions/checkout@v4
 
       - name: Set environment variables
         run: |
-          if [ "${{ matrix.environment }}" = "production" ]; then
-            echo "SUPABASE_URL=${{ secrets.PRODUCTION_SUPABASE_URL }}" >> $GITHUB_ENV
-            echo "SUPABASE_ANON_KEY=${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
-            echo "APP_URL=${{ secrets.PRODUCTION_APP_URL }}" >> $GITHUB_ENV
-          else
-            echo "SUPABASE_URL=${{ secrets.STAGING_SUPABASE_URL }}" >> $GITHUB_ENV
-            echo "SUPABASE_ANON_KEY=${{ secrets.STAGING_SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
-            echo "APP_URL=${{ secrets.STAGING_APP_URL }}" >> $GITHUB_ENV
-          fi
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> $GITHUB_ENV
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> $GITHUB_ENV
+          echo "APP_URL=${{ secrets.APP_URL }}" >> $GITHUB_ENV
 
       - name: Check Supabase API health
         id: supabase-check
         run: |
-          echo "### Checking Supabase API (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          echo "### Checking Supabase API" >> $GITHUB_STEP_SUMMARY
           
           # Check REST API
           response=$(curl -s -o /dev/null -w "%{http_code}" \
@@ -73,7 +55,7 @@ jobs:
       - name: Check Edge Functions health
         id: functions-check
         run: |
-          echo "### Checking Edge Functions (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          echo "### Checking Edge Functions" >> $GITHUB_STEP_SUMMARY
           
           # Check submit-feedback function
           response=$(curl -s -o /dev/null -w "%{http_code}" \
@@ -92,7 +74,7 @@ jobs:
         id: app-check
         if: env.APP_URL != ''
         run: |
-          echo "### Checking Application (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          echo "### Checking Application" >> $GITHUB_STEP_SUMMARY
           
           # Check homepage
           response=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL")
@@ -119,7 +101,7 @@ jobs:
       - name: Check widget availability
         id: widget-check
         run: |
-          echo "### Checking Widget CDN (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          echo "### Checking Widget CDN" >> $GITHUB_STEP_SUMMARY
           
           WIDGET_URL="$SUPABASE_URL/storage/v1/object/public/widget-assets/production/widget.js"
           
@@ -142,7 +124,7 @@ jobs:
           steps.widget-check.outputs.widget_cdn == 'unhealthy'
         run: |
           # Prepare alert message
-          MESSAGE="🚨 **Health Check Failed** - ${{ matrix.environment }}\n\n"
+          MESSAGE="🚨 **Health Check Failed**\n\n"
           
           if [ "${{ steps.supabase-check.outputs.rest_api }}" = "unhealthy" ]; then
             MESSAGE="${MESSAGE}❌ Supabase REST API is down\n"
@@ -180,9 +162,6 @@ jobs:
 
   database-health-check:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        environment: [production, staging]
     steps:
       - uses: actions/checkout@v4
 
@@ -193,15 +172,11 @@ jobs:
 
       - name: Set environment variables
         run: |
-          if [ "${{ matrix.environment }}" = "production" ]; then
-            echo "DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}" >> $GITHUB_ENV
-          else
-            echo "DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" >> $GITHUB_ENV
-          fi
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
 
       - name: Check database connectivity
         run: |
-          echo "### Checking Database (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          echo "### Checking Database" >> $GITHUB_STEP_SUMMARY
           
           # Create a simple Node.js script to test connection
           cat > test-db.js << 'EOF'
@@ -230,21 +205,14 @@ jobs:
 
   storage-health-check:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        environment: [production, staging]
     steps:
       - name: Set environment variables
         run: |
-          if [ "${{ matrix.environment }}" = "production" ]; then
-            echo "SUPABASE_URL=${{ secrets.PRODUCTION_SUPABASE_URL }}" >> $GITHUB_ENV
-          else
-            echo "SUPABASE_URL=${{ secrets.STAGING_SUPABASE_URL }}" >> $GITHUB_ENV
-          fi
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> $GITHUB_ENV
 
       - name: Check storage buckets
         run: |
-          echo "### Checking Storage Buckets (${{ matrix.environment }})" >> $GITHUB_STEP_SUMMARY
+          echo "### Checking Storage Buckets" >> $GITHUB_STEP_SUMMARY
           
           # Check each bucket
           buckets=("feedback-media" "organization-assets" "widget-assets")
@@ -276,8 +244,7 @@ jobs:
           
           # Add uptime calculation (would need historical data)
           echo "## Uptime Statistics" >> $GITHUB_STEP_SUMMARY
-          echo "- Production: Calculate from historical runs" >> $GITHUB_STEP_SUMMARY
-          echo "- Staging: Calculate from historical runs" >> $GITHUB_STEP_SUMMARY
+          echo "- Calculate from historical runs" >> $GITHUB_STEP_SUMMARY
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Next Steps" >> $GITHUB_STEP_SUMMARY

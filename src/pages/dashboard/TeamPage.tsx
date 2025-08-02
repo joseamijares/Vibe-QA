@@ -92,9 +92,29 @@ export function TeamPage() {
 
       if (membersError) throw membersError;
 
+      // Fetch user profiles for all team members
+      const userIds = (membersData || []).map((member) => member.user_id);
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, avatar_url')
+        .in('id', userIds);
+
+      if (profileError) {
+        console.error('Error fetching profiles:', profileError);
+      }
+
+      // Create a map of user profiles
+      const profileMap = (profiles || []).reduce(
+        (map, profile) => {
+          map[profile.id] = profile;
+          return map;
+        },
+        {} as Record<string, any>
+      );
+
       const transformedMembers: MemberWithUser[] = (membersData || []).map((member) => ({
         ...member,
-        user: {
+        user: profileMap[member.user_id] || {
           id: member.user_id,
           email:
             member.user_id === session?.user?.id && session?.user?.email
@@ -455,12 +475,16 @@ export function TeamPage() {
             >
               <div className="flex items-center gap-4">
                 <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-[#094765] to-[#3387a7] rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                  {member.user.email[0].toUpperCase()}
+                  {(member.user.user_metadata?.full_name ||
+                    member.user.email ||
+                    'U')[0].toUpperCase()}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-gray-900">
-                      {member.user.user_metadata?.full_name || member.user.email}
+                      {member.user.user_metadata?.full_name ||
+                        member.user.email ||
+                        (member.user_id ? `User ${member.user_id.slice(0, 8)}` : 'Unknown User')}
                     </p>
                     <span
                       className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(

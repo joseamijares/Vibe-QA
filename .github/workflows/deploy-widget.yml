@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - Dev
     paths:
       - 'src/widget/**'
       - 'vite.widget.config.ts'
@@ -16,16 +15,6 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      channel:
-        description: 'Deployment channel'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - production
-          - staging
-          - beta
 
 jobs:
   build-widget:
@@ -112,14 +101,10 @@ jobs:
             exit 1
           fi
 
-  deploy-staging:
+  deploy-preview:
     needs: test-widget
-    if: |
-      (github.event_name == 'push' && github.ref == 'refs/heads/Dev') ||
-      (github.event_name == 'pull_request') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.channel == 'staging')
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    environment: staging
     steps:
       - uses: actions/checkout@v4
 
@@ -132,65 +117,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Deploy to staging
-        env:
-          SUPABASE_PROJECT_ID: ${{ secrets.STAGING_SUPABASE_PROJECT_ID }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          npm run deploy:widget:staging
-          
-          echo "### Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
-          echo "Widget URL: https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/widget-assets/staging/widget.js" >> $GITHUB_STEP_SUMMARY
+      - name: Build widget
+        run: npm run build:widget
 
-      - name: Post PR comment with preview
-        if: github.event_name == 'pull_request'
+      - name: Post PR comment with preview info
         uses: actions/github-script@v7
         with:
           script: |
-            const url = `https://${{ secrets.STAGING_SUPABASE_PROJECT_ID }}.supabase.co/storage/v1/object/public/widget-assets/staging/widget.js`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `### 🚀 Widget Preview Ready!\n\nTest the widget with:\n\`\`\`html\n<script src="${url}" data-project-key="test-key" async></script>\n\`\`\``
+              body: `### 🚀 Widget Build Complete!\n\nThe widget has been built successfully. It will be deployed to production when this PR is merged to main.`
             });
-
-  deploy-beta:
-    needs: test-widget
-    if: |
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.channel == 'beta')
-    runs-on: ubuntu-latest
-    environment: beta
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Deploy to beta
-        env:
-          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          npm run deploy:widget:beta
-          
-          echo "### Beta Deployment Complete" >> $GITHUB_STEP_SUMMARY
-          echo "Widget URL: https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/widget-assets/beta/widget.js" >> $GITHUB_STEP_SUMMARY
 
   deploy-production:
     needs: test-widget
     if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'release') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.channel == 'production')
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -205,8 +152,8 @@ jobs:
 
       - name: Deploy to production
         env:
-          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           npm run deploy:widget
           
@@ -217,19 +164,6 @@ jobs:
           echo "Widget URLs:" >> $GITHUB_STEP_SUMMARY
           echo "- Latest: https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/widget-assets/production/widget.js" >> $GITHUB_STEP_SUMMARY
           echo "- Versioned: https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/widget-assets/v${VERSION}/widget.js" >> $GITHUB_STEP_SUMMARY
-
-      - name: Invalidate CDN cache
-        env:
-          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: |
-          # If using Cloudflare CDN
-          if [ -n "$CLOUDFLARE_ZONE_ID" ]; then
-            curl -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
-              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-              -H "Content-Type: application/json" \
-              --data '{"files":["https://cdn.vibeqa.com/widget.js"]}'
-          fi
 
       - name: Create release notes
         if: github.event_name == 'release'
@@ -242,15 +176,38 @@ jobs:
     if: failure()
     needs: [deploy-production]
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - uses: actions/checkout@v4
 
       - name: Rollback to previous version
         env:
-          SUPABASE_PROJECT_ID: ${{ secrets.PRODUCTION_SUPABASE_PROJECT_ID }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.PRODUCTION_SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           echo "⚠️ Rolling back widget deployment..."
-          # Implement rollback logic here
-          # This could involve copying the previous version back to production/widget.js
+          
+          # Get the previous version from git tags
+          PREVIOUS_VERSION=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "v0.0.0")
+          echo "Rolling back to version: $PREVIOUS_VERSION"
+          
+          # Download the previous version from versioned path
+          STORAGE_URL="https://$SUPABASE_PROJECT_ID.supabase.co/storage/v1"
+          PREVIOUS_WIDGET_URL="$STORAGE_URL/object/public/widget-assets/$PREVIOUS_VERSION/widget.js"
+          
+          # Check if previous version exists
+          if curl -f -s -o /tmp/previous-widget.js "$PREVIOUS_WIDGET_URL"; then
+            echo "Previous version found, restoring..."
+            
+            # Upload the previous version as the current production version
+            curl -X POST \
+              "$STORAGE_URL/object/widget-assets/production/widget.js" \
+              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+              -H "Content-Type: application/javascript" \
+              -H "Cache-Control: public, max-age=300" \
+              --data-binary "@/tmp/previous-widget.js"
+            
+            echo "✅ Rollback complete to version $PREVIOUS_VERSION"
+          else
+            echo "❌ Previous version not found in storage. Manual intervention required."
+            exit 1
+          fi

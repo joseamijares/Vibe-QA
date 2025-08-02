@@ -9,7 +9,7 @@ export class WidgetUI extends EventEmitter {
   private state: WidgetState;
   private shadowRoot: ShadowRoot | null = null;
   private formData: Partial<FeedbackSubmission> = {};
-  private screenshotMode: 'fullpage' | 'area' | 'element' = 'fullpage';
+  private screenshotMode: 'fullpage' | 'area' = 'fullpage';
   private dropdownOpen = false;
 
   constructor(config: Required<VibeQAWidgetConfig>, state: WidgetState) {
@@ -198,8 +198,7 @@ export class WidgetUI extends EventEmitter {
           e.stopPropagation();
           const mode = (e.currentTarget as HTMLElement).getAttribute('data-screenshot-mode') as
             | 'fullpage'
-            | 'area'
-            | 'element';
+            | 'area';
           this.screenshotMode = mode;
           this.dropdownOpen = false;
           screenshotDropdown.setAttribute('data-open', 'false');
@@ -222,6 +221,13 @@ export class WidgetUI extends EventEmitter {
         this.emit('record');
       });
     }
+
+    // Attachment removal listeners are attached separately
+    this.attachAttachmentListeners();
+  }
+
+  private attachAttachmentListeners(): void {
+    if (!this.shadowRoot) return;
 
     // Attachment removal buttons
     const removeButtons = this.shadowRoot.querySelectorAll('[data-attachment-remove]');
@@ -431,6 +437,7 @@ export class WidgetUI extends EventEmitter {
     this.on('attachment-added', () => {
       this.state.attachments = mediaManager.getAttachments();
       this.updateUI();
+      this.attachAttachmentListeners();
     });
 
     // Listen for attachment removals
@@ -438,6 +445,7 @@ export class WidgetUI extends EventEmitter {
       mediaManager.removeAttachment(filename);
       this.state.attachments = mediaManager.getAttachments();
       this.updateUI();
+      this.attachAttachmentListeners();
     });
   }
 
@@ -445,7 +453,7 @@ export class WidgetUI extends EventEmitter {
     return this.state;
   }
 
-  getScreenshotMode(): 'fullpage' | 'area' | 'element' {
+  getScreenshotMode(): 'fullpage' | 'area' {
     return this.screenshotMode;
   }
 
